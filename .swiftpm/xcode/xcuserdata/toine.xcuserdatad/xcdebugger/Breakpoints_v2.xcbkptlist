@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "7F5490C0-B812-4A18-8829-5DC035CA7E19"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "46A8B2C2-41E3-491E-9070-A350DAA40786"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "SceneView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "666"
+            endingLineNumber = "666"
+            landmarkName = "handleTap(_:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4502F996-E12A-434B-B830-841F575CBB0F"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "SceneView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "462"
+            endingLineNumber = "462"
+            landmarkName = "createMusician()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8CE2BA2C-E6B3-40A1-8430-F68E83824C87"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "SceneView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "468"
+            endingLineNumber = "468"
+            landmarkName = "createMusician()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "3EE80EB5-3959-43DB-AB1A-0233A7367A93"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "SceneView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "552"
+            endingLineNumber = "552"
+            landmarkName = "body"
+            landmarkType = "24">
+            <Locations>
+               <Location
+                  uuid = "3EE80EB5-3959-43DB-AB1A-0233A7367A93 - 58a616a973d8082b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "WWDC24.NonOptionalSceneView.body.getter : some"
+                  moduleName = "WWDC24"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/toine/app/AntoineBollengier/WWDC24.swiftpm/SceneView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "170"
+                  endingLineNumber = "170"
+                  offsetFromSymbolStart = "384">
+               </Location>
+               <Location
+                  uuid = "3EE80EB5-3959-43DB-AB1A-0233A7367A93 - 4ecb6070af951b28"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () -&gt; () in closure #1 () -&gt; SwiftUI.Button&lt;SwiftUI.Text&gt; in closure #1 () -&gt; SwiftUI.HStack&lt;SwiftUI.Button&lt;SwiftUI.Text&gt;&gt; in WWDC24.NonOptionalSceneView.body.getter : some"
+                  moduleName = "WWDC24"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/toine/app/AntoineBollengier/WWDC24.swiftpm/SceneView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "170"
+                  endingLineNumber = "170"
+                  offsetFromSymbolStart = "48">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "87F17901-6BE9-4C1A-B43D-FC49C4ECBA5E"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "SceneView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "554"
+            endingLineNumber = "554"
+            landmarkName = "body"
+            landmarkType = "24">
+            <Locations>
+               <Location
+                  uuid = "87F17901-6BE9-4C1A-B43D-FC49C4ECBA5E - 57be9c78bf5eaf6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () -&gt; SwiftUI.HStack&lt;SwiftUI.Button&lt;SwiftUI.Text&gt;&gt; in WWDC24.NonOptionalSceneView.body.getter : some"
+                  moduleName = "WWDC24"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/toine/app/AntoineBollengier/WWDC24.swiftpm/SceneView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "172"
+                  endingLineNumber = "172"
+                  offsetFromSymbolStart = "356">
+               </Location>
+               <Location
+                  uuid = "87F17901-6BE9-4C1A-B43D-FC49C4ECBA5E - 3fae62d26eb150ec"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () -&gt; SwiftUI.Button&lt;SwiftUI.Text&gt; in closure #1 () -&gt; SwiftUI.HStack&lt;SwiftUI.Button&lt;SwiftUI.Text&gt;&gt; in WWDC24.NonOptionalSceneView.body.getter : some"
+                  moduleName = "WWDC24"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/toine/app/AntoineBollengier/WWDC24.swiftpm/SceneView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "173"
+                  endingLineNumber = "173"
+                  offsetFromSymbolStart = "188">
+               </Location>
+               <Location
+                  uuid = "87F17901-6BE9-4C1A-B43D-FC49C4ECBA5E - 4ecb6070af951b96"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 () -&gt; () in closure #1 () -&gt; SwiftUI.Button&lt;SwiftUI.Text&gt; in closure #1 () -&gt; SwiftUI.HStack&lt;SwiftUI.Button&lt;SwiftUI.Text&gt;&gt; in WWDC24.NonOptionalSceneView.body.getter : some"
+                  moduleName = "WWDC24"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/toine/app/AntoineBollengier/WWDC24.swiftpm/SceneView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "172"
+                  endingLineNumber = "172"
+                  offsetFromSymbolStart = "196">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "856E5259-0D49-4A2B-94FF-EFDF4F19F32F"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "SceneView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "658"
+            endingLineNumber = "658"
+            landmarkName = "handleTap(_:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>
