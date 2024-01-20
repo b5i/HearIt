@@ -252,9 +252,12 @@ class PlaybackManager: ObservableObject {
         let spatialMixerDefinition = PHASESpatialMixerDefinition(spatialPipeline: spatialPipeline)
         spatialMixerDefinition.distanceModelParameters = options.distanceModelParameters
         
+        let nodeIdentifier = audioIdentifier + "_node"
+        
         let samplerNodeDefinition = PHASESamplerNodeDefinition(
             soundAssetIdentifier: audioIdentifier,
-            mixerDefinition: spatialMixerDefinition
+            mixerDefinition: spatialMixerDefinition,
+            identifier: nodeIdentifier
         )
         
         
@@ -265,7 +268,7 @@ class PlaybackManager: ObservableObject {
         let soundGroup = PHASEGroup(identifier: groupIdentifier)
         soundGroup.register(engine: self.engine)
         
-        samplerNodeDefinition.group = self.engine.groups[groupIdentifier]
+        samplerNodeDefinition.group = soundGroup
         
         
         // Define the sound playback behavior
@@ -308,6 +311,8 @@ class PlaybackManager: ObservableObject {
 
             event.prepare(completion: { reason in
                 if reason == .prepared {
+                    event.resume()
+                    event.pause()
                     handler?(.success(sound))
                 } else {
                     handler?(.failure("Asset preparation failed: \(reason)"))

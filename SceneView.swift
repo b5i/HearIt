@@ -172,6 +172,7 @@ struct NonOptionalSceneView: View {
                                 musician.toggleSpotlight()
                             }
                         }
+                        
                         /*
                         ForEach(Array(PM.sounds.enumerated()), id: \.offset) { (_, sound) in
                             let sound = sound.1
@@ -194,7 +195,7 @@ struct NonOptionalSceneView: View {
     }
     
     private func setupTutorial() async {
-        func createMusician(withSongName songName: String, index: Int) async {
+        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int) async {
             if PlaybackManager.shared.sounds[songName] == nil {
                 let newMusician = MM.createMusician()
                 
@@ -207,7 +208,7 @@ struct NonOptionalSceneView: View {
                 
                 
                 
-                let result = await PlaybackManager.shared.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping))
+                let result = await PlaybackManager.shared.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
                 
                 switch result {
                 case .success(let sound):
@@ -219,9 +220,9 @@ struct NonOptionalSceneView: View {
         }
         
         await createMusician(withSongName: "TutorialSounds/tutorial_drums.m4a", index: 0)
-        //await createMusician(withSongName: "TutorialSounds/tutorial_hihats.m4a", index: 1)
-        //await createMusician(withSongName: "TutorialSounds/tutorial_kick.m4a", index: 2)
-        //await createMusician(withSongName: "TutorialSounds/tutorial_synth.m4a", index: 3)
+        await createMusician(withSongName: "TutorialSounds/tutorial_hihats.m4a", index: 1)
+        await createMusician(withSongName: "TutorialSounds/tutorial_kick.m4a", index: 2)
+        await createMusician(withSongName: "TutorialSounds/tutorial_synth.m4a", audioLevel: -3, index: 3)
     }
 }
 
