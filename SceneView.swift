@@ -173,6 +173,12 @@ struct NonOptionalSceneView: View {
                             }
                         }
                         
+                        ForEach(Array(PM.sounds.enumerated()), id: \.offset) { (_ dictEntry) in
+                            let sound = dictEntry.element.value
+                            
+                            PlaybackProgressView(playbackObserver: sound.timeObserver)
+                        }
+                        
                         /*
                         ForEach(Array(PM.sounds.enumerated()), id: \.offset) { (_, sound) in
                             let sound = sound.1
@@ -194,6 +200,22 @@ struct NonOptionalSceneView: View {
             }
     }
     
+    private struct PlaybackProgressView: View {
+        @StateObject var playbackObserver: PlaybackManager.Sound.SoundPlaybackObserver
+        var body: some View {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(.gray)
+                        .frame(width: geometry.size.width, height: 10)
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(.white)
+                        .frame(width: geometry.size.width * (playbackObserver.currentTime / playbackObserver.soundDuration), height: 10)
+                }
+            }
+        }
+    }
+    
     private func setupTutorial() async {
         func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int) async {
             if PlaybackManager.shared.sounds[songName] == nil {
@@ -208,7 +230,7 @@ struct NonOptionalSceneView: View {
                 
                 
                 
-                let result = await PlaybackManager.shared.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
+                let result = await PlaybackManager.shared.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .oneShot, audioCalibration: (.relativeSpl, audioLevel)))
                 
                 switch result {
                 case .success(let sound):

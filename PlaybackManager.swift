@@ -6,6 +6,7 @@
 //
 
 import PHASE
+import Combine
 
 class PlaybackManager: ObservableObject {
     static let shared = PlaybackManager()
@@ -13,6 +14,7 @@ class PlaybackManager: ObservableObject {
     class Sound {
         struct SoundEventInfos {
             var soundPath: String
+            var soundDuration: Double
             var assetName: String
             var anchorName: String
         }
@@ -26,22 +28,38 @@ class PlaybackManager: ObservableObject {
         /// The group of the sound, it comports only one instance of sound, `event`. It can be used to do some more complex operations about the playback.
         private let group: PHASEGroup
         
+        /// A model that is used to get the current time of the playback.
+        let timeObserver: SoundPlaybackObserver
+        
         /// Infos about the sound, they describe the way the sound is defined in the engine.
         var infos: SoundEventInfos
-        
+                        
         init(event: PHASESoundEvent, infos: SoundEventInfos, source: PHASESource, group: PHASEGroup) {
             self.event = event
             self.infos = infos
             self.source = source
             self.group = group
+            self.timeObserver = SoundPlaybackObserver(soundDuration: infos.soundDuration)
         }
         
         // MARK: Sound's properties
         
-        func play() { self.event.resume() }
-        func pause() { self.event.pause() }
+        func play() { 
+            self.event.resume()
+            self.timeObserver.resume()
+        }
+        
+        func pause() {
+            self.event.pause()
+            self.timeObserver.pause()
+        }
+        
         func restart() { self.seek(to: 0.0); self.event.resume() }
-        func seek(to time: Double) { self.event.seek(to: time) }
+        
+        func seek(to time: Double) {
+            self.event.seek(to: time)
+            self.timeObserver.seek(to: time)
+        }
         
         // MARK: Group's properties
         
@@ -63,6 +81,7 @@ class PlaybackManager: ObservableObject {
                 return self.group.rate
             } set {
                 self.group.rate = newValue
+                self.timeObserver.setRate(newValue)
             }
         }
         
@@ -116,6 +135,77 @@ class PlaybackManager: ObservableObject {
             self.group.unregisterFromEngine()
             manager.engine.assetRegistry.unregisterAsset(identifier: self.infos.assetName)
             manager.engine.assetRegistry.unregisterAsset(identifier: self.infos.anchorName)
+        }
+        
+        class SoundPlaybackObserver: ObservableObject {
+            var currentTime: Double {
+                get {
+                    if self.startedAt != -1 {
+                        return self.secondsPlayed + (Double(Date().timeIntervalSince1970) - self.startedAt) * self.rate
+                    } else { // paused
+                        return self.secondsPlayed
+                    }
+                }
+            }
+            
+            let soundDuration: Double
+            
+            @Published private(set) var isPlaying: Bool = false
+
+            @Published private var secondsPlayed: Double = 0.0
+            
+            @Published private var startedAt: Double = -1
+            
+            private var rate: Double = 1.0
+            
+            private var updateTimer: AnyCancellable?
+            
+            init(soundDuration: Double) {
+                self.soundDuration = soundDuration
+                self.updateTimer = Timer.publish(every: 0.1, on: .main, in: .default)
+                                        .autoconnect()
+                                        .sink(receiveValue: { _ in
+                                            self.update()
+                                        })
+            }
+            
+            func resume() {
+                guard !self.isPlaying else { return }
+                
+                self.startedAt = Double(Date().timeIntervalSince1970)
+                self.update()
+            }
+            
+            func pause() {
+                guard self.isPlaying else { return }
+                
+                self.secondsPlayed += (Double(Date().timeIntervalSince1970) - self.startedAt) * self.rate
+                self.startedAt = -1
+                self.update()
+            }
+            
+            func setRate(_ rate: Double) {
+                guard self.rate != rate else { return }
+            
+                // Add to self.secondsPlayed all the time it has been playing with the rate.
+                let currentTime: Double = Double(Date().timeIntervalSince1970)
+                self.secondsPlayed += (currentTime - self.startedAt) * self.rate
+                self.startedAt = currentTime
+                
+                self.rate = rate
+                self.update()
+            }
+            
+            func seek(to time: Double) {
+                self.secondsPlayed = time
+                
+                self.startedAt = self.isPlaying ? Double(Date().timeIntervalSince1970) : -1
+                self.update()
+            }
+            
+            private func update() {
+                self.objectWillChange.send()
+            }
         }
     }
     
@@ -298,26 +388,34 @@ class PlaybackManager: ObservableObject {
                 mixerParameters: mixerParameters
             )
             
-            let sound = Sound(
-                event: event,
-                infos: Sound.SoundEventInfos(soundPath: soundPath, assetName: audioIdentifier, anchorName: anchorName),
-                source: source,
-                group: soundGroup
-            )
-            
-            DispatchQueue.main.async {
-                self.sounds.updateValue(sound, forKey: soundPath)
-            }
-
-            event.prepare(completion: { reason in
-                if reason == .prepared {
+            Task {
+                let audioAsset = AVURLAsset(url: url, options: nil)
+                let soundDuration = try? await audioAsset.load(.duration).seconds
+                
+                guard let soundDuration = soundDuration else { handler?(.failure("Could not get duration of sound, stopping.")); return }
+                
+                let sound = Sound(
+                    event: event,
+                    infos: Sound.SoundEventInfos(soundPath: soundPath, soundDuration: soundDuration, assetName: audioIdentifier, anchorName: anchorName),
+                    source: source,
+                    group: soundGroup
+                )
+                
+                DispatchQueue.main.async {
+                    self.sounds.updateValue(sound, forKey: soundPath)
+                }
+                
+                let result = await event.prepare()
+                
+                
+                if result == .prepared {
                     event.resume()
                     event.pause()
                     handler?(.success(sound))
                 } else {
-                    handler?(.failure("Asset preparation failed: \(reason)"))
+                    handler?(.failure("Asset preparation failed: \(String(describing: result))"))
                 }
-            })
+            }
             
             return
         } catch {
