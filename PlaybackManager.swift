@@ -33,13 +33,16 @@ class PlaybackManager: ObservableObject {
         
         /// Infos about the sound, they describe the way the sound is defined in the engine.
         var infos: SoundEventInfos
-                        
-        init(event: PHASESoundEvent, infos: SoundEventInfos, source: PHASESource, group: PHASEGroup) {
+        
+        var delegate: SoundDelegate?
+                                
+        init(event: PHASESoundEvent, infos: SoundEventInfos, source: PHASESource, group: PHASEGroup, delegate: SoundDelegate? = nil) {
             self.event = event
             self.infos = infos
             self.source = source
             self.group = group
             self.timeObserver = SoundPlaybackObserver(soundDuration: infos.soundDuration)
+            self.delegate = delegate
         }
         
         // MARK: Sound's properties
@@ -47,18 +50,21 @@ class PlaybackManager: ObservableObject {
         func play() { 
             self.event.resume()
             self.timeObserver.resume()
+            self.delegate?.soundDidChangePlaybackStatus(isPlaying: true)
         }
         
         func pause() {
             self.event.pause()
             self.timeObserver.pause()
+            self.delegate?.soundDidChangePlaybackStatus(isPlaying: false)
         }
         
-        func restart() { self.seek(to: 0.0); self.event.resume() }
+        func restart() { self.seek(to: 0.0); self.play() }
         
         func seek(to time: Double) {
             self.event.seek(to: time)
             self.timeObserver.seek(to: time)
+            self.delegate?.soundDidSeekTo(time: time)
         }
         
         // MARK: Group's properties
@@ -69,11 +75,12 @@ class PlaybackManager: ObservableObject {
                 return self.group.gain
             } set {
                 self.group.gain = newValue
+                self.delegate?.soundDidChangeGain(newGain: newValue)
             }
         }
         
         /// Adjusts the volume of the sound gradually.
-        func fadeGain(gain: Double, duration: Double, curveType: PHASECurveType) { self.group.fadeGain(gain: gain, duration: duration, curveType: curveType) }
+        func fadeGain(gain: Double, duration: Double, curveType: PHASECurveType) { self.group.fadeGain(gain: gain, duration: duration, curveType: curveType); self.delegate?.soundDidChangeGain(newGain: gain) }
         
         /// The sound playback speed.
         var rate: Double {
@@ -82,11 +89,12 @@ class PlaybackManager: ObservableObject {
             } set {
                 self.group.rate = newValue
                 self.timeObserver.setRate(newValue)
+                self.delegate?.soundDidChangeRate(newRate: rate)
             }
         }
         
         /// Adjusts the playback speed of the sound gradually.
-        func fadeRate(rate: Double, duration: Double, curveType: PHASECurveType) { self.group.fadeRate(rate: rate, duration: duration, curveType: curveType) }
+        func fadeRate(rate: Double, duration: Double, curveType: PHASECurveType) { self.group.fadeRate(rate: rate, duration: duration, curveType: curveType); self.delegate?.soundDidChangeRate(newRate: rate) }
         
         var isMuted: Bool { 
             get {
@@ -111,10 +119,10 @@ class PlaybackManager: ObservableObject {
             }
         }
 
-        func mute() { self.group.mute() }
-        func unmute() { self.group.unmute() }
-        func solo() { self.group.solo() }
-        func unsolo() { self.group.unsolo() }
+        func mute() { self.group.mute(); self.delegate?.soundDidChangeMuteStatus(isMuted: true) }
+        func unmute() { self.group.unmute(); self.delegate?.soundDidChangeMuteStatus(isMuted: false) }
+        func solo() { self.group.solo(); self.delegate?.soundDidChangeSoloStatus(isSoloed: true) }
+        func unsolo() { self.group.unsolo(); self.delegate?.soundDidChangeSoloStatus(isSoloed: false) }
         
         // MARK: Source's properties
         
@@ -141,7 +149,7 @@ class PlaybackManager: ObservableObject {
             var currentTime: Double {
                 get {
                     if self.startedAt != -1 {
-                        return self.secondsPlayed + (Double(Date().timeIntervalSince1970) - self.startedAt) * self.rate
+                        return self.secondsPlayed + max((Double(Date().timeIntervalSince1970) - self.startedAt), 0) * self.rate
                     } else { // paused
                         return self.secondsPlayed
                     }
@@ -169,22 +177,24 @@ class PlaybackManager: ObservableObject {
                                         })
             }
             
-            func resume() {
+            fileprivate func resume() {
                 guard !self.isPlaying else { return }
                 
                 self.startedAt = Double(Date().timeIntervalSince1970)
+                self.isPlaying = true
                 self.update()
             }
             
-            func pause() {
+            fileprivate func pause() {
                 guard self.isPlaying else { return }
                 
                 self.secondsPlayed += (Double(Date().timeIntervalSince1970) - self.startedAt) * self.rate
                 self.startedAt = -1
+                self.isPlaying = false
                 self.update()
             }
             
-            func setRate(_ rate: Double) {
+            fileprivate func setRate(_ rate: Double) {
                 guard self.rate != rate else { return }
             
                 // Add to self.secondsPlayed all the time it has been playing with the rate.
@@ -196,10 +206,11 @@ class PlaybackManager: ObservableObject {
                 self.update()
             }
             
-            func seek(to time: Double) {
+            fileprivate func seek(to time: Double) {
                 self.secondsPlayed = time
                 
                 self.startedAt = self.isPlaying ? Double(Date().timeIntervalSince1970) : -1
+                print("NewTime is: \(self.currentTime)")
                 self.update()
             }
             

@@ -173,10 +173,19 @@ struct NonOptionalSceneView: View {
                             }
                         }
                         
-                        ForEach(Array(PM.sounds.enumerated()), id: \.offset) { (_ dictEntry) in
-                            let sound = dictEntry.element.value
-                            
-                            PlaybackProgressView(playbackObserver: sound.timeObserver)
+                        if let sound = PM.sounds.first?.value {
+                            PlayingBarView(sound: sound, soundObserver: sound.timeObserver)
+                            /*
+                            PlayingBarView(endOfSlideAction: { newValue in
+                                sound.seek(to: newValue * sound.timeObserver.soundDuration)
+                                print("endOfSlideAction: \(newValue)")
+                            }, endOfZoomAction: { normalSliderValue, zoomedInSliderValue in
+                                sound.seek(to: sound.timeObserver.currentTime * normalSliderValue + 20 * (zoomedInSliderValue - 0.5))
+                                print("endOfZoomAction: \(normalSliderValue), \(zoomedInSliderValue)")
+                            }, externalSliderValue: sliderValue, isPlaying: isPlaying)
+                                .frame(alignment: .bottom)
+                             */
+                            //PlayingBarWrapperView(sound: sound, soundObserver: sound.timeObserver)
                         }
                         
                         /*
@@ -200,8 +209,46 @@ struct NonOptionalSceneView: View {
             }
     }
     
+    /*
+    private struct PlayingBarWrapperView: View {
+        let sound: PlaybackManager.Sound
+        @ObservedObject var soundObserver: PlaybackManager.Sound.SoundPlaybackObserver
+        var body: some View {
+            let sliderValue: Binding<Double> = Binding(get: {
+                return soundObserver.currentTime / soundObserver.soundDuration
+            }, set: {_ in})
+            let isPlaying: Binding<Bool> = Binding {
+                return soundObserver.isPlaying
+            } set: { newValue in
+                if newValue {
+                    sound.pause()
+                } else {
+                    sound.play()
+                }
+            }
+
+            
+            PlayingBarView(endOfSlideAction: { newValue in
+                sound.seek(to: newValue * sound.timeObserver.soundDuration)
+                print("endOfSlideAction: \(newValue)")
+            }, endOfZoomAction: { normalSliderValue, zoomedInSliderValue in
+                sound.seek(to: sound.timeObserver.currentTime * normalSliderValue + 20 * (zoomedInSliderValue - 0.5))
+                print("endOfZoomAction: \(normalSliderValue), \(zoomedInSliderValue)")
+            }, externalSliderValue: sliderValue, isPlaying: isPlaying)
+                .frame(alignment: .bottom)
+        }
+    }     */
+
+    
     private struct PlaybackProgressView: View {
+        let sound: PlaybackManager.Sound
         @StateObject var playbackObserver: PlaybackManager.Sound.SoundPlaybackObserver
+        
+        init(sound: PlaybackManager.Sound) {
+            self.sound = sound
+            self._playbackObserver = StateObject(wrappedValue: sound.timeObserver)
+        }
+        
         var body: some View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
@@ -235,16 +282,21 @@ struct NonOptionalSceneView: View {
                 switch result {
                 case .success(let sound):
                     newMusician.setSound(sound)
+                    sound.delegate = newMusician
                 case .failure(let error):
                     print("Error: \(error)")
                 }
             }
         }
         
+        await createMusician(withSongName: "TutorialSounds/la_panterra.mp3", audioLevel: -8, index: 0)
+        
+        /*
         await createMusician(withSongName: "TutorialSounds/tutorial_drums.m4a", index: 0)
         await createMusician(withSongName: "TutorialSounds/tutorial_hihats.m4a", index: 1)
         await createMusician(withSongName: "TutorialSounds/tutorial_kick.m4a", index: 2)
         await createMusician(withSongName: "TutorialSounds/tutorial_synth.m4a", audioLevel: -3, index: 3)
+         */
     }
 }
 
@@ -314,7 +366,7 @@ class SceneViewController: UIViewController {
                 }
             } else if result.node.isMusicianBodyPart {
                 if !didTogglePlayback {
-                    musicianManager.musicians[musicianName]?.toggleMuteStatus() // won't do anything if the result is not a musician
+                    musicianManager.musicians[musicianName]?.sound?.isMuted.toggle() // won't do anything if the result is not a musician
                     didTogglePlayback = true
                 }
             }
