@@ -8,20 +8,23 @@
 import Foundation
 import SceneKit
 
-class Musician {
+
+class Musician: ObservableObject {
+    let manager: MusiciansManager
     let node: SCNNode
     let spotlightNode: SCNNode
-    var sound: PlaybackManager.Sound?
-    var status: MusicianStatus = .init()
+    var sound: Sound?
+    private(set) var status: MusicianStatus = .init()
     
-    init(node: SCNNode, spotlightNode: SCNNode, sound: PlaybackManager.Sound? = nil, status: MusicianStatus = .init()) {
+    init(manager: MusiciansManager, node: SCNNode, spotlightNode: SCNNode, sound: Sound? = nil, status: MusicianStatus = .init()) {
+        self.manager = manager
         self.node = node
         self.spotlightNode = spotlightNode
         self.sound = sound
         self.status = status
     }
     
-    func setSound(_ sound: PlaybackManager.Sound) {
+    func setSound(_ sound: Sound) {
         if self.sound == nil {
             self.sound = sound
             sound.position = self.node.position.getBaseVector()
@@ -34,14 +37,28 @@ class Musician {
     
     func setMuteStatus(isMuted: Bool) {
         self.status.isMuted = isMuted
-        self.showParticles()
+        self.showParticles(canBeHeard: manager.musicianCanBeHeard(musician: self))
+        self.update()
     }
     
-    func showParticles() {
-        self.node.removeAllParticleSystems()
-        
-        // set up all the particles
-        self.node.addParticleSystem(createParticleSystem(type: self.status.isMuted ? .muted : .musicPlaying))
+    func setSoloStatus(isSoloed: Bool) {
+        self.status.isSoloed = isSoloed
+        self.manager.updateCanBeHeardStatus()
+        self.update()
+    }
+    
+    func showParticles(canBeHeard: Bool? = nil) {
+        if !self.status.isStopped {
+            self.node.removeAllParticleSystems()
+            
+            if let canBeHeard = canBeHeard {
+                self.node.addParticleSystem(createParticleSystem(type: canBeHeard ? .musicPlaying : .muted))
+            } else {
+                
+                // set up all the particles
+                self.node.addParticleSystem(createParticleSystem(type: self.status.isMuted ? .muted : .musicPlaying))
+            }
+        }
     }
     
     func hideParticles() {
@@ -52,6 +69,7 @@ class Musician {
         guard !self.status.isSpotlightOn else { return }
         
         self.status.isSpotlightOn = true
+        self.update()
         
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.5
@@ -71,6 +89,7 @@ class Musician {
         guard self.status.isSpotlightOn else { return }
         
         self.status.isSpotlightOn = false
+        self.update()
         
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.5
@@ -103,11 +122,12 @@ class Musician {
         guard self.status.spotlightColor != color else { return }
         
         self.status.spotlightColor = color
+        self.update()
         
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.5
         self.spotlightNode.light?.color = color.getCGColor()
-        self.spotlightNode.light?.intensity = color.getPreferredIntensity()
+        self.spotlightNode.light?.intensity = self.status.isSpotlightOn ? color.getPreferredIntensity() : 0
         SCNTransaction.commit()
     }
     
@@ -178,9 +198,16 @@ class Musician {
         case muted
     }
     
+    private func update() {
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
+    
     struct MusicianStatus {
         var isMuted: Bool = false
-        var isStopped: Bool = false
+        var isSoloed: Bool = false
+        var isStopped: Bool = true
         
         var spotlightColor: SpotlightColor = .blue
         var isSpotlightOn: Bool = true
@@ -197,13 +224,17 @@ extension Musician: SoundDelegate {
     }
     
     func soundDidChangeSoloStatus(isSoloed: Bool) {
-        self.setMuteStatus(isMuted: !isSoloed)
+        self.setSoloStatus(isSoloed: isSoloed)
     }
     
     func soundDidChangePlaybackStatus(isPlaying: Bool) {
         if isPlaying {
+            self.status.isStopped = false
+            self.update()
             self.powerOnSpotlight()
         } else {
+            self.status.isStopped = true
+            self.update()
             self.powerOffSpotlight()
         }
     }

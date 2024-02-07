@@ -18,9 +18,13 @@ struct ActualSceneView: View {
     @State private var scene: SCNScene?
     @State private var isLoadingScene: Bool = false
     
+    @ObservedObject var PM: PlaybackManager
+    
+    @State private var MM: MusiciansManager?
+    
     var body: some View {
-        if let scene = scene {
-            NonOptionalSceneView(scene: scene)
+        if let scene = scene, let MM = MM {
+            NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
         } else if isLoadingScene {
             ProgressView()
         } else {
@@ -31,7 +35,6 @@ struct ActualSceneView: View {
             }
         }
     }
-    
     private func createScene() -> SCNScene {
         // create a new scene
         let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
@@ -47,7 +50,7 @@ struct ActualSceneView: View {
         positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { node, _ in
             var matrix = matrix_identity_float4x4
             matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
-            PlaybackManager.shared.listener.transform = matrix
+            PM.listener.transform = matrix
         })
         
         // create and add a light to the scene
@@ -80,12 +83,13 @@ struct NonOptionalSceneView: View {
     
     @State private var isStarting: Bool = false
         
-    @StateObject private var MM: MusiciansManager
-    @ObservedObject private var PM = PlaybackManager.shared
-    
-    init(scene: SCNScene) {
+    @ObservedObject private var MM: MusiciansManager
+    @ObservedObject var PM: PlaybackManager
+        
+    init(scene: SCNScene, musicianManager: MusiciansManager, playbackManager: PlaybackManager) {
         self.scene = scene
-        self._MM = StateObject(wrappedValue: MusiciansManager(scene: scene))
+        self._MM = ObservedObject(wrappedValue: musicianManager)
+        self._PM = ObservedObject(wrappedValue: playbackManager)
     }
     
     var body: some View {
@@ -102,17 +106,21 @@ struct NonOptionalSceneView: View {
             })
             .overlay(alignment: .bottomLeading) {
                 HStack {
+                    Button("Place loop") {
+                        self.PM.replaceLoop(by: .init(startTime: 30, endTime: 40, shouldRestart: true))
+                    }
+                    /*
                     Button("Load tutorial") {
                         self.isStarting = true
                         Task {
                             await setupTutorial()
                             DispatchQueue.main.async {
                                 self.isStarting = false
-                                PlaybackManager.shared.restartAndSynchronizeSounds()
+                                PM.restartAndSynchronizeSounds()
                             }
                         }
                     }
-                    /*
+                    
                     Button("Duplicate new sprite") {
                         let newMusician = MM.createMusician()
                         
@@ -163,29 +171,31 @@ struct NonOptionalSceneView: View {
                         scene.rootNode.getFirstCamera()?.transform.m41 += 1
                     }
                     Button("Synchronize sounds") {
-                        PlaybackManager.shared.restartAndSynchronizeSounds()
+                        PM.restartAndSynchronizeSounds()
                     }
                     HStack {
-                        ForEach(Array(MM.musicians.enumerated()), id: \.offset) { (offset, dictEntry) in
-                            let (_, musician) = dictEntry
-                            Button("PowerOn/Off") {
-                                musician.toggleSpotlight()
+                        VStack {
+                            HStack {
+                                ForEach(Array(MM.musicians.enumerated()), id: \.offset) { (offset, dictEntry) in
+                                    let (_, musician) = dictEntry
+                                    
+                                    LittleMusicianView(musician: musician)
+                                }
                             }
-                        }
-                        
-                        if let sound = PM.sounds.first?.value {
-                            PlayingBarView(sound: sound, soundObserver: sound.timeObserver)
-                            /*
-                            PlayingBarView(endOfSlideAction: { newValue in
-                                sound.seek(to: newValue * sound.timeObserver.soundDuration)
-                                print("endOfSlideAction: \(newValue)")
-                            }, endOfZoomAction: { normalSliderValue, zoomedInSliderValue in
-                                sound.seek(to: sound.timeObserver.currentTime * normalSliderValue + 20 * (zoomedInSliderValue - 0.5))
-                                print("endOfZoomAction: \(normalSliderValue), \(zoomedInSliderValue)")
-                            }, externalSliderValue: sliderValue, isPlaying: isPlaying)
-                                .frame(alignment: .bottom)
-                             */
-                            //PlayingBarWrapperView(sound: sound, soundObserver: sound.timeObserver)
+                            if let sound = PM.sounds.first?.value {
+                                PlayingBarView(playbackManager: PM, sound: sound, soundObserver: sound.timeObserver)
+                                /*
+                                 PlayingBarView(endOfSlideAction: { newValue in
+                                 sound.seek(to: newValue * sound.timeObserver.soundDuration)
+                                 print("endOfSlideAction: \(newValue)")
+                                 }, endOfZoomAction: { normalSliderValue, zoomedInSliderValue in
+                                 sound.seek(to: sound.timeObserver.currentTime * normalSliderValue + 20 * (zoomedInSliderValue - 0.5))
+                                 print("endOfZoomAction: \(normalSliderValue), \(zoomedInSliderValue)")
+                                 }, externalSliderValue: sliderValue, isPlaying: isPlaying)
+                                 .frame(alignment: .bottom)
+                                 */
+                                //PlayingBarWrapperView(sound: sound, soundObserver: sound.timeObserver)
+                            }
                         }
                         
                         /*
@@ -238,13 +248,69 @@ struct NonOptionalSceneView: View {
                 .frame(alignment: .bottom)
         }
     }     */
+    
+    private struct LittleMusicianView: View {
+        @ObservedObject var musician: Musician
+        var body: some View {
+            VStack {
+                Image(systemName: self.musician.status.isSpotlightOn ? "figure.wave.circle.fill" : "figure.wave.circle")
+                    .resizable()
+                    .sfReplaceEffect()
+                    .scaledToFit()
+                    .frame(width: 60, height: 60)
+                    .animation(.spring, value: self.musician.status.isSpotlightOn)
+                    .foregroundStyle(Color(cgColor: self.musician.status.spotlightColor.getCGColor()))
+                    .animation(.spring, value: self.musician.status.spotlightColor)
+                    .onTapGesture {
+                        self.musician.goToNextColor()
+                    }
+                HStack(spacing: 10) {
+                    Button {
+                        self.musician.sound?.isMuted.toggle()
+                    } label: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundStyle(.white)
+                                .opacity(0.3)
+                                .frame(width: 35, height: 35)
+                            Image(systemName: self.musician.status.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                                .resizable()
+                                .sfReplaceEffect()
+                                .scaledToFit()
+                                .frame(width: 20)
+                                .foregroundStyle(self.musician.status.isMuted ? .red : .white)
+                                .padding(5)
+                        }
+                    }
+                    .frame(width: 35, height: 35)
+                    Button {
+                        self.musician.sound?.isSoloed.toggle()
+                    } label: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundStyle(.white)
+                                .opacity(0.3)
+                                .frame(width: 35, height: 35)
+                            Image(systemName: self.musician.status.isSoloed ? "s.circle.fill" : "s.circle")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20)
+                                .foregroundStyle(self.musician.status.isSoloed ? .yellow : .white)
+                                .padding(5)
+                        }
+                    }
+                    .frame(width: 35, height: 35)
+                }
+            }
+        }
+    }
 
     
     private struct PlaybackProgressView: View {
-        let sound: PlaybackManager.Sound
-        @StateObject var playbackObserver: PlaybackManager.Sound.SoundPlaybackObserver
+        let sound: Sound
+        @StateObject var playbackObserver: Sound.SoundPlaybackObserver
         
-        init(sound: PlaybackManager.Sound) {
+        init(sound: Sound) {
             self.sound = sound
             self._playbackObserver = StateObject(wrappedValue: sound.timeObserver)
         }
@@ -261,42 +327,6 @@ struct NonOptionalSceneView: View {
                 }
             }
         }
-    }
-    
-    private func setupTutorial() async {
-        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int) async {
-            if PlaybackManager.shared.sounds[songName] == nil {
-                let newMusician = MM.createMusician()
-                
-                newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
-                newMusician.node.position = .init(x: 4 * Float(index), y: 0, z: 0)
-                
-                let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
-                distanceParameters.rolloffFactor = 0.5
-                distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
-                
-                
-                
-                let result = await PlaybackManager.shared.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .oneShot, audioCalibration: (.relativeSpl, audioLevel)))
-                
-                switch result {
-                case .success(let sound):
-                    newMusician.setSound(sound)
-                    sound.delegate = newMusician
-                case .failure(let error):
-                    print("Error: \(error)")
-                }
-            }
-        }
-        
-        await createMusician(withSongName: "TutorialSounds/la_panterra.mp3", audioLevel: -8, index: 0)
-        
-        /*
-        await createMusician(withSongName: "TutorialSounds/tutorial_drums.m4a", index: 0)
-        await createMusician(withSongName: "TutorialSounds/tutorial_hihats.m4a", index: 1)
-        await createMusician(withSongName: "TutorialSounds/tutorial_kick.m4a", index: 2)
-        await createMusician(withSongName: "TutorialSounds/tutorial_synth.m4a", audioLevel: -3, index: 3)
-         */
     }
 }
 
@@ -370,6 +400,17 @@ class SceneViewController: UIViewController {
                     didTogglePlayback = true
                 }
             }
+        }
+    }
+}
+
+extension View {
+    /// apply the content transition only if the device is iOS 17.0 or later
+    func sfReplaceEffect() -> some View {
+        if #available(iOS 17.0, *) {
+            return self.contentTransition(.symbolEffect(.replace))
+        } else {
+            return self
         }
     }
 }

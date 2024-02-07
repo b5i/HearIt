@@ -33,6 +33,16 @@ class MusiciansManager: ObservableObject {
         return musicians.first(where: {$0.value.node == node})?.value
     }
     
+    func updateCanBeHeardStatus() {
+        for musician in self.musicians.values {
+            if musician.status.isStopped {
+                musician.hideParticles()
+            } else {
+                musician.showParticles(canBeHeard: self.musicianCanBeHeard(musician: musician))
+            }
+        }
+    }
+    
     private func createUniqueMusician(verifyWithScene scene: SCNScene) -> Musician {
         func makeMusician() -> Musician {
             let musicianScene = SCNScene(named: "art.scnassets/common_people@idle.scn")!
@@ -107,7 +117,7 @@ class MusiciansManager: ObservableObject {
             //spotlightLightNode.scale = SCNVector3(x: 10, y: 10, z: 10)
             spotlightLight.type = .area
             spotlightLight.color = Musician.SpotlightColor.blue.getCGColor()
-            spotlightLight.intensity = Musician.SpotlightColor.blue.getPreferredIntensity()
+            spotlightLight.intensity = 0
             
             //spotlightLight.spotInnerAngle = 180
             
@@ -144,13 +154,27 @@ class MusiciansManager: ObservableObject {
             spotlightLight.shadowMode = .deferred
              */
             
-            return Musician(node: musicianNode, spotlightNode: spotlightLightNode)
+            return Musician(manager: self, node: musicianNode, spotlightNode: spotlightLightNode)
         }
         while true {
             let musician = makeMusician()
             if !scene.rootNode.childNodes.contains(where: {$0.hash == musician.node.hash}) { // make sure that we will be able to identify the musician (no doubles) TODO: Check with the address instead
                 return musician
             }
+        }
+    }
+    
+    func musicianCanBeHeard(musician: Musician) -> Bool {
+        if musician.status.isSoloed {
+            return true
+        }
+        if musician.status.isMuted {
+            return false
+        }
+        if self.musicians.contains(where: {$0.value.status.isSoloed}) {
+            return false
+        } else {
+            return true
         }
     }
 }

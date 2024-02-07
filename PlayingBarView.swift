@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct PlayingBarView: View {
-    let sound: PlaybackManager.Sound
-    @ObservedObject var soundObserver: PlaybackManager.Sound.SoundPlaybackObserver
+    let playbackManager: PlaybackManager
+    let sound: Sound
+    @ObservedObject var soundObserver: Sound.SoundPlaybackObserver
     
     //var endOfSlideAction: (_ sliderValue: Double) -> () // action that will be called when the user stops scrolling
     //var endOfZoomAction: (_ sliderValue: Double, _ zoomedInSliderValue: Double) -> () // action that will be called when the zoomed in UI disappear
@@ -21,10 +22,10 @@ struct PlayingBarView: View {
     var sidePadding: Double = 25 // the padding on the sides of the playingBar
     var zoomedInHeight: Double = 50 // the height of the playing bar when it is zoomed in
     var zoomedOutHeight: Double = 20 // the height of the playing bar when it is zoomed out
-    var velocityThreshold: Double = 25 // the maximum velocity to show the zoomed in UI
-    var timeThreshold: Double = 0.75 // the time the user has to stay under the velocityThreshold to show the zoomed in UI
+    var velocityThreshold: Double = 15 // the maximum velocity to show the zoomed in UI
+    var timeThreshold: Double = 0.9 // the time the user has to stay under the velocityThreshold to show the zoomed in UI
     
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 1/60, on: .main, in: .common).autoconnect()
     
     
     @State private var sliderValue: Double = 0
@@ -66,14 +67,31 @@ struct PlayingBarView: View {
     @State private var zoomedInSliderValue: Double = 0.0
         
     var body: some View {
-        VStack {
-            Button("Play/Pause") {
+        HStack {
+            Button {
                 if self.sound.timeObserver.isPlaying {
-                    sound.pause()
+                    playbackManager.pause()
+                    //sound.pause()
                 } else {
-                    sound.play()
+                    playbackManager.resume()
+                    //sound.play()
+                }
+            } label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .foregroundStyle(.white)
+                        .opacity(0.3)
+                        .frame(width: 55, height: zoomedInHeight)
+                    Image(systemName: self.soundObserver.isPlaying ? "pause.fill" : "play.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30)
+                        .foregroundStyle(.white)
+                        .padding(10)
                 }
             }
+            .frame(width: 55, height: zoomedInHeight)
+            .padding(.horizontal)
             GeometryReader { geometry in
                 let UNUSED_SPACE: Double = Double(geometry.size.width - 2*sidePadding).truncatingRemainder(dividingBy: barSpacing) / 2
                 let bars: [Double] = (0...Int((geometry.size.width - 2*sidePadding) / barSpacing)).map({Double($0) * barSpacing + sidePadding + abs(sidePadding - UNUSED_SPACE) })
@@ -104,7 +122,7 @@ struct PlayingBarView: View {
                                     
                                     RoundedRectangle(cornerRadius: 10)
                                         .fill(showZoomedInUI ? Color(uiColor: .darkGray) : .gray)
-                                        .frame(width: showZoomedInUI ? 0 : geometry.size.width - sliderValue * geometry.size.width - capsuleSize.width, height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
+                                        .frame(width: showZoomedInUI ? 0 : max(geometry.size.width - sliderValue * geometry.size.width - capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
                                         .position(x: showZoomedInUI ? geometry.size.width - 10 : (sliderValue * geometry.size.width + capsuleSize.width + geometry.size.width) / 2, y: showZoomedInUI ? 25 : 10)
                                         .opacity(showZoomedInUI ? 0 : 5)
                                 }
@@ -168,7 +186,11 @@ struct PlayingBarView: View {
                             
                             self.isSliding = false
 
-                            sound.seek(to: max(0, sound.timeObserver.soundDuration * sliderValue + 10 * (zoomedInSliderValue - 0.5)))
+                            //DispatchQueue.global(qos: .background).async {
+                            
+                            playbackManager.seekTo(time: max(0, sound.timeObserver.soundDuration * sliderValue + 10 * (zoomedInSliderValue - 0.5)))
+                            
+                            //sound.seek(to: max(0, sound.timeObserver.soundDuration * sliderValue + 10 * (zoomedInSliderValue - 0.5)))
                             
                             self.zoomedInSliderValue = 0.5 // "middle" of the zoomedI bar
                             

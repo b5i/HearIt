@@ -6,219 +6,9 @@
 //
 
 import PHASE
-import Combine
 
 class PlaybackManager: ObservableObject {
-    static let shared = PlaybackManager()
-    
-    class Sound {
-        struct SoundEventInfos {
-            var soundPath: String
-            var soundDuration: Double
-            var assetName: String
-            var anchorName: String
-        }
-        
-        /// The event that is used to control the basic playback of the sound.
-        private let event: PHASESoundEvent
-        
-        /// The source that can be used to manage the sound emitting properties such as the position in space and more.
-        private let source: PHASESource
-        
-        /// The group of the sound, it comports only one instance of sound, `event`. It can be used to do some more complex operations about the playback.
-        private let group: PHASEGroup
-        
-        /// A model that is used to get the current time of the playback.
-        let timeObserver: SoundPlaybackObserver
-        
-        /// Infos about the sound, they describe the way the sound is defined in the engine.
-        var infos: SoundEventInfos
-        
-        var delegate: SoundDelegate?
-                                
-        init(event: PHASESoundEvent, infos: SoundEventInfos, source: PHASESource, group: PHASEGroup, delegate: SoundDelegate? = nil) {
-            self.event = event
-            self.infos = infos
-            self.source = source
-            self.group = group
-            self.timeObserver = SoundPlaybackObserver(soundDuration: infos.soundDuration)
-            self.delegate = delegate
-        }
-        
-        // MARK: Sound's properties
-        
-        func play() { 
-            self.event.resume()
-            self.timeObserver.resume()
-            self.delegate?.soundDidChangePlaybackStatus(isPlaying: true)
-        }
-        
-        func pause() {
-            self.event.pause()
-            self.timeObserver.pause()
-            self.delegate?.soundDidChangePlaybackStatus(isPlaying: false)
-        }
-        
-        func restart() { self.seek(to: 0.0); self.play() }
-        
-        func seek(to time: Double) {
-            self.event.seek(to: time)
-            self.timeObserver.seek(to: time)
-            self.delegate?.soundDidSeekTo(time: time)
-        }
-        
-        // MARK: Group's properties
-        
-        /// Modifies the volume of the sound.
-        var gain: Double {
-            get {
-                return self.group.gain
-            } set {
-                self.group.gain = newValue
-                self.delegate?.soundDidChangeGain(newGain: newValue)
-            }
-        }
-        
-        /// Adjusts the volume of the sound gradually.
-        func fadeGain(gain: Double, duration: Double, curveType: PHASECurveType) { self.group.fadeGain(gain: gain, duration: duration, curveType: curveType); self.delegate?.soundDidChangeGain(newGain: gain) }
-        
-        /// The sound playback speed.
-        var rate: Double {
-            get {
-                return self.group.rate
-            } set {
-                self.group.rate = newValue
-                self.timeObserver.setRate(newValue)
-                self.delegate?.soundDidChangeRate(newRate: rate)
-            }
-        }
-        
-        /// Adjusts the playback speed of the sound gradually.
-        func fadeRate(rate: Double, duration: Double, curveType: PHASECurveType) { self.group.fadeRate(rate: rate, duration: duration, curveType: curveType); self.delegate?.soundDidChangeRate(newRate: rate) }
-        
-        var isMuted: Bool { 
-            get {
-                self.group.isMuted
-            } set {
-                if newValue {
-                    self.mute()
-                } else {
-                    self.unmute()
-                }
-            }
-        }
-        var isSoloed: Bool { 
-            get {
-                self.group.isSoloed
-            } set {
-                if newValue {
-                    self.solo()
-                } else {
-                    self.unsolo()
-                }
-            }
-        }
-
-        func mute() { self.group.mute(); self.delegate?.soundDidChangeMuteStatus(isMuted: true) }
-        func unmute() { self.group.unmute(); self.delegate?.soundDidChangeMuteStatus(isMuted: false) }
-        func solo() { self.group.solo(); self.delegate?.soundDidChangeSoloStatus(isSoloed: true) }
-        func unsolo() { self.group.unsolo(); self.delegate?.soundDidChangeSoloStatus(isSoloed: false) }
-        
-        // MARK: Source's properties
-        
-        var position: simd_float3 {
-            get {
-                return simd_float3(self.source.transform.columns.3.x, self.source.transform.columns.3.y, self.source.transform.columns.3.z)
-            } set {
-                self.source.transform = simd_float4x4(position: newValue)
-            }
-        }
-        
-        /// Remove the source and the soundEvent from the engine's tree.
-        /// Unregister a sound from the engine's registry,.
-        func deinitialize(from manager: PlaybackManager) {
-            manager.sounds.removeValue(forKey: self.infos.soundPath)
-            self.event.stopAndInvalidate()
-            self.source.parent?.removeChild(self.source)
-            self.group.unregisterFromEngine()
-            manager.engine.assetRegistry.unregisterAsset(identifier: self.infos.assetName)
-            manager.engine.assetRegistry.unregisterAsset(identifier: self.infos.anchorName)
-        }
-        
-        class SoundPlaybackObserver: ObservableObject {
-            var currentTime: Double {
-                get {
-                    if self.startedAt != -1 {
-                        return self.secondsPlayed + max((Double(Date().timeIntervalSince1970) - self.startedAt), 0) * self.rate
-                    } else { // paused
-                        return self.secondsPlayed
-                    }
-                }
-            }
-            
-            let soundDuration: Double
-            
-            @Published private(set) var isPlaying: Bool = false
-
-            @Published private var secondsPlayed: Double = 0.0
-            
-            @Published private var startedAt: Double = -1
-            
-            private var rate: Double = 1.0
-            
-            private var updateTimer: AnyCancellable?
-            
-            init(soundDuration: Double) {
-                self.soundDuration = soundDuration
-                self.updateTimer = Timer.publish(every: 0.1, on: .main, in: .default)
-                                        .autoconnect()
-                                        .sink(receiveValue: { _ in
-                                            self.update()
-                                        })
-            }
-            
-            fileprivate func resume() {
-                guard !self.isPlaying else { return }
-                
-                self.startedAt = Double(Date().timeIntervalSince1970)
-                self.isPlaying = true
-                self.update()
-            }
-            
-            fileprivate func pause() {
-                guard self.isPlaying else { return }
-                
-                self.secondsPlayed += (Double(Date().timeIntervalSince1970) - self.startedAt) * self.rate
-                self.startedAt = -1
-                self.isPlaying = false
-                self.update()
-            }
-            
-            fileprivate func setRate(_ rate: Double) {
-                guard self.rate != rate else { return }
-            
-                // Add to self.secondsPlayed all the time it has been playing with the rate.
-                let currentTime: Double = Double(Date().timeIntervalSince1970)
-                self.secondsPlayed += (currentTime - self.startedAt) * self.rate
-                self.startedAt = currentTime
-                
-                self.rate = rate
-                self.update()
-            }
-            
-            fileprivate func seek(to time: Double) {
-                self.secondsPlayed = time
-                
-                self.startedAt = self.isPlaying ? Double(Date().timeIntervalSince1970) : -1
-                print("NewTime is: \(self.currentTime)")
-                self.update()
-            }
-            
-            private func update() {
-                self.objectWillChange.send()
-            }
-        }
-    }
+    //static let shared = PlaybackManager()
     
     struct SoundCharacteristic {
         enum SpatialFlag {
@@ -301,6 +91,8 @@ class PlaybackManager: ObservableObject {
     let listener: PHASEListener
     
     @Published var sounds: [String: Sound] = [:]
+    
+    var currentLoop: LoopEvent? = nil
     
     init() {
         self.engine = PHASEEngine(updateMode: .automatic)
@@ -421,6 +213,7 @@ class PlaybackManager: ObservableObject {
                 
                 if result == .prepared {
                     event.resume()
+                    await event.seek(to: 0.0) // avoid a weird crash
                     event.pause()
                     handler?(.success(sound))
                 } else {
@@ -462,34 +255,98 @@ class PlaybackManager: ObservableObject {
         }
     }
     
+    func resume(soundNames: [String]? = nil) {
+        // synchronize the sounds
+        guard let currentTime = self.sounds.first?.value.timeObserver.currentTime else { return }
+        self.seekTo(time: currentTime, soundNames: soundNames)
+        
+        for soundName in soundNames ?? self.sounds.keys.map({$0}) {
+            self.sounds[soundName]?.play()
+        }
+    }
+    
     /// Restart and synchronize the sounds corresponding to the provided names, you can set `soundNames` to nil to synchronize all sounds.
     func restartAndSynchronizeSounds(withNames soundNames: [String]? = nil) {
-        let actualSoundNames: [String]
-        
-        if let soundNames = soundNames {
-            actualSoundNames = soundNames
-        } else {
-            actualSoundNames = self.sounds.keys.map({$0})
-        }
-        for soundName in actualSoundNames {
-            self.pause(soundPath: soundName)
-            self.seekTo(time: 0.0, soundPath: soundName)
-        }
-        for soundName in actualSoundNames {
-            self.playSound(soundPath: soundName)
-        }
+        pause(soundNames: soundNames)
+        seekTo(time: 0.0, soundNames: soundNames)
+        resume(soundNames: soundNames)
     }
     
     /// Pause the playback of a sound.
-    func pause(soundPath: String) {
-        self.sounds[soundPath]?.pause()
+    func pause(soundNames: [String]? = nil) {
+        for soundName in soundNames ?? self.sounds.keys.map({$0}) {
+            self.sounds[soundName]?.pause()
+        }
     }
     
-    /// Seek to a certain time (in seconds).
-    func seekTo(time: Double, soundPath: String) {
-        self.sounds[soundPath]?.seek(to: time)
+    /// Seek to a certain time (in seconds), if that time is beyond (>) the endTime of the currentLoop (if it's not nil), then it will remove that loop.
+    func seekTo(time: Double, soundNames: [String]? = nil) {
+        if time > self.currentLoop?.endTime ?? -1 {
+            self.removeLoop()
+        }
+        for soundName in soundNames ?? self.sounds.keys.map({$0}) {
+            self.sounds[soundName]?.seek(to: time)
+        }
     }
     
+    /// Place the loop on the provided soundNames or all the sounds if its value is nil.
+    ///
+    /// If the endTime of the loop is already behind the currentTime of the first sound in soundNames or in ``PlaybackManager/sounds``, the method will automatically seek to the startTime of the loop.
+    func replaceLoop(by loop: LoopEvent, soundNames: [String]? = nil) {
+        self.currentLoop = loop
+        
+        if loop.shouldRestart {
+            self.seekTo(time: loop.startTime, soundNames: soundNames)
+            
+            Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - loop.startTime), repeats: true, block: { [weak self] timer in
+                if self?.currentLoop?.id != loop.id || self == nil {
+                    timer.invalidate()
+                } else {
+                    self?.seekTo(time: loop.startTime, soundNames: soundNames)
+                }
+            })
+        } else if let currentTime =  self.sounds[soundNames?.first ?? UUID().uuidString]?.timeObserver.currentTime ?? self.sounds.first?.value.timeObserver.currentTime {
+            if loop.endTime <= currentTime {
+                self.seekTo(time: loop.startTime, soundNames: soundNames)
+                Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - loop.startTime), repeats: true, block: { [weak self] timer in
+                    if self?.currentLoop?.id != loop.id || self == nil {
+                        timer.invalidate()
+                    } else {
+                        self?.seekTo(time: loop.startTime, soundNames: soundNames)
+                    }
+                })
+            } else {
+                Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - currentTime), repeats: false, block: { _ in
+                    self.seekTo(time: loop.startTime, soundNames: soundNames)
+                    
+                    Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - loop.startTime), repeats: true, block: { [weak self] timer in
+                        if self?.currentLoop?.id != loop.id || self == nil {
+                            timer.invalidate()
+                        } else {
+                            self?.seekTo(time: loop.startTime, soundNames: soundNames)
+                        }
+                    })
+                })
+            }
+        }
+        
+        self.update()
+    }
+    
+    /// Remove the current loop.
+    func removeLoop() {
+        DispatchQueue.main.async {
+            self.currentLoop = nil
+        }
+    }
+    
+    /// Send the objectWillChange notification.
+    func update() {
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
+        
     /// Start the engine.
     private func startEngine() {
         do {
@@ -514,6 +371,23 @@ class PlaybackManager: ObservableObject {
         } catch {
             return .failure("Could not add source to engine: \(error.localizedDescription)")
         }
+    }
+    
+    /// Struct representing a loop in the whole ``PlaybackManager``.
+    ///
+    /// - Note: You should not place too close ``PlaybackManager/LoopEvent/startTime`` and ``PlaybackManager/LoopEvent/endTime`` as it could introduce some bugs as some delays might occur in the ``PlaybackManager/engine``.
+    struct LoopEvent {
+        /// The unique identifier of the loop, should not be set up anywhere else otherwise the timer that controls the loop might have some unknown behaviors.
+        let id = UUID()
+        
+        /// The time when the loop starts in seconds of the track, shoud be less than ``PlaybackManager/LoopEvent/endTime``.
+        let startTime: Double
+        
+        /// The time when the loop ends in seconds of the track, shoud be more than ``PlaybackManager/LoopEvent/startTime``.
+        let endTime: Double
+        
+        /// Boolean indicating whether the playback should get back to the startTime when the loop is activated.
+        let shouldRestart: Bool
     }
         
     deinit {
