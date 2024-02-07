@@ -107,7 +107,7 @@ struct NonOptionalSceneView: View {
             .overlay(alignment: .bottomLeading) {
                 HStack {
                     Button("Place loop") {
-                        self.PM.replaceLoop(by: .init(startTime: 30, endTime: 40, shouldRestart: true))
+                        self.PM.replaceLoop(by: .init(startTime: 0, endTime: 20, shouldRestart: false))
                     }
                     /*
                     Button("Load tutorial") {

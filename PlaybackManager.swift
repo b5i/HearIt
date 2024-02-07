@@ -297,38 +297,22 @@ class PlaybackManager: ObservableObject {
         
         if loop.shouldRestart {
             self.seekTo(time: loop.startTime, soundNames: soundNames)
-            
-            Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - loop.startTime), repeats: true, block: { [weak self] timer in
-                if self?.currentLoop?.id != loop.id || self == nil {
-                    timer.invalidate()
-                } else {
+        } else if let currentTime = self.sounds[soundNames?.first ?? UUID().uuidString]?.timeObserver.currentTime ?? self.sounds.first?.value.timeObserver.currentTime, loop.endTime <= currentTime {
+            self.seekTo(time: loop.startTime, soundNames: soundNames)
+        }
+        
+        Timer.scheduledTimer(withTimeInterval: 0.1 /* lower number => less efficiency */ , repeats: true, block: { [weak self] timer in
+            if self?.currentLoop?.id != loop.id || self == nil {
+                timer.invalidate()
+            } else {
+                guard let firstSound = self?.sounds[soundNames?.first ?? UUID().uuidString] ?? self?.sounds.first?.value else { timer.invalidate(); self?.removeLoop(); return }
+                guard firstSound.timeObserver.isPlaying else { return /* We don't need to make a system call (costly) to get the current time */ }
+                
+                if firstSound.timeObserver.currentTime >= loop.endTime {
                     self?.seekTo(time: loop.startTime, soundNames: soundNames)
                 }
-            })
-        } else if let currentTime =  self.sounds[soundNames?.first ?? UUID().uuidString]?.timeObserver.currentTime ?? self.sounds.first?.value.timeObserver.currentTime {
-            if loop.endTime <= currentTime {
-                self.seekTo(time: loop.startTime, soundNames: soundNames)
-                Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - loop.startTime), repeats: true, block: { [weak self] timer in
-                    if self?.currentLoop?.id != loop.id || self == nil {
-                        timer.invalidate()
-                    } else {
-                        self?.seekTo(time: loop.startTime, soundNames: soundNames)
-                    }
-                })
-            } else {
-                Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - currentTime), repeats: false, block: { _ in
-                    self.seekTo(time: loop.startTime, soundNames: soundNames)
-                    
-                    Timer.scheduledTimer(withTimeInterval: abs(loop.endTime - loop.startTime), repeats: true, block: { [weak self] timer in
-                        if self?.currentLoop?.id != loop.id || self == nil {
-                            timer.invalidate()
-                        } else {
-                            self?.seekTo(time: loop.startTime, soundNames: soundNames)
-                        }
-                    })
-                })
             }
-        }
+        })
         
         self.update()
     }
