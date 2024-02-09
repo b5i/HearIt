@@ -19,6 +19,8 @@ struct TutorialLevelView: View {
     @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
     
+    @State private var positionObserver: NSKeyValueObservation? = nil
+    
     //@State private var MM: MusiciansManager?
     
     var body: some View {
@@ -39,6 +41,7 @@ struct TutorialLevelView: View {
                                         .onTapGesture {
                                             levelModel.goToPreviousStep()
                                         }
+                                        //.opacity(levelModel.previousStepExists ? 1 : 0)
                                     Spacer()
                                     Image(systemName: "arrow.forward.circle.fill")
                                         .onTapGesture {
@@ -81,7 +84,7 @@ struct TutorialLevelView: View {
         }
         
         @Published private var steps: [Step] = [
-            Step(text: "Hello", passCondition: {_,_  in return true}),
+            Step(text: "Welcome in [name of the app]! To begin I'll teach you the basic controls that you have over the app: \n To go to the ", passCondition: {_,_  in return true}),
             Step(text: "Please put the player in green", passCondition: { mm, pm in
                 return mm.musicians.first?.value.status.spotlightColor == .green
             })
@@ -90,30 +93,34 @@ struct TutorialLevelView: View {
         @Published private var currentStepIndex: Int = 0
         
         var currentStep: Step? {
-            if steps.count > currentStepIndex && currentStepIndex != -1 {
-                return steps[currentStepIndex]
+            if self.steps.count > self.currentStepIndex && self.currentStepIndex != -1 {
+                return self.steps[currentStepIndex]
             } else {
                 return nil
             }
         }
         
+        var previousStepExists: Bool {
+            return self.currentStepIndex != 0 && !self.steps.isEmpty
+        }
+        
         func goToPreviousStep() {
-            if currentStepIndex != 0 {
+            if self.currentStepIndex != 0 {
                 withAnimation {
-                    currentStepIndex -= 1
+                    self.currentStepIndex -= 1
                 }
             }
         }
         
         func goToNextStep(musicianManager: MusiciansManager, playbackManager: PlaybackManager) {
-            if steps[currentStepIndex].passCondition(musicianManager, playbackManager) {
-                if steps.count > currentStepIndex + 1 {
+            if self.steps[self.currentStepIndex].passCondition(musicianManager, playbackManager) {
+                if self.steps.count > self.currentStepIndex + 1 {
                     withAnimation {
-                        currentStepIndex += 1
+                        self.currentStepIndex += 1
                     }
                 } else {
                     withAnimation {
-                        currentStepIndex = -1
+                        self.currentStepIndex = -1
                     }
                 }
             }
@@ -132,7 +139,7 @@ struct TutorialLevelView: View {
         
         // place the camera and observe its position to adapt the listener position in space
         cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { node, _ in
+        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { node, _ in
             var matrix = matrix_identity_float4x4
             matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
             PM.listener.transform = matrix
@@ -209,6 +216,53 @@ struct TutorialLevelView: View {
          */
                 
         //self.PM.restartAndSynchronizeSounds()
+    }
+}
+
+extension View {
+    /// Apply a spotlight effect on the view.
+    func spotlight(areaRadius: CGFloat = 10, isEnabled: Bool = true) -> some View {
+        if #available(iOS 17.0, *) {
+            return GeometryReader { geometry in
+                self.onAppear {
+                    SpotlightModel.shared.setNewSpotlight(to: SpotlightModel.Spotlight(position: CGPoint(x: geometry.frame(in: .global).midX, y: geometry.frame(in: .global).midY), areaRadius: areaRadius))
+                    SpotlightModel.shared.setSpotlightActiveStatus(to: isEnabled)
+                }
+            }
+        } else {
+            return self
+        }
+    }
+}
+
+class SpotlightModel: ObservableObject {
+    static let shared = SpotlightModel()
+    
+    private(set) var spotlight: Spotlight?
+    
+    private(set) var isEnabled: Bool = false
+    
+    func setNewSpotlight(to spotlight: Spotlight?) {
+        self.spotlight = spotlight
+        
+        self.isEnabled = spotlight != nil
+        
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
+    
+    func setSpotlightActiveStatus(to status: Bool) {
+        self.isEnabled = status
+        
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
+    
+    struct Spotlight {
+        let position: CGPoint
+        let areaRadius: CGFloat
     }
 }
 

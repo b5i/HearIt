@@ -13,7 +13,6 @@ import PHASE
 extension String: Error {}
 
 
-var positionObserver: NSKeyValueObservation?
 struct ActualSceneView: View {
     @State private var scene: SCNScene?
     @State private var isLoadingScene: Bool = false
@@ -21,6 +20,8 @@ struct ActualSceneView: View {
     @ObservedObject var PM: PlaybackManager
     
     @State private var MM: MusiciansManager?
+    
+    @State private var positionObserver: NSKeyValueObservation? = nil
     
     var body: some View {
         if let scene = scene, let MM = MM {
@@ -47,7 +48,7 @@ struct ActualSceneView: View {
         
         // place the camera and observe its position to adapt the listener position in space
         cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { node, _ in
+        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { node, _ in
             var matrix = matrix_identity_float4x4
             matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
             PM.listener.transform = matrix
@@ -83,6 +84,8 @@ struct NonOptionalSceneView: View {
     
     @State private var isStarting: Bool = false
         
+    @State private var spotlightIt: Bool = false
+    
     @ObservedObject private var MM: MusiciansManager
     @ObservedObject var PM: PlaybackManager
         
@@ -108,6 +111,11 @@ struct NonOptionalSceneView: View {
                 HStack {
                     Button("Place loop") {
                         self.PM.replaceLoop(by: .init(startTime: 0, endTime: 20, shouldRestart: false))
+                    }
+                    Button("Spotlight") {
+                        withAnimation {
+                            spotlightIt.toggle()
+                        }
                     }
                     /*
                     Button("Load tutorial") {
@@ -180,6 +188,7 @@ struct NonOptionalSceneView: View {
                                     let (_, musician) = dictEntry
                                     
                                     LittleMusicianView(musician: musician)
+                                        .spotlight(areaRadius: 100, isEnabled: spotlightIt)
                                 }
                             }
                             if let sound = PM.sounds.first?.value {
