@@ -94,6 +94,8 @@ class PlaybackManager: ObservableObject {
     
     var currentLoop: LoopEvent? = nil
     
+    private weak var stopNotificationObserver: NSObjectProtocol?
+    
     init() {
         self.engine = PHASEEngine(updateMode: .automatic)
         self.listener = PHASEListener(engine: self.engine)
@@ -102,6 +104,10 @@ class PlaybackManager: ObservableObject {
         
         self.engine.defaultReverbPreset = .largeChamber
         self.startEngine()
+        
+        self.stopNotificationObserver = NotificationCenter.default.addObserver(forName: .shouldStopEveryEngineNotification, object: nil, queue: nil, using: { [weak self] _ in
+            self?.prepareForDeletion()
+        })
     }
     
     /// Load the song into the engine.
@@ -373,13 +379,21 @@ class PlaybackManager: ObservableObject {
         /// Boolean indicating whether the playback should get back to the startTime when the loop is activated.
         let shouldRestart: Bool
     }
-        
-    deinit {
+    
+    private func prepareForDeletion() {
         for (_, sound) in self.sounds {
             sound.deinitialize(from: self)
         }
         self.engine.stop()
-        // engine will automatically be removed
+        if let stopNotificationObserver = self.stopNotificationObserver {
+            self.stopNotificationObserver = nil
+            NotificationCenter.default.removeObserver(stopNotificationObserver)
+        }
+    }
+        
+    deinit {
+        self.prepareForDeletion()
+        print("deinited")
     }
 }
 

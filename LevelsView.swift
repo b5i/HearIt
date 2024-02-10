@@ -10,122 +10,104 @@ import SwiftUI
 struct LevelsView: View {
     @Environment(\.colorScheme) private var colorScheme
     
-    @State private var showContent: Bool = true
-    @ObservedObject private var LM = LevelsManager.shared
-    @State private var levelsSelection: NavigationModel.Level = .tutorial
-    var body: some View {
-        GeometryReader { geometry in
-            TabView(selection: $levelsSelection) {
-                HStack {
-                    Spacer()
-                        .frame(width: geometry.size.width * 0.4)
-                        .opacity(showContent ? 1 : 0)
-                    VStack {
-                        LevelHeaderView(level: .tutorial, startLevelAction: {
-                            self.showContent = false
-                        })
-                    }
-                    .frame(width: geometry.size.width * 0.2)
-                    ZStack(alignment: .leading) {
-                        Line()
-                            .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
-                            .fill(colorScheme.textColor)
-                            .frame(width: geometry.size.width * 0.4, height: 1)
-                        RoundedRectangle(cornerRadius: 20)
-                            .foregroundStyle(colorScheme.textColor)
-                            .frame(width: LM.tutorialUnlocked > 0 ? geometry.size.width * 0.4 : 0, height: 11)
-                    }
-                    .verticallyCentered()
-                    .opacity(showContent ? 1 : 0)
-                }
-                .tag(NavigationModel.Level.tutorial)
-                HStack {
-                    ZStack(alignment: .leading) {
-                        Line()
-                            .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
-                            .fill(colorScheme.textColor)
-                            .frame(width: geometry.size.width * 0.4, height: 1)
-                        RoundedRectangle(cornerRadius: 20)
-                            .foregroundStyle(colorScheme.textColor)
-                            .frame(width: LM.tutorialUnlocked > 1 ? geometry.size.width * 0.4 : 0, height: 11)
-                    }
-                    .verticallyCentered()
-                    .opacity(showContent ? 1 : 0)
-                    LevelHeaderView(level: .boleroTheme, startLevelAction: {
-                        self.showContent = false
-                    })
-                    .frame(width: geometry.size.width * 0.2)
-                    ZStack(alignment: .leading) {
-                        Line()
-                            .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
-                            .fill(colorScheme.textColor)
-                            .frame(width: geometry.size.width * 0.4, height: 1)
-                        RoundedRectangle(cornerRadius: 20)
-                            .foregroundStyle(colorScheme.textColor)
-                            .frame(width: LM.boleroThemeUnlocked > 0 ? geometry.size.width * 0.4 : 0, height: 11)
-                    }
-                    .verticallyCentered()
-                    .opacity(showContent ? 1 : 0)
-                }
-                .tag(NavigationModel.Level.boleroTheme)
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .overlay(alignment: .bottom, content: {
-                HStack {
-                    Button("Reset") {
-                        LM.tutorialUnlocked = 0
-                        self.levelsSelection = .tutorial
-                    }
-                    Button("Unlock tutorial") {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            withAnimation(.spring(duration: 0.4)) {
-                                self.levelsSelection = .boleroTheme
-                            }
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                            withAnimation(.spring(duration: 0.4)) {
-                                LM.tutorialUnlocked = 2
-                            }
-                        }
-                        withAnimation(.spring(duration: 0.4)) {
-                            LM.tutorialUnlocked = 1
-                        }
-                    }
-                }
-                .opacity(showContent ? 1 : 0)
-            })
-        }
-    }
+    //@State private var selection: NavigationModel.Level = LevelsManager.shared.levelSelection
     
-    struct LevelHeaderView: View {
-        @Environment(\.colorScheme) private var colorScheme
-        
-        let level: NavigationModel.Level
-        let startLevelAction: () -> ()
-        
-        @State private var levelStarted: Bool = false
-        
-        var body: some View {
-            VStack {
-                Text(level.rawValue)
-                    .opacity(levelStarted ? 0 : 1)
-                    .foregroundStyle(colorScheme.textColor)
-                Button {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: {
-                        withAnimation {
-                            NavigationModel.shared.currentStep = .levelView(level: .tutorial)
-                        }
-                    })
-                    withAnimation(.easeInOut(duration: 0.6)) {
-                        self.levelStarted = true
-                        self.startLevelAction()
+    @ObservedObject private var LM = LevelsManager.shared
+    var body: some View {
+        // - TODO: Remove that log function when finished
+        Self._printChanges()
+
+        return GeometryReader { geometry in
+            ZStack {
+                // - TODO: Make a gradient: black/white background with moving centers that emit colors creating "random" shapes
+                //Rectangle()
+                //    .fill(.ellipticalGradient(colors: [.pink, .gray, .blue]))
+                //    .ignoresSafeArea()
+                         
+                let selectionBinding: Binding<NavigationModel.Level> = Binding(get: {
+                    return LM.levelSelection
+                }, set: { newValue in
+                    if !LM.isDoingTransition {
+                        LM.levelSelection = newValue
                     }
-                } label: {
-                    Text("Start")
-                        .scaleEffect(levelStarted ? 10 : 1)
-                        .foregroundStyle(colorScheme.textColor)
+                }) // - TODO: Try to avoid any scroll gesture when the model is doing a transition
+                
+                TabView(selection: selectionBinding) {
+                    let levels = NavigationModel.Level.allCases
+                    let lastLevelIndex = levels.count - 1
+                    ForEach(Array(levels.enumerated()), id: \.offset) { (offset: Int, level: NavigationModel.Level) in
+                        HStack {
+                            if offset == 0 {
+                                Spacer()
+                                    .frame(width: geometry.size.width * 0.4)
+                                    .opacity(LM.levelStarted ? 0 : 1)
+                            } else {
+                                ZStack(alignment: .leading) {
+                                    Line()
+                                        .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
+                                        .fill(colorScheme.textColor)
+                                        .frame(width: geometry.size.width * 0.4, height: 1)
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .foregroundStyle(colorScheme.textColor)
+                                        .frame(width: LM.unlockedLevels[levels[offset]] ?? 0 > 1 ? geometry.size.width * 0.4 : 0, height: 11)
+                                }
+                                .verticallyCentered()
+                                .opacity(LM.levelStarted ? 0 : 1)
+                            }
+                            Button {
+                                LevelsManager.shared.startLevel(level)
+                            } label: {
+                                Text("Start")
+                                    .scaleEffect(LM.levelStarted ? 10 : 1)
+                                    .foregroundStyle(colorScheme.textColor)
+                            }
+                            .opacity(LM.levelStarted ? 0 : 8)
+                            .frame(width: geometry.size.width * 0.2)
+                            if offset == lastLevelIndex {
+                                Spacer()
+                                    .frame(width: geometry.size.width * 0.4)
+                                    .opacity(LM.levelStarted ? 0 : 1)
+                            } else {
+                                
+                                ZStack(alignment: .leading) {
+                                    Line()
+                                        .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
+                                        .fill(colorScheme.textColor)
+                                        .frame(width: geometry.size.width * 0.4, height: 1)
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .foregroundStyle(colorScheme.textColor)
+                                        .frame(width: LM.unlockedLevels[levels[offset + 1]] ?? 0 > 0 ? geometry.size.width * 0.4 : 0, height: 11)
+                                }
+                                .verticallyCentered()
+                                .opacity(LM.levelStarted ? 0 : 1)
+                            }
+                        }
+                        .overlay(alignment: .top, content: {
+                            Text(level.rawValue)
+                                .font(.system(size: 80))
+                                .bold()
+                                .opacity(LM.levelStarted ? 0 : 1)
+                        })
+                        .tag(level)
+                    }
                 }
-                .opacity(levelStarted ? 0 : 8)
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .overlay(alignment: .bottom, content: {
+                    HStack {
+                        Button("Reset") {
+                            LM.reset()
+                        }
+                        Button("Unlock tutorial") {
+                            LM.unlockLevel(.boleroTheme)
+                        }
+                    }
+                    .opacity(LM.levelStarted ? 0 : 1)
+                })/*
+                .castedOnChange(of: LM.levelSelection, perform: {
+                    withAnimation {
+                        self.selection = LM.levelSelection
+                    }
+                })*/
             }
         }
     }
@@ -135,9 +117,18 @@ struct LevelsView: View {
     LevelsView()
 }
 
-class LevelsManager: ObservableObject {
-    static let shared = LevelsManager()
-    
-    @Published var tutorialUnlocked: Int = 0
-    @Published var boleroThemeUnlocked: Int = 0
+extension View {
+    func castedOnChange<V>(of value: V, perform action: @escaping () -> Void) -> some View where V: Equatable {
+        if #available(iOS 17.0, *) {
+            print(value)
+            return self.onChange(of: value, {
+                action()
+            })
+        } else {
+            print(value)
+            return self.onChange(of: value, perform: {_ in
+                action()
+            })
+        }
+    }
 }

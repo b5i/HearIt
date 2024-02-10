@@ -12,50 +12,44 @@ import SceneKit
 struct TutorialLevelView: View {
     @StateObject private var PM = PlaybackManager()
     
-    @StateObject private var levelModel = LevelModel()
-    
     @State private var isLoadingScene: Bool = false
     @State private var isSceneLoaded: Bool = false
     @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
     
     @State private var positionObserver: NSKeyValueObservation? = nil
-    
-    //@State private var MM: MusiciansManager?
-    
+        
     var body: some View {
         if isLoadingScene {
             ProgressView()
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
                 VStack {
-                    ZStack(alignment: .center) {
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(.cyan.opacity(0.3))
-                            .background(RoundedRectangle(cornerRadius: 10).fill(.cyan))
-                        if let currentStep = levelModel.currentStep {
-                            VStack {
-                                Text(currentStep.text)
-                                HStack {
-                                    Image(systemName: "arrow.backward.circle.fill")
-                                        .onTapGesture {
-                                            levelModel.goToPreviousStep()
-                                        }
-                                        //.opacity(levelModel.previousStepExists ? 1 : 0)
-                                    Spacer()
-                                    Image(systemName: "arrow.forward.circle.fill")
-                                        .onTapGesture {
-                                            levelModel.goToNextStep(musicianManager: MM, playbackManager: PM)
-                                        }
-                                }
-                            }
-                        }
-                    }
-                    .frame(width: geometry.size.width * 0.75, height: levelModel.currentStep != nil ? geometry.size.height * 0.2 : 0)
-                    .background(.black)
+                    SceneStepsView(levelModel: LevelModel(steps: [
+                        .init(text: "Welcome in \(appName)! To begin I'll teach you the basic controls that you have over the app: \n To go to the next instruction, click on the circled arrow at your right. \n If you can't find it, do a long press on the light bulb at the top right, it will highlight the right button."),
+                        .init(text: "Let's start with the basics playback controls of the app. For the music to start playing, click on the rectangular button next to the timeline and its orange cursor.", passCondition: { mm, pm in
+                            return pm.sounds.first?.value.timeObserver.isPlaying ?? false // - TODO: maybe set true as default value
+                        }),
+                        .init(text: "Great! You can now hear a little melody, to move forward or backwards in it, move the orange cursor to the time you want to listen to. If you move slowly, the bar will become bigger and let you select the precise second that you want to listent to."),
+                        .init(text: "Let's move on to the controls that you have over the musician, you can mute and unmute the musician by clicking on the speaker icon under the musician or directly by clicking on the musician. Mute him to go to the next step.", passCondition: { mm, pm in
+                            return pm.sounds.first?.value.isMuted ?? false
+                        }),
+                        .init(text: "If you have multiple musicians, you can decide to mute all of them except one, this operation is called the solo operation. To solo a musician, tap on the S button next to the mute/unmute one. Unmute and solo the first musician to continue.", passCondition: { mm, pm in
+                            return !(pm.sounds.first?.value.isMuted ?? false) && (pm.sounds.first?.value.isSoloed ?? false)
+                        }, stepAction: {
+                            // TODO: add some other musicians
+                        }),
+                        .init(text: "In the coming levels you'll be asked to change the color of the musician, it actually refers to the color of the spotlight in front of him. To change its color, click on the spotlight or on the little firgure that is raising its hand. Clicking multiple times on the musician will switch between blue, red and green. Set the color of the spotlight to green to proceed.", passCondition: { mm, _ in
+                            return mm.musicians.first?.value.status.spotlightColor == .green
+                        }),
+                        .init(text: "Congrats you finished the tutorial phase and you now know everything about the controls of the app. To quit this tutorial, click on the opened door at the top right next to the light bulb button.")
+                    ]), MM: MM, PM: PM)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
                 }
             }
+            .overlay(alignment: .topTrailing, content: {
+                TopTrailingActionsView()
+            })
         } else {
             Color.clear
                 .onAppear {
@@ -77,56 +71,6 @@ struct TutorialLevelView: View {
         }
     }
     
-    private class LevelModel: ObservableObject {
-        struct Step {
-            var text: String
-            var passCondition: (MusiciansManager, PlaybackManager) -> Bool
-        }
-        
-        @Published private var steps: [Step] = [
-            Step(text: "Welcome in [name of the app]! To begin I'll teach you the basic controls that you have over the app: \n To go to the ", passCondition: {_,_  in return true}),
-            Step(text: "Please put the player in green", passCondition: { mm, pm in
-                return mm.musicians.first?.value.status.spotlightColor == .green
-            })
-        ]
-        
-        @Published private var currentStepIndex: Int = 0
-        
-        var currentStep: Step? {
-            if self.steps.count > self.currentStepIndex && self.currentStepIndex != -1 {
-                return self.steps[currentStepIndex]
-            } else {
-                return nil
-            }
-        }
-        
-        var previousStepExists: Bool {
-            return self.currentStepIndex != 0 && !self.steps.isEmpty
-        }
-        
-        func goToPreviousStep() {
-            if self.currentStepIndex != 0 {
-                withAnimation {
-                    self.currentStepIndex -= 1
-                }
-            }
-        }
-        
-        func goToNextStep(musicianManager: MusiciansManager, playbackManager: PlaybackManager) {
-            if self.steps[self.currentStepIndex].passCondition(musicianManager, playbackManager) {
-                if self.steps.count > self.currentStepIndex + 1 {
-                    withAnimation {
-                        self.currentStepIndex += 1
-                    }
-                } else {
-                    withAnimation {
-                        self.currentStepIndex = -1
-                    }
-                }
-            }
-        }
-    }
-    
     private func createScene() -> SCNScene {
         // create a new scene
         let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
@@ -139,10 +83,10 @@ struct TutorialLevelView: View {
         
         // place the camera and observe its position to adapt the listener position in space
         cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { node, _ in
+        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { [weak PM] /* avoid memory leak */ node, _ in
             var matrix = matrix_identity_float4x4
             matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
-            PM.listener.transform = matrix
+            PM?.listener.transform = matrix
         })
         
         // create and add a light to the scene
@@ -232,37 +176,6 @@ extension View {
         } else {
             return self
         }
-    }
-}
-
-class SpotlightModel: ObservableObject {
-    static let shared = SpotlightModel()
-    
-    private(set) var spotlight: Spotlight?
-    
-    private(set) var isEnabled: Bool = false
-    
-    func setNewSpotlight(to spotlight: Spotlight?) {
-        self.spotlight = spotlight
-        
-        self.isEnabled = spotlight != nil
-        
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-        }
-    }
-    
-    func setSpotlightActiveStatus(to status: Bool) {
-        self.isEnabled = status
-        
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-        }
-    }
-    
-    struct Spotlight {
-        let position: CGPoint
-        let areaRadius: CGFloat
     }
 }
 

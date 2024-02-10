@@ -18,7 +18,7 @@ class NavigationModel: ObservableObject {
         case levelView(level: Level)
     }
     
-    enum Level: String {
+    enum Level: String, CaseIterable {        
         case tutorial = "Tutorial"
         case boleroTheme = "1. Theme and others."
     }

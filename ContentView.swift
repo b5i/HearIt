@@ -20,7 +20,7 @@ struct ContentView: View {
                 case .tutorial:
                     TutorialLevelView()
                 case .boleroTheme:
-                    Text("Bolero theme")
+                    BoleroLevelView()
                 }
             }
         }
@@ -41,4 +41,8 @@ fileprivate extension View {
             self
         }
     }
+}
+
+extension Notification.Name {
+    static let shouldStopEveryEngineNotification: Notification.Name = .init("ShouldStopEveryEngineNotification")
 }

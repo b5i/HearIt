@@ -17,7 +17,7 @@ struct HomeScreenView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
             VStack {
-                Text("[name of the app]")
+                Text(appName)
                     .foregroundStyle(colorScheme.textColor)
                     .font(.largeTitle)
                     .bold()
@@ -50,7 +50,7 @@ struct HomeScreenView: View {
                     .multilineTextAlignment(.center)
                     .frame(width: 300)
                 
-                AirPlayButton()
+                AirPlayButton(color: colorScheme.textColor == .white ? .white : .black)
                     .scaledToFit()
                     .blendMode(.screen)
                     .frame(width: 50)
