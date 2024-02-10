@@ -67,6 +67,7 @@ class LevelsManager: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
             if let level = level {
                 LevelsManager.shared.unlockLevel(level)
+                TopTrailingActionsView.Model.shared.unlockedLevel = nil
             }
         })
         

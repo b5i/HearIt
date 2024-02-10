@@ -91,7 +91,7 @@ class PlaybackManager: ObservableObject {
     let listener: PHASEListener
     
     @Published var sounds: [String: Sound] = [:]
-    
+        
     var currentLoop: LoopEvent? = nil
     
     private weak var stopNotificationObserver: NSObjectProtocol?

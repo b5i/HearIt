@@ -107,121 +107,121 @@ struct NonOptionalSceneView: View {
                     }
                 }
             })
-            .overlay(alignment: .bottomLeading) {
-                HStack {
-                    Button("Place loop") {
-                        self.PM.replaceLoop(by: .init(startTime: 0, endTime: 20, shouldRestart: false))
-                    }
-                    Button("Spotlight") {
-                        withAnimation {
-                            spotlightIt.toggle()
-                        }
-                    }
-                    /*
-                    Button("Load tutorial") {
-                        self.isStarting = true
-                        Task {
-                            await setupTutorial()
-                            DispatchQueue.main.async {
-                                self.isStarting = false
-                                PM.restartAndSynchronizeSounds()
-                            }
-                        }
-                    }
-                    
-                    Button("Duplicate new sprite") {
-                        let newMusician = MM.createMusician()
-                        
-                        newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
-                        newMusician.node.position = .init(x: 4 * Float(amountOfSprites), y: 0, z: 0)
-                        amountOfSprites += 1
-                        
-                        let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
-                        distanceParameters.rolloffFactor = 0.5
-                        distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
-                        if PlaybackManager.shared.sounds["kick.m4a"] == nil {
-                            PlaybackManager.shared.loadSound(soundPath: "kick.m4a", emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping), completionHandler: { result in
-                                switch result {
-                                case .success(let sound):
-                                    newMusician.addSound(sound)
-                                case .failure(let error):
-                                    print("Error: \(error)")
-                                }
-                            })
-                        } else if PlaybackManager.shared.sounds["kick2.m4a"] == nil {
-                            PlaybackManager.shared.loadSound(soundPath: "kick2.m4a", emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping), completionHandler: { result in
-                                switch result {
-                                case .success(let sound):
-                                    newMusician.addSound(sound)
-                                case .failure(let error):
-                                    print("Error: \(error)")
-                                }
-                            })
-                        }
-                    }
-                     */
-                    Button("^") {
-                        scene.rootNode.getFirstCamera()?.transform.m43 -= 1
-                    }
-                    Button("v") {
-                        scene.rootNode.getFirstCamera()?.transform.m43 += 1
-                    }
-                    Button("down") {
-                        scene.rootNode.getFirstCamera()?.transform.m42 -= 1
-                    }
-                    Button("up") {
-                        scene.rootNode.getFirstCamera()?.transform.m42 += 1
-                    }
-                    Button("<-") {
-                        scene.rootNode.getFirstCamera()?.transform.m41 -= 1
-                    }
-                    Button("->") {
-                        scene.rootNode.getFirstCamera()?.transform.m41 += 1
-                    }
-                    Button("Synchronize sounds") {
-                        PM.restartAndSynchronizeSounds()
-                    }
+            .overlay(alignment: .bottom) {
+                VStack {
+                    Spacer()
                     HStack {
-                        VStack {
-                            HStack {
-                                ForEach(Array(MM.musicians.enumerated()), id: \.offset) { (offset, dictEntry) in
-                                    let (_, musician) = dictEntry
-                                    
-                                    LittleMusicianView(musician: musician)
-                                        .spotlight(areaRadius: 100, isEnabled: spotlightIt)
-                                }
+                        Button("Place loop") {
+                            self.PM.replaceLoop(by: .init(startTime: 0, endTime: 20, shouldRestart: false))
+                        }
+                        Button("Spotlight") {
+                            withAnimation {
+                                spotlightIt.toggle()
                             }
-                            if let sound = PM.sounds.first?.value {
-                                PlayingBarView(playbackManager: PM, sound: sound, soundObserver: sound.timeObserver)
-                                /*
-                                 PlayingBarView(endOfSlideAction: { newValue in
-                                 sound.seek(to: newValue * sound.timeObserver.soundDuration)
-                                 print("endOfSlideAction: \(newValue)")
-                                 }, endOfZoomAction: { normalSliderValue, zoomedInSliderValue in
-                                 sound.seek(to: sound.timeObserver.currentTime * normalSliderValue + 20 * (zoomedInSliderValue - 0.5))
-                                 print("endOfZoomAction: \(normalSliderValue), \(zoomedInSliderValue)")
-                                 }, externalSliderValue: sliderValue, isPlaying: isPlaying)
-                                 .frame(alignment: .bottom)
-                                 */
-                                //PlayingBarWrapperView(sound: sound, soundObserver: sound.timeObserver)
+                        }
+                        /*
+                         Button("Load tutorial") {
+                         self.isStarting = true
+                         Task {
+                         await setupTutorial()
+                         DispatchQueue.main.async {
+                         self.isStarting = false
+                         PM.restartAndSynchronizeSounds()
+                         }
+                         }
+                         }
+                         
+                         Button("Duplicate new sprite") {
+                         let newMusician = MM.createMusician()
+                         
+                         newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
+                         newMusician.node.position = .init(x: 4 * Float(amountOfSprites), y: 0, z: 0)
+                         amountOfSprites += 1
+                         
+                         let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
+                         distanceParameters.rolloffFactor = 0.5
+                         distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
+                         if PlaybackManager.shared.sounds["kick.m4a"] == nil {
+                         PlaybackManager.shared.loadSound(soundPath: "kick.m4a", emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping), completionHandler: { result in
+                         switch result {
+                         case .success(let sound):
+                         newMusician.addSound(sound)
+                         case .failure(let error):
+                         print("Error: \(error)")
+                         }
+                         })
+                         } else if PlaybackManager.shared.sounds["kick2.m4a"] == nil {
+                         PlaybackManager.shared.loadSound(soundPath: "kick2.m4a", emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping), completionHandler: { result in
+                         switch result {
+                         case .success(let sound):
+                         newMusician.addSound(sound)
+                         case .failure(let error):
+                         print("Error: \(error)")
+                         }
+                         })
+                         }
+                         }
+                         */
+                        Button("^") {
+                            scene.rootNode.getFirstCamera()?.transform.m43 -= 1
+                        }
+                        Button("v") {
+                            scene.rootNode.getFirstCamera()?.transform.m43 += 1
+                        }
+                        Button("down") {
+                            scene.rootNode.getFirstCamera()?.transform.m42 -= 1
+                        }
+                        Button("up") {
+                            scene.rootNode.getFirstCamera()?.transform.m42 += 1
+                        }
+                        Button("<-") {
+                            scene.rootNode.getFirstCamera()?.transform.m41 -= 1
+                        }
+                        Button("->") {
+                            scene.rootNode.getFirstCamera()?.transform.m41 += 1
+                        }
+                        Button("Synchronize sounds") {
+                            PM.restartAndSynchronizeSounds()
+                        }
+                    }
+                    VStack {
+                        Spacer()
+                        HStack(alignment: .center) {
+                            ForEach(Array(MM.musicians.values), id: \.index) { (_, musician) in
+                                LittleMusicianView(musician: musician)
+                                    .spotlight(areaRadius: 100, isEnabled: spotlightIt)
                             }
+                        }
+                        if let sound = PM.sounds.first?.value {
+                            PlayingBarView(playbackManager: PM, sound: sound, soundObserver: sound.timeObserver)
+                            /*
+                             PlayingBarView(endOfSlideAction: { newValue in
+                             sound.seek(to: newValue * sound.timeObserver.soundDuration)
+                             print("endOfSlideAction: \(newValue)")
+                             }, endOfZoomAction: { normalSliderValue, zoomedInSliderValue in
+                             sound.seek(to: sound.timeObserver.currentTime * normalSliderValue + 20 * (zoomedInSliderValue - 0.5))
+                             print("endOfZoomAction: \(normalSliderValue), \(zoomedInSliderValue)")
+                             }, externalSliderValue: sliderValue, isPlaying: isPlaying)
+                             .frame(alignment: .bottom)
+                             */
+                            //PlayingBarWrapperView(sound: sound, soundObserver: sound.timeObserver)
                         }
                         
                         /*
-                        ForEach(Array(PM.sounds.enumerated()), id: \.offset) { (_, sound) in
-                            let sound = sound.1
-                            VStack {
-                                HStack {
-                                    Text(sound.infos.soundPath)
-                                    Button("Play") {
-                                        PlaybackManager.shared.playSound(soundPath: sound.infos.soundPath)
-                                    }
-                                    Button("Pause") {
-                                        PlaybackManager.shared.pause(soundPath: sound.infos.soundPath)
-                                    }
-                                }
-                            }
-                        }
+                         ForEach(Array(PM.sounds.enumerated()), id: \.offset) { (_, sound) in
+                         let sound = sound.1
+                         VStack {
+                         HStack {
+                         Text(sound.infos.soundPath)
+                         Button("Play") {
+                         PlaybackManager.shared.playSound(soundPath: sound.infos.soundPath)
+                         }
+                         Button("Pause") {
+                         PlaybackManager.shared.pause(soundPath: sound.infos.soundPath)
+                         }
+                         }
+                         }
+                         }
                          */
                     }
                 }
@@ -400,12 +400,12 @@ class SceneViewController: UIViewController {
             guard let musician = result.node.getMusicianParent(), let musicianName = musician.name else { continue }
             if result.node.isSpotlightPart {
                 if !didToggleSpotlight {
-                    musicianManager.musicians[musicianName]?.goToNextColor()
+                    musicianManager.musicians[musicianName]?.musician.goToNextColor()
                     didToggleSpotlight = true
                 }
             } else if result.node.isMusicianBodyPart {
                 if !didTogglePlayback {
-                    musicianManager.musicians[musicianName]?.sound?.isMuted.toggle() // won't do anything if the result is not a musician
+                    musicianManager.musicians[musicianName]?.musician.sound?.isMuted.toggle() // won't do anything if the result is not a musician
                     didTogglePlayback = true
                 }
             }

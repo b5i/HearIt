@@ -56,7 +56,7 @@ class Musician: ObservableObject {
             } else {
                 
                 // set up all the particles
-                self.node.addParticleSystem(createParticleSystem(type: self.status.isMuted ? .muted : .musicPlaying))
+                self.node.addParticleSystem(createParticleSystem(type: manager.musicianCanBeHeard(musician: self) ? .musicPlaying : .muted))
             }
         }
     }

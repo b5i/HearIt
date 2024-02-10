@@ -36,7 +36,7 @@ struct TopTrailingActionsView: View {
                         })
                 )
             Button {
-                LevelsManager.shared.returnToLevelsView(unlockingLevel: .boleroTheme) // TODO: add a confirmation dialog
+                LevelsManager.shared.returnToLevelsView(unlockingLevel: Model.shared.unlockedLevel) // TODO: add a confirmation dialog
             } label: {
                 Image(systemName: "door.left.hand.open")
                     .resizable()
@@ -46,6 +46,12 @@ struct TopTrailingActionsView: View {
             }
             .padding()
         }
+    }
+    
+    class Model {
+        static let shared = Model()
+        
+        var unlockedLevel: LevelsManager.Level? = nil
     }
 }
 

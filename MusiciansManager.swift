@@ -11,17 +11,17 @@ import AVFoundation
 class MusiciansManager: ObservableObject {
     let scene: SCNScene
     
-    @Published var musicians: [String: Musician] = [:] // array of SCNNode's hash and their status
+    @Published var musicians: [String: (index: Int, musician: Musician)] = [:] // array of SCNNode's hash and their status
     
     init(scene: SCNScene) {
         self.scene = scene
     }
     
-    func createMusician() -> Musician {
+    func createMusician(index: Int) -> Musician {
         let musician = createUniqueMusician(verifyWithScene: scene)
         let name = "WWDC24-Musician-\(UUID().uuidString)"
         musician.node.name = name
-        musicians.updateValue(musician, forKey: name)
+        musicians.updateValue((index, musician), forKey: name)
         musician.setMuteStatus(isMuted: musician.status.isMuted)
         
         scene.rootNode.addChildNode(musician.node)
@@ -30,11 +30,11 @@ class MusiciansManager: ObservableObject {
     }
     
     func getMusicianWithNode(_ node: SCNNode) -> Musician? {
-        return musicians.first(where: {$0.value.node == node})?.value
+        return musicians.first(where: {$0.value.musician.node == node})?.value.musician
     }
     
     func updateCanBeHeardStatus() {
-        for musician in self.musicians.values {
+        for musician in self.musicians.values.map({$0.musician}) {
             if musician.status.isStopped {
                 musician.hideParticles()
             } else {
@@ -171,7 +171,7 @@ class MusiciansManager: ObservableObject {
         if musician.status.isMuted {
             return false
         }
-        if self.musicians.contains(where: {$0.value.status.isSoloed}) {
+        if self.musicians.contains(where: {$0.value.musician.status.isSoloed}) {
             return false
         } else {
             return true
