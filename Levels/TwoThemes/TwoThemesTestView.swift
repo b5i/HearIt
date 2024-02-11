@@ -1,15 +1,15 @@
 //
-//  BoleroLevelTestView.swift
+//  TwoThemesTestView.swift
+//  
 //
-//
-//  Created by Antoine Bollengier on 10.02.2024.
+//  Created by Antoine Bollengier on 11.02.2024.
 //
 
 import SwiftUI
 import PHASE
 import SceneKit
 
-struct BoleroLevelTestView: View {
+struct TwoThemesTestView: View {
     @StateObject private var PM = PlaybackManager()
         
     @State private var isLoadingScene: Bool = false
@@ -25,12 +25,12 @@ struct BoleroLevelTestView: View {
         } else if let scene = scene, let MM = MM {
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly."),
-                    LevelModel.TextStep(text: "Your goal is to find what musician is playing what element, each element can be played by multiple musicians. Good luck! Once you're finished, click on the right arrow to validate your results.", passCondition: { _,_ in
+                    LevelModel.TextStep(text: "Here is the 20th concerto from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
+                    LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge.", passCondition: { _,_ in
                         return true
                     }),
                     LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
-                         TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
+                         //TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
                     })
                 ]), MM: MM, PM: PM)
                 NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
@@ -129,16 +129,15 @@ struct BoleroLevelTestView: View {
             }
         }
         
-        await createMusician(withSongName: "BoleroSounds/bolerobassoon.m4a", index: 0)
-        await createMusician(withSongName: "BoleroSounds/boleroclarinet.m4a", index: 1)
-        await createMusician(withSongName: "BoleroSounds/bolerodrum.m4a", index: 2)
-        await createMusician(withSongName: "BoleroSounds/boleroflute.m4a", index: 3)
-        await createMusician(withSongName: "BoleroSounds/bolerohorn.m4a", index: 4)
-        await createMusician(withSongName: "BoleroSounds/bolerooboe.m4a", index: 5)
+        await createMusician(withSongName: "ThemesSounds/mozart20celloandbass.m4a", index: 0)
+        await createMusician(withSongName: "ThemesSounds/mozart20flutesandoboe.m4a", index: 1)
+        await createMusician(withSongName: "ThemesSounds/mozart20piano.m4a", index: 2)
+        await createMusician(withSongName: "ThemesSounds/mozart20viola.m4a", index: 3)
+        await createMusician(withSongName: "ThemesSounds/mozart20violins.m4a", index: 4)
     }
 }
 
 #Preview {
-    BoleroLevelTestView()
+    TwoThemesTestView()
 }
 

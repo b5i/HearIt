@@ -26,25 +26,42 @@ struct TutorialLevelView: View {
             GeometryReader { geometry in
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        .init(text: "Welcome in \(appName)! To begin I'll teach you the basic controls that you have over the app: \n To go to the next instruction, click on the circled arrow at your right. \n If you can't find it, do a long press on the light bulb at the top right, it will highlight the right button."),
-                        .init(text: "Let's start with the basics playback controls of the app. For the music to start playing, click on the rectangular button next to the timeline and its orange cursor.", passCondition: { mm, pm in
+                        LevelModel.TextStep(text: "Welcome in \(appName)! To begin I'll teach you the basic controls that you have over the app: \n To go to the next instruction, click on the circled arrow at your right. \n If you can't find it, do a long press on the light bulb at the top right, it will highlight the right button."),
+                        LevelModel.TextStep(text: "Let's start with the basics playback controls of the app. For the music to start playing, click on the rectangular button next to the timeline and its orange cursor.", passCondition: { mm, pm in
                             return pm.sounds.first?.value.timeObserver.isPlaying ?? false // - TODO: maybe set true as default value
                         }),
-                        .init(text: "Great! You can now hear a little melody, to move forward or backwards in it, move the orange cursor to the time you want to listen to. If you move slowly, the bar will become bigger and let you select the precise second that you want to listent to."),
-                        .init(text: "Let's move on to the controls that you have over the musician, you can mute and unmute the musician by clicking on the speaker icon under the musician or directly by clicking on the musician. Mute him to go to the next step.", passCondition: { mm, pm in
-                            return pm.sounds.first?.value.isMuted ?? false
+                        LevelModel.TextStep(text: "Great! You can now hear a little melody, to move forward or backwards in it, move the orange cursor to the time you want to listen to. If you move slowly, the bar will become bigger and let you select the precise second that you want to listen to."),
+                        LevelModel.TextStep(text: "Let's move on to the controls that you have over the musician, you can mute and unmute the musician by clicking on the speaker icon under the musician or directly by clicking on the musician. Mute him to go to the next step.", passCondition: { mm, pm in
+                            let sound = MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialkick2"})?.value.musician.sound
+                            return sound?.isMuted ?? false
+                        }, stepAction: {
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.sound?.mute()
+                            
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.hide()
+                            
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialsnare2"})?.value.musician.sound?.mute()
+                            
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialsnare2"})?.value.musician.hide()
                         }),
-                        .init(text: "If you have multiple musicians, you can decide to mute all of them except one, this operation is called the solo operation. To solo a musician, tap on the S button next to the mute/unmute one. Unmute and solo the first musician to continue.", passCondition: { mm, pm in
-                            return !(pm.sounds.first?.value.isMuted ?? false) && (pm.sounds.first?.value.isSoloed ?? false)
+                        LevelModel.TextStep(text: "If you have multiple musicians, you can decide to mute all of them except one, this operation is called the solo operation. To solo a musician, tap on the S button next to the mute/unmute one. Unmute and solo the first musician to continue.", passCondition: { mm, pm in
+                            let sound = MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialkick2"})?.value.musician.sound
+                            return !(sound?.isMuted ?? false) && (sound?.isSoloed ?? false)
                         }, stepAction: {
                             // TODO: add some other musicians
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.sound?.unmute()
+                            
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.show()
+                            
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialsnare2"})?.value.musician.sound?.unmute()
+                            
+                            MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialsnare2"})?.value.musician.show()
                         }),
-                        .init(text: "In the coming levels you'll be asked to change the color of the musician, it actually refers to the color of the spotlight in front of him. To change its color, click on the spotlight or on the little firgure that is raising its hand. Clicking multiple times on the musician will switch between blue, red and green. Set the color of the spotlight to green to proceed.", passCondition: { mm, _ in
-                            return mm.musicians.first?.value.musician.status.spotlightColor == .green
+                        LevelModel.TextStep(text: "In the coming levels you'll be asked to change the color of the musician, it actually refers to the color of the spotlight in front of him. To change its color, click on the spotlight or on the little firgure that is raising its hand. Clicking multiple times on the musician will switch between blue, red and green. Set the color of the first musician's spotlight to green to proceed.", passCondition: { mm, _ in
+                            return MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialkick2"})?.value.musician.status.spotlightColor == .green
                         }, stepAction: {
                             TopTrailingActionsView.Model.shared.unlockedLevel = nil
                         }),
-                        .init(text: "Congrats you finished the tutorial phase and you now know everything about the controls of the app. To quit this tutorial, click on the opened door at the top right next to the light bulb button.", stepAction: {
+                        LevelModel.TextStep(text: "Congrats you finished the tutorial phase and you now know everything about the controls of the app. To quit this tutorial, click on the opened door at the top right next to the light bulb button.", stepAction: {
                             TopTrailingActionsView.Model.shared.unlockedLevel = .boleroTheme
                         })
                     ]), MM: MM, PM: PM)
@@ -144,26 +161,23 @@ struct TutorialLevelView: View {
             }
         }
         
-        await createMusician(withSongName: "TutorialSounds/la_panterra.mp3", audioLevel: -8, index: 0)
+        await createMusician(withSongName: "TutorialSounds/tutorialkick2.m4a", index: 0)
+        await createMusician(withSongName: "TutorialSounds/tutorialhihat2.m4a", index: 1)
+        await createMusician(withSongName: "TutorialSounds/tutorialsnare2.m4a", index: 2)
         
-        /*
-        await createMusician(withSongName: "TutorialSounds/bolero_1.m4a", index: 0)
-        await createMusician(withSongName: "TutorialSounds/bolero_2.m4a", index: 1)
-        await createMusician(withSongName: "TutorialSounds/bolero_3.m4a", index: 2)
-        await createMusician(withSongName: "TutorialSounds/bolero_4.m4a", index: 3)
-        await createMusician(withSongName: "TutorialSounds/bolero_5.m4a", index: 4)
-        await createMusician(withSongName: "TutorialSounds/bolero_6.m4a", index: 5)
-        await createMusician(withSongName: "TutorialSounds/bolero_7.m4a", index: 6)
-        */
-         
-       /*
-        await createMusician(withSongName: "TutorialSounds/tutorial_drums.m4a", index: 0)
-        await createMusician(withSongName: "TutorialSounds/tutorial_hihats.m4a", index: 1)
-        await createMusician(withSongName: "TutorialSounds/tutorial_kick.m4a", index: 2)
-        await createMusician(withSongName: "TutorialSounds/tutorial_synth.m4a", audioLevel: -3, index: 3)
-         */
-                
-        //self.PM.restartAndSynchronizeSounds()
+        MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.sound?.mute()
+        
+        MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.hide()
+        
+        MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialsnare2"})?.value.musician.sound?.mute()
+        
+        MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialsnare2"})?.value.musician.hide()
+        
+        //let loopTime = (PM.sounds.values.map({$0.timeObserver.soundDuration}).min() ?? 3.6) + 0.1 /* approximated value of the duration, a bit more than the actual to that if the user scrolls to the end of the playing bar it won't get out of the loop */
+        
+        let loopTime = 14.6 // calibrated so there isn't that 2 kicks effect
+        
+        PM.replaceLoop(by: .init(startTime: 0, endTime: loopTime, shouldRestart: false, lockLoopZone: true))
     }
 }
 

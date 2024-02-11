@@ -31,6 +31,22 @@ class Musician: ObservableObject {
         }
     }
     
+    func show() {
+        self.showParticles()
+        self.node.isHidden = false
+        self.status.isHidden = false
+        self.update()
+        self.manager.update()
+    }
+    
+    func hide() {
+        self.hideParticles()
+        self.node.isHidden = true
+        self.status.isHidden = true
+        self.update()
+        self.manager.update()
+    }
+    
     func toggleMuteStatus() {
         setMuteStatus(isMuted: !self.status.isMuted)
     }
@@ -211,6 +227,8 @@ class Musician: ObservableObject {
         
         var spotlightColor: SpotlightColor = .blue
         var isSpotlightOn: Bool = true
+        
+        var isHidden: Bool = false
     }
     
     deinit {

@@ -50,6 +50,7 @@ struct PlayingBarView: View {
                         if self.timeSinceVelocityCheck == newValue {
                             DispatchQueue.main.async {
                                 self.zoomedInSliderValue = self.sliderValue
+                                print("open big view")
                                 withAnimation {
                                     self.showZoomedInUI = true
                                 }
@@ -64,8 +65,8 @@ struct PlayingBarView: View {
         }
     }
     @State private var isSliding: Bool = false
-    @State private var zoomedInSliderValue: Double = 0.0
-        
+    @State private var zoomedInSliderValue: Double = 0.5 // middle of the screen
+
     var body: some View {
         HStack {
             Button {
@@ -182,13 +183,23 @@ struct PlayingBarView: View {
                             }
                         })
                         .onEnded({ newValue in
-                            handleSwipe(gesture: newValue, bars: bars)
+                            if self.showZoomedInUI {
+                                handleSwipe(gesture: newValue, bars: bars)
+                            }
                             
                             self.isSliding = false
 
                             //DispatchQueue.global(qos: .background).async {
                             
-                            playbackManager.seekTo(time: max(0, sound.timeObserver.soundDuration * sliderValue + 10 * (zoomedInSliderValue - 0.5)))
+                            print("sliderValue: \(sliderValue), self.sound.timeObserver.soundDuration: \(self.sound.timeObserver.soundDuration), self.sound.timeObserver.soundDuration * sliderValue = \(self.sound.timeObserver.soundDuration * sliderValue). self.zoomedInSliderValue = \(self.zoomedInSliderValue), 10 * (self.zoomedInSliderValue - 0.5) = \(10 * (self.zoomedInSliderValue - 0.5))")
+                            
+                            var seekToTime = min(max(0, self.sound.timeObserver.soundDuration * self.sliderValue + 10 * (self.zoomedInSliderValue - 0.5)), self.sound.timeObserver.soundDuration)
+                            
+                            if let loop = self.playbackManager.currentLoop, loop.lockLoopZone == true {
+                                seekToTime = min(seekToTime, loop.endTime)
+                            }
+                            
+                            playbackManager.seekTo(time: seekToTime)
                             
                             //sound.seek(to: max(0, sound.timeObserver.soundDuration * sliderValue + 10 * (zoomedInSliderValue - 0.5)))
                             

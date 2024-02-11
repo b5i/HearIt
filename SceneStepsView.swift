@@ -21,7 +21,7 @@ struct SceneStepsView: View {
                     .background(RoundedRectangle(cornerRadius: 10).fill(.cyan))
                 if let currentStep = levelModel.currentStep {
                     VStack {
-                        Text(currentStep.text)
+                        AnyView(currentStep.view)
                         HStack {
                             Image(systemName: "arrow.backward.circle.fill")
                                 .onTapGesture {

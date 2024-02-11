@@ -97,6 +97,7 @@ struct NonOptionalSceneView: View {
     
     var body: some View {
         SceneViewWrapper(scene: scene, musicianManager: MM)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay(alignment: .center, content: {
                 if self.isStarting {
                     ZStack {
@@ -111,9 +112,6 @@ struct NonOptionalSceneView: View {
                 VStack {
                     Spacer()
                     HStack {
-                        Button("Place loop") {
-                            self.PM.replaceLoop(by: .init(startTime: 0, endTime: 20, shouldRestart: false))
-                        }
                         Button("Spotlight") {
                             withAnimation {
                                 spotlightIt.toggle()
@@ -162,6 +160,7 @@ struct NonOptionalSceneView: View {
                          }
                          }
                          */
+                        /*
                         Button("^") {
                             scene.rootNode.getFirstCamera()?.transform.m43 -= 1
                         }
@@ -183,11 +182,12 @@ struct NonOptionalSceneView: View {
                         Button("Synchronize sounds") {
                             PM.restartAndSynchronizeSounds()
                         }
+                         */
                     }
                     VStack {
                         Spacer()
                         HStack(alignment: .center) {
-                            ForEach(Array(MM.musicians.values), id: \.index) { (_, musician) in
+                            ForEach(Array(MM.musicians.values).filter({!$0.musician.status.isHidden}).sorted(by: {$0.index < $1.index}), id: \.index) { (_, musician) in
                                 LittleMusicianView(musician: musician)
                                     .spotlight(areaRadius: 100, isEnabled: spotlightIt)
                             }

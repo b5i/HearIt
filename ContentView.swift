@@ -21,6 +21,8 @@ struct ContentView: View {
                     TutorialLevelView()
                 case .boleroTheme:
                     BoleroLevelView()
+                case .twoThemes:
+                    TwoThemesView()
                 }
             }
         }

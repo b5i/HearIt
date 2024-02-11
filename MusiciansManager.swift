@@ -177,6 +177,10 @@ class MusiciansManager: ObservableObject {
             return true
         }
     }
+    
+    func update() {
+        self.objectWillChange.send()
+    }
 }
 
 extension simd_float3 {

@@ -20,6 +20,7 @@ class NavigationModel: ObservableObject {
     
     enum Level: String, CaseIterable {        
         case tutorial = "Tutorial"
-        case boleroTheme = "1. Theme and others."
+        case boleroTheme = "3 Elements"
+        case twoThemes = "2 Themes"
     }
 }

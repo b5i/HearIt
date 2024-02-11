@@ -1,15 +1,15 @@
 //
-//  BoleroLevelTestView.swift
+//  TwoThemesIntroductionView.swift
 //
 //
-//  Created by Antoine Bollengier on 10.02.2024.
+//  Created by Antoine Bollengier on 11.02.2024.
 //
 
 import SwiftUI
 import PHASE
 import SceneKit
 
-struct BoleroLevelTestView: View {
+struct TwoThemesIntroductionView: View {
     @StateObject private var PM = PlaybackManager()
         
     @State private var isLoadingScene: Bool = false
@@ -18,19 +18,45 @@ struct BoleroLevelTestView: View {
     @State private var MM: MusiciansManager?
     
     @State private var positionObserver: NSKeyValueObservation? = nil
-            
+    
+    @Binding var finishedIntroduction: Bool
+        
     var body: some View {
         if isLoadingScene {
             ProgressView()
         } else if let scene = scene, let MM = MM {
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly."),
-                    LevelModel.TextStep(text: "Your goal is to find what musician is playing what element, each element can be played by multiple musicians. Good luck! Once you're finished, click on the right arrow to validate your results.", passCondition: { _,_ in
-                        return true
+                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To distinguish them, compositors usually put a bridge or a little pause between them."),
+                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" around a theme. What he/she actually means is that they recreated a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it."),
+                    LevelModel.TextStep(text: "Let's me show you an example with the 25th concerto from Mozart. I starts with the Theme A played by the violins and the viola.", stepAction: {
+                        for sound in PM.sounds.values {
+                            sound.unsolo()
+                            sound.unmute()
+                        }
+                        PM.seekTo(time: 5.6 /* beginning of the Theme A */)
                     }),
-                    LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
-                         TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
+                    LevelModel.TextStep(text: "Then a bridge follows, it is characterized by the tension it brings and by the fact that it prepares, for example by introducing new instruments, to the next theme. Here, no complex melody is played and all the instruments act as accompaniment ???? à verifier avec Raph.", stepAction: {
+                        // reset states
+                        for sound in PM.sounds.values {
+                            sound.unsolo()
+                            sound.unmute()
+                        }
+                        PM.seekTo(time: 22.5 /* beginning of the bridge */)
+                    }),
+                    LevelModel.TextStep(text: "Then Theme B starts, themes usually start by priority order. You'll generally remember the Theme A of a song better than Theme B and Theme B better than Theme C and so on, (another difference is that the first themes are generally more played than the other ones, for example in the whole concerto 25 from Mozart, ??? a vérifier). Here Theme B is less melodic and less \"iconic\" than Theme A.", stepAction: {
+                        // reset states
+                        for sound in PM.sounds.values {
+                            sound.unsolo()
+                            sound.unmute()
+                        }
+                        PM.seekTo(time: 52.2 /* beginning of the Theme B */)
+                    }),
+                    LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test."),
+                    LevelModel.TextStep(text: "", stepAction: {
+                        withAnimation {
+                            self.finishedIntroduction = true
+                        }
                     })
                 ]), MM: MM, PM: PM)
                 NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
@@ -103,7 +129,7 @@ struct BoleroLevelTestView: View {
     }
     
     private func setupTutorial(MM: MusiciansManager) async {
-        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int) async {
+        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, color: Musician.SpotlightColor = .blue, handler: ((Sound) -> ())? = nil) async {
             if PM.sounds[songName] == nil {
                 let newMusician = MM.createMusician(index: index)
                 
@@ -120,25 +146,25 @@ struct BoleroLevelTestView: View {
                 
                 switch result {
                 case .success(let sound):
+                    sound.infos.musician = newMusician
+                    sound.infos.musiciansManager = MM
+                    sound.infos.playbackManager = PM
+                    sound.timeHandler = handler
                     newMusician.setSound(sound)
                     newMusician.soundDidChangePlaybackStatus(isPlaying: false)
+                    newMusician.changeSpotlightColor(color: color)
                     sound.delegate = newMusician
                 case .failure(let error):
                     print("Error: \(error)")
                 }
             }
         }
-        
-        await createMusician(withSongName: "BoleroSounds/bolerobassoon.m4a", index: 0)
-        await createMusician(withSongName: "BoleroSounds/boleroclarinet.m4a", index: 1)
-        await createMusician(withSongName: "BoleroSounds/bolerodrum.m4a", index: 2)
-        await createMusician(withSongName: "BoleroSounds/boleroflute.m4a", index: 3)
-        await createMusician(withSongName: "BoleroSounds/bolerohorn.m4a", index: 4)
-        await createMusician(withSongName: "BoleroSounds/bolerooboe.m4a", index: 5)
+                
+        await createMusician(withSongName: "ThemesSounds/mozart25cellandbass.m4a", index: 0, color: .green)
+        await createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, color: .green)
+        await createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, color: .red)
+        await createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, color: .red)
+        await createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, color: .red)
     }
-}
-
-#Preview {
-    BoleroLevelTestView()
 }
 

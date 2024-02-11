@@ -14,6 +14,10 @@ class Sound {
         var soundDuration: Double
         var assetName: String
         var anchorName: String
+        
+        weak var musician: Musician? = nil
+        weak var musiciansManager: MusiciansManager? = nil
+        weak var playbackManager: PlaybackManager? = nil
     }
     
     /// The event that is used to control the basic playback of the sound.
@@ -31,15 +35,27 @@ class Sound {
     /// Infos about the sound, they describe the way the sound is defined in the engine.
     var infos: SoundEventInfos
     
+    /// A handler function that, when set up, will be called multiple times a second.
+    ///
+    /// - Note: This handler can be defined for example if you want the sound to behave in a special way, e.g if the musician's status should change when the sound is playing.
+    var timeHandler: ((Sound) -> ())?
+    
     var delegate: SoundDelegate?
                             
-    init(event: PHASESoundEvent, infos: SoundEventInfos, source: PHASESource, group: PHASEGroup, delegate: SoundDelegate? = nil) {
+    init(event: PHASESoundEvent, infos: SoundEventInfos, source: PHASESource, group: PHASEGroup, timeHandler: ((Sound) -> ())? = nil, delegate: SoundDelegate? = nil) {
         self.event = event
         self.infos = infos
         self.source = source
         self.group = group
         self.timeObserver = SoundPlaybackObserver(soundDuration: infos.soundDuration)
+        self.timeHandler = timeHandler
         self.delegate = delegate
+        
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { [weak self] timer in
+            guard let self = self else { timer.invalidate(); return }
+            
+            self.timeHandler?(self)
+        })
     }
     
     // MARK: Sound's properties

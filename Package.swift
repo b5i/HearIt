@@ -43,6 +43,8 @@ let package = Package(
 		.copy("Resources/kick.m4a"),
 		.copy("Resources/kick2.m4a"),
 		.copy("Resources/TutorialSounds"),
+		.copy("Resources/ThemesSounds"),
+ 		.copy("Resources/BoleroSounds"),
 		.copy("Resources/musicPlayingParticleTexture.png"),
 		.copy("Resources/mutedParticleTexture.png"),
                 .copy("Resources/art.scnassets")

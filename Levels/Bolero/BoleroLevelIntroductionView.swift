@@ -27,15 +27,15 @@ struct BoleroLevelIntroductionView: View {
         } else if let scene = scene, let MM = MM {
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    .init(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."),
-                    .init(text: "Let's me show you an example with this simple music that 4 musicians are playing.", stepAction: {
+                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."),
+                    LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
                         }
                         PM.restartAndSynchronizeSounds()
                     }),
-                    .init(text: "The first thing you hear is definitely the riff of the guitar, it's called the theme or melody of the song. Note that it can be played by more than one instrument.", stepAction: {
+                    LevelModel.TextStep(text: "The first thing you hear is definitely the riff of the guitar, it's called the theme or melody of the song. Note that it can be played by more than one instrument.", stepAction: {
                         // reset states
                         for (key, sound) in PM.sounds {
                             if key.hasPrefix("TutorialSounds/melody") {
@@ -47,7 +47,7 @@ struct BoleroLevelIntroductionView: View {
                         }
                         PM.restartAndSynchronizeSounds()
                     }),
-                    .init(text: "The second element is the accompaniment, here it is composed by a synthesizer and a some notes from a bass, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
+                    LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by a synthesizer and a some notes from a bass, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
                         // reset states
                         for (key, sound) in PM.sounds {
                             if key.hasPrefix("TutorialSounds/accompaniment") {
@@ -59,7 +59,7 @@ struct BoleroLevelIntroductionView: View {
                         }
                         PM.restartAndSynchronizeSounds()
                     }),
-                    .init(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music to support the theme. Note that the bassline can also be played by other instruments than drums/kick.", stepAction: {
+                    LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music to support the theme. Note that the bassline can also be played by other instruments than drums/kick.", stepAction: {
                         // reset states
                         for (key, sound) in PM.sounds {
                             if key.hasPrefix("TutorialSounds/bassline") {
@@ -71,7 +71,8 @@ struct BoleroLevelIntroductionView: View {
                         }
                         PM.restartAndSynchronizeSounds()
                     }),
-                    .init(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
+                    LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test."),
+                    LevelModel.TextStep(text: "", stepAction: {
                         withAnimation {
                             self.finishedIntroduction = true
                         }
@@ -147,7 +148,7 @@ struct BoleroLevelIntroductionView: View {
     }
     
     private func setupTutorial(MM: MusiciansManager) async {
-        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, color: Musician.SpotlightColor = .blue) async {
+        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, color: Musician.SpotlightColor = .blue, handler: ((Sound) -> ())? = nil) async {
             if PM.sounds[songName] == nil {
                 let newMusician = MM.createMusician(index: index)
                 
@@ -164,6 +165,10 @@ struct BoleroLevelIntroductionView: View {
                 
                 switch result {
                 case .success(let sound):
+                    sound.infos.musician = newMusician
+                    sound.infos.musiciansManager = MM
+                    sound.infos.playbackManager = PM
+                    sound.timeHandler = handler
                     newMusician.setSound(sound)
                     newMusician.soundDidChangePlaybackStatus(isPlaying: false)
                     newMusician.changeSpotlightColor(color: color)
@@ -177,7 +182,19 @@ struct BoleroLevelIntroductionView: View {
         //await createMusician(withSongName: "TutorialSounds/la_panterra.mp3", audioLevel: -8, index: 0)
         
         
-        await createMusician(withSongName: "TutorialSounds/melody.m4a", index: 0, color: .blue)
+        await createMusician(withSongName: "TutorialSounds/melody.m4a", index: 0, color: .blue, handler: { sound in
+            guard let musician = sound.infos.musician else { return }
+            
+            let currentTime = sound.timeObserver.currentTime
+            
+            if currentTime < 2, musician.status.spotlightColor != .blue {
+                musician.changeSpotlightColor(color: .blue)
+            } else if currentTime < 4, musician.status.spotlightColor != .red {
+                musician.changeSpotlightColor(color: .red)
+            } else if musician.status.spotlightColor != .green {
+                musician.changeSpotlightColor(color: .green)
+            }
+        })
         await createMusician(withSongName: "TutorialSounds/accompaniment1.m4a", index: 1, color: .green)
         await createMusician(withSongName: "TutorialSounds/accompaniment2.m4a", index: 2, color: .green)
         await createMusician(withSongName: "TutorialSounds/bassline.m4a", index: 3, color: .red)

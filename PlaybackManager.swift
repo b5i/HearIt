@@ -216,11 +216,12 @@ class PlaybackManager: ObservableObject {
                 
                 let result = await event.prepare()
                 
-                
                 if result == .prepared {
+                    soundGroup.gain = 0
                     event.resume()
                     await event.seek(to: 0.0) // avoid a weird crash
                     event.pause()
+                    soundGroup.gain = 1 // avoid having a little noise during the time it resumes, seeks and pauses.
                     handler?(.success(sound))
                 } else {
                     handler?(.failure("Asset preparation failed: \(String(describing: result))"))
@@ -308,14 +309,16 @@ class PlaybackManager: ObservableObject {
         }
         
         Timer.scheduledTimer(withTimeInterval: 0.1 /* lower number => less efficiency */ , repeats: true, block: { [weak self] timer in
-            if self?.currentLoop?.id != loop.id || self == nil {
+            guard let self = self else { timer.invalidate(); return }
+            
+            if self.currentLoop?.id != loop.id {
                 timer.invalidate()
             } else {
-                guard let firstSound = self?.sounds[soundNames?.first ?? UUID().uuidString] ?? self?.sounds.first?.value else { timer.invalidate(); self?.removeLoop(); return }
+                guard let firstSound = self.sounds[soundNames?.first ?? UUID().uuidString] ?? self.sounds.first?.value else { timer.invalidate(); self.removeLoop(); return }
                 guard firstSound.timeObserver.isPlaying else { return /* We don't need to make a system call (costly) to get the current time */ }
                 
                 if firstSound.timeObserver.currentTime >= loop.endTime {
-                    self?.seekTo(time: loop.startTime, soundNames: soundNames)
+                    self.seekTo(time: loop.startTime, soundNames: soundNames)
                 }
             }
         })
@@ -336,7 +339,7 @@ class PlaybackManager: ObservableObject {
             self.objectWillChange.send()
         }
     }
-        
+            
     /// Start the engine.
     private func startEngine() {
         do {
@@ -378,6 +381,9 @@ class PlaybackManager: ObservableObject {
         
         /// Boolean indicating whether the playback should get back to the startTime when the loop is activated.
         let shouldRestart: Bool
+        
+        /// Boolean indicating if the playback can go after the end of the loop, for example when the playing bar's pilule is scrolled after. Setting this option to true will disable the ability to scroll beyond the end of the loop.
+        let lockLoopZone: Bool
     }
     
     private func prepareForDeletion() {

@@ -7,15 +7,6 @@
 
 import SwiftUI
 
-protocol LevelStep {
-    associatedtype Label: View
-    var view: Label { get }
-    
-    var passCondition: (MusiciansManager, PlaybackManager) -> Bool { get }
-    
-    var stepAction: (() -> Void)? { get }
-}
-
 class LevelModel: ObservableObject {
     struct TextStep: LevelStep {
         var view: some View {
@@ -51,15 +42,15 @@ class LevelModel: ObservableObject {
         }
     }
     
-    init(steps: [TextStep]) {
+    init(steps: [any LevelStep]) {
         self.steps = steps
     }
     
-    @Published private var steps: [TextStep]
+    @Published private var steps: [any LevelStep]
     
     @Published private var currentStepIndex: Int = 0
     
-    var currentStep: TextStep? {
+    var currentStep: (any LevelStep)? {
         if self.steps.count > self.currentStepIndex && self.currentStepIndex != -1 {
             return self.steps[currentStepIndex]
         } else {
