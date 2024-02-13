@@ -102,10 +102,10 @@ struct PlayingBarView: View {
     @State private var bars: [Double] = []
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             currentTimeLabel
                 .animation(.spring, value: self.playbackManager.currentLoop == nil)
-                .offset(y: self.playbackManager.currentLoop == nil ? 0 : -10)
+                .offset(y: self.playbackManager.currentLoop == nil ? 0 : -35)
             HStack {
                 playPauseButton
                 GeometryReader { geometry in
@@ -145,17 +145,30 @@ struct PlayingBarView: View {
                                             }
                                             .frame(height: showZoomedInUI ? capsuleSize.height : 0, alignment: .center)
                                             
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(showZoomedInUI ? Color(uiColor: .darkGray) : .gray)
+                                            SegmentedRectangleView(stops: gradientStopsLeading)
+                                                .clipShape(RoundedRectangle(cornerRadius: 10))
                                                 .frame(width: showZoomedInUI ? 0 : sliderValue * self.size.width, height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
-                                                .position(x: showZoomedInUI ? 10 : sliderValue * self.size.width / 2, y: showZoomedInUI ? 25 : 10)
+                                                .position(x: showZoomedInUI ? 0 : sliderValue * self.size.width / 2, y: showZoomedInUI ? 25 : 10)
                                                 .opacity(showZoomedInUI ? 0 : 5)
                                             
+                                            SegmentedRectangleView(stops: gradientStopsTrailing)
+                                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                .frame(width: showZoomedInUI ? 0 : max(geometry.size.width - sliderValue * geometry.size.width + capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
+                                                .position(x: showZoomedInUI ? geometry.size.width : (sliderValue * geometry.size.width + geometry.size.width) / 2, y: showZoomedInUI ? 25 : 10)
+                                                .opacity(showZoomedInUI ? 0 : 5)
+                                            
+                                            /*RoundedRectangle(cornerRadius: 10)
+                                                .fill(showZoomedInUI ? Color(uiColor: .darkGray) : .gray)
+                                                //.fill(showZoomedInUI ? grayGradient : gradient)
+                                                .frame(width: showZoomedInUI ? 0 : sliderValue * self.size.width, height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
+                                                .position(x: showZoomedInUI ? 0 : sliderValue * self.size.width / 2, y: showZoomedInUI ? 25 : 10)
+                                                .opacity(showZoomedInUI ? 0 : 5)
                                             RoundedRectangle(cornerRadius: 10)
                                                 .fill(showZoomedInUI ? Color(uiColor: .darkGray) : .gray)
                                                 .frame(width: showZoomedInUI ? 0 : max(geometry.size.width - sliderValue * geometry.size.width - capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
-                                                .position(x: showZoomedInUI ? geometry.size.width - 10 : (sliderValue * geometry.size.width + capsuleSize.width + geometry.size.width) / 2, y: showZoomedInUI ? 25 : 10)
+                                                .position(x: showZoomedInUI ? geometry.size.width : (sliderValue * geometry.size.width + capsuleSize.width + geometry.size.width) / 2, y: showZoomedInUI ? 25 : 10)
                                                 .opacity(showZoomedInUI ? 0 : 5)
+                                             */
                                         }
                                     })
                                     .position(x: geometry.size.width / 2, y: 0)
@@ -362,6 +375,40 @@ struct PlayingBarView: View {
         }
     }
     
+    struct SegmentedRectangleView: View {
+        let stops: [(percentage: Double, color: Color)]
+        
+        let direction: Direction = .horizontal
+        
+        var body: some View {
+            GeometryReader { geometry in
+                switch direction {
+                case .horizontal:
+                    HStack(spacing: 0) {
+                        ForEach(Array(stops.enumerated()), id: \.offset) { (_, stop) in
+                            Rectangle()
+                                .fill(stop.color)
+                                .frame(width: geometry.size.width * stop.percentage)
+                        }
+                    }
+                case .vertical:
+                    VStack(spacing: 0) {
+                        ForEach(Array(stops.enumerated()), id: \.offset) { (_, stop) in
+                            Rectangle()
+                                .fill(stop.color)
+                                .frame(height: geometry.size.height * stop.percentage)
+                        }
+                    }
+                }
+            }
+        }
+        
+        enum Direction {
+            case horizontal
+            case vertical
+        }
+    }
+    
     struct LoopView: View {
         let geometry: GeometryProxy
         
@@ -370,16 +417,17 @@ struct PlayingBarView: View {
         
         /// Width of the side yellow bars.
         var sideBarsWidth: Double = 7.5
+        
+        @State private var isChangingLeading: Bool = false
+        @State private var isChangingTrailing: Bool = false
                 
         @ObservedObject var soundObserver: Sound.SoundPlaybackObserver
         @ObservedObject var playbackManager: PlaybackManager
         var body: some View {
-            let yellow = Color(uiColor: .systemYellow).opacity(0.8)
+            let yellow = Color(uiColor: .systemYellow)
             
             let loopRectangleSize = CGSize(width: ((self.playbackManager.currentLoop?.endTime ?? 0) - (self.playbackManager.currentLoop?.startTime ?? 0)) / (self.soundObserver.soundDuration + 0.1) * geometry.size.width, height: 20)
-            
-            let blackRectangleSize = CGSize(width: max(loopRectangleSize.width - 2 * sideBarsWidth, 0), height: max(loopRectangleSize.height - topLineHeight, 0))
-            
+                        
             HStack(spacing: 0) {
                 UnevenRoundedRectangle(topLeadingRadius: 5, bottomLeadingRadius: 5, bottomTrailingRadius: 5, topTrailingRadius: 0, style: .continuous)
                     .fill(yellow)
@@ -393,28 +441,44 @@ struct PlayingBarView: View {
                             .gesture(
                                 DragGesture()
                                     .onChanged({ newValue in
+                                        self.isChangingLeading = true
                                         handleLeadingLoopChange(gesture: newValue)
                                     })
                                     .onEnded({ newValue in
+                                        self.isChangingLeading = false
                                         handleLeadingLoopChange(gesture: newValue)
                                     })
                                 )
                     })
+                    .overlay(alignment: .top, content: {
+                        Text(self.playbackManager.currentLoop?.startTime.timestampFormatted() ?? "")
+                            .foregroundStyle(.yellow)
+                            .offset(y: -20)
+                            .frame(width: self.isChangingLeading ? 60 : 0)
+                            .animation(.spring(duration: 0.2), value: self.isChangingLeading) // TODO: Decide if we keep this little animation
+                    })
                 VStack {
-                    Rectangle()
+                    UnevenRoundedRectangle(topLeadingRadius: 5, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: self.playbackManager.currentLoop == nil ? 0 : 5, style: .continuous)
                         .fill(yellow)
-                        .frame(width: blackRectangleSize.width, height: topLineHeight, alignment: .top)
+                        .frame(width: loopRectangleSize.width, height: topLineHeight, alignment: .top)
                     Spacer()
                     
                 }
+                .padding(.leading, self.playbackManager.currentLoop == nil ? 0 : -5) // to compensate the 5 points' corner radius
+                .padding(.trailing, self.playbackManager.currentLoop == nil ? -10 : -5)
+                .animation(.spring, value: self.playbackManager.currentLoop == nil)
                 .frame(height: loopRectangleSize.height)
                 .contentShape(Rectangle())
                 .gesture(
                     DragGesture()
                         .onChanged({ newValue in
-                                handleTopLoopChange(gesture: newValue)
+                            self.isChangingLeading = true
+                            self.isChangingTrailing = true
+                            handleTopLoopChange(gesture: newValue)
                         })
                         .onEnded({ newValue in
+                            self.isChangingLeading = false
+                            self.isChangingTrailing = false
                             handleTopLoopChange(gesture: newValue)
                         })
                 )
@@ -429,12 +493,21 @@ struct PlayingBarView: View {
                             .gesture(
                                 DragGesture()
                                     .onChanged({ newValue in
+                                        self.isChangingTrailing = true
                                         handleTrailingLoopChange(gesture: newValue)
                                     })
                                     .onEnded({ newValue in
+                                        self.isChangingTrailing = false
                                         handleTrailingLoopChange(gesture: newValue)
                                     })
                                 )
+                    })
+                    .overlay(alignment: .top, content: {
+                        Text(self.playbackManager.currentLoop?.endTime.timestampFormatted() ?? "")
+                            .foregroundStyle(.yellow)
+                            .offset(y: -20)
+                            .frame(width: self.isChangingTrailing ? 60 : 0)
+                            .animation(.spring(duration: 0.2), value: self.isChangingTrailing) // TODO: Decide if we keep this little animation and if we align the little text with the bar
                     })
             }
             .frame(width: loopRectangleSize.width)
@@ -480,8 +553,6 @@ struct PlayingBarView: View {
             if gesture.translation.width >= 0 {
                 translationValue = min(soundObserver.soundDuration - currentLoop.endTime, translationValue)
             } else {
-
-                
                 translationValue = max(translationValue, -currentLoop.startTime)
             }
                         
@@ -495,6 +566,182 @@ struct PlayingBarView: View {
             
             self.playbackManager.replaceLoop(by: newLoop)
         }
+    }
+    
+    var gradientStopsLeading: [(Double, Color)] {
+        func handleEditingMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
+            var toReturn: [(Double, Color)] = []
+            
+            let parts = Array(config.songParts.enumerated())
+            let partsCount = parts.count
+            
+            var distanceCounter: Double = 0
+            
+            for (offset, (time, part)) in parts {
+                if time == -1 {
+                    let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
+                    
+                    toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                    break
+                } else {
+                    // normal handling
+                    guard time <= self.soundObserver.soundDuration * self.sliderValue else { break }
+                    if offset != partsCount - 1 {
+                        if parts[offset + 1].element.startTime == -1 {
+                            toReturn.append((1 - distanceCounter, part.getColor()))
+                            break
+                        }
+                        if parts[offset + 1].element.startTime > self.soundObserver.soundDuration * self.sliderValue {
+                            toReturn.append((1 - distanceCounter, part.getColor()))
+                            break
+                        } else {
+                            let distanceFromNext = (parts[offset + 1].element.startTime - time) / (self.soundObserver.soundDuration * self.sliderValue)
+                            
+                            toReturn.append((distanceFromNext, part.getColor()))
+                            
+                            distanceCounter += distanceFromNext
+                        }
+                    } else {
+                        let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
+                        
+                        toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                    }
+                }
+            }
+            
+            return toReturn
+        }
+        
+        func handleNormalMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
+            var toReturn: [(Double, Color)] = []
+            let parts = Array(config.songParts.sorted(by: {$0.0 < $1.0}).enumerated())
+            let partsCount = parts.count
+            
+            var distanceCounter: Double = 0
+            
+            for (offset, (time, part)) in parts {
+                guard time <= self.soundObserver.soundDuration * self.sliderValue else { break }
+                if offset != partsCount - 1 {
+                    if parts[offset + 1].element.startTime > self.soundObserver.soundDuration * self.sliderValue {
+                        toReturn.append((1 - distanceCounter, part.getColor()))
+                        break
+                    } else {
+                        let distanceFromNext = (parts[offset + 1].element.startTime - time) / (self.soundObserver.soundDuration * self.sliderValue)
+                        
+                        toReturn.append((distanceFromNext, part.getColor()))
+                        
+                        distanceCounter += distanceFromNext
+                    }
+                } else {
+                    let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
+                    
+                    toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                }
+            }
+            
+            return toReturn
+        }
+        
+        guard let config = self.playbackManager.currentSongPartsConfiguration else { return [
+            (1, Color(uiColor: .darkGray))] }
+        
+        guard self.sliderValue != 0 else { return [(1, Color(uiColor: .darkGray))] }
+        
+        return config.isEditing ? handleEditingMode(config: config) : handleNormalMode(config: config)
+    }
+    
+    
+    var gradientStopsTrailing: [(Double, Color)] {
+        func handleEditingMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
+            var toReturn: [(Double, Color)] = []
+            
+            let parts = Array(config.songParts.enumerated())
+            let partsCount = parts.count
+            
+            var distanceCounter: Double = 0
+            
+            for (offset, (time, part)) in parts {
+                if time == -1 {
+                    toReturn.append((max(1 - distanceCounter, 0), Color(uiColor: .darkGray)))
+                    break
+                }
+                
+                if offset != partsCount - 1 {
+                    if time < self.soundObserver.soundDuration * self.sliderValue {
+                        if parts[offset + 1].element.startTime >= self.soundObserver.soundDuration * self.sliderValue {
+                            
+                            let distanceFromNext = (parts[offset + 1].element.startTime - self.soundObserver.soundDuration * self.sliderValue) / (self.soundObserver.soundDuration * (1 - self.sliderValue))
+                            
+                            distanceCounter += distanceFromNext
+                            
+                            toReturn.append((distanceFromNext, part.getColor()))
+                        } else {
+                            continue
+                        }
+                    } else {
+                        let distanceFromNext = min((parts[offset + 1].element.startTime - time) / (self.soundObserver.soundDuration * (1 - self.sliderValue)), 1)
+                        
+                        distanceCounter += distanceFromNext
+                        
+                        toReturn.append((distanceFromNext, part.getColor()))
+                    }
+                } else {
+                    if time == -1 {
+                        let distanceOfNextFromCapsule = max(1 - distanceCounter, 0) // should be useless but we never know
+                        
+                        toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                    } else {
+                        let distanceOfNextFromCapsule = max(1 - distanceCounter, 0) // should be useless but we never know
+                        
+                        toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                    }
+                }
+            }
+            
+            return toReturn
+        }
+        
+        func handleNormalMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
+            var toReturn: [(Double, Color)] = []
+            let parts = Array(config.songParts.sorted(by: {$0.0 < $1.0}).enumerated())
+            let partsCount = parts.count
+            
+            var distanceCounter: Double = 0
+            
+            for (offset, (time, part)) in parts {
+                if offset != partsCount - 1 {
+                    if time < self.soundObserver.soundDuration * self.sliderValue {
+                        if parts[offset + 1].element.startTime >= self.soundObserver.soundDuration * self.sliderValue {
+                            // case where the capsule is between two parts
+                            let distanceFromNext = (parts[offset + 1].element.startTime - self.soundObserver.soundDuration * self.sliderValue) / (self.soundObserver.soundDuration * (1 - self.sliderValue))
+                            
+                            distanceCounter += distanceFromNext
+                            
+                            toReturn.append((distanceFromNext, part.getColor()))
+                        } else {
+                            continue
+                        }
+                    } else {
+                        let distanceFromNext = min((parts[offset + 1].element.startTime - time) / (self.soundObserver.soundDuration * (1 - self.sliderValue)), 1)
+                        
+                        distanceCounter += distanceFromNext
+                        
+                        toReturn.append((distanceFromNext, part.getColor()))
+                    }
+                } else {
+                    let distanceOfNextFromCapsule = max(1 - distanceCounter, 0) // should be useless but we never know
+                    
+                    toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                }
+            }
+            
+            return toReturn
+        }
+        
+        guard let config = self.playbackManager.currentSongPartsConfiguration else { return [
+            (1, Color(uiColor: .darkGray))] }
+        
+        return config.isEditing ? handleEditingMode(config: config) : handleNormalMode(config: config)
     }
 }
 

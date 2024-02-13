@@ -122,6 +122,8 @@ struct ActualSceneView: View {
         await createMusician(withSongName: "TutorialSounds/la_panterra.mp3", index: 0)
         
         PM.replaceLoop(by: .init(startTime: 50, endTime: 100, shouldRestart: false, lockLoopZone: false, isEditable: true))
+        
+        PM.changeConfiguration(for: .init(songParts: [(0, .introduction), (20, .themeA), (40, .ending)], isEditing: true))
     }
 }
 struct NonOptionalSceneView: View {

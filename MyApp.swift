@@ -6,7 +6,8 @@ let appName: String = "[name of the app]"
 struct MyApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ActualSceneView()
+            //ContentView()
         }
     }
 }

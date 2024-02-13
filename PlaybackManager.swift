@@ -91,9 +91,11 @@ class PlaybackManager: ObservableObject {
     let listener: PHASEListener
     
     @Published var sounds: [String: Sound] = [:]
-        
-    var currentLoop: LoopEvent? = nil
     
+    @Published private(set) var currentSongPartsConfiguration: SongPartsConfiguration? = nil
+        
+    private(set) var currentLoop: LoopEvent? = nil
+        
     private weak var stopNotificationObserver: NSObjectProtocol?
     
     init() {
@@ -332,6 +334,12 @@ class PlaybackManager: ObservableObject {
         self.update()
     }
     
+    /// Override the current SongPartsConfiguration for a new one, put nil if you want to erase the current configuration.
+    func changeConfiguration(for configuration: SongPartsConfiguration?) {
+        self.currentSongPartsConfiguration = configuration
+        self.update()
+    }
+    
     /// Send the objectWillChange notification.
     func update() {
         DispatchQueue.main.async {
@@ -390,6 +398,23 @@ class PlaybackManager: ObservableObject {
         /// Total duration of the loop.
         var duration: Double {
             return self.endTime - self.startTime
+        }
+    }
+    
+    struct SongPartsConfiguration {
+        typealias StartTime = Double
+        
+        /// If editingMode is on, you should sort by the part in ascending order and set the "unknown" startTime to -1, otherwise it will be sorted by startTime. Editing mode won't care about values that are not -1 and are preceded by -1 value(s).
+        var songParts: [(startTime: StartTime, part: Part)] = []
+        
+        var isEditing: Bool = false
+        
+        enum Part {
+            case themeA, themeB
+            case introduction
+            case ending
+            case bridge
+            case pause
         }
     }
     
