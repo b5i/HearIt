@@ -34,17 +34,6 @@ struct ContentView: View {
         //.globalSpotlight(center: spotlightModel.spotlight?.position, areaRadius: spotlightModel.spotlight?.areaRadius, isEnabled: spotlightModel.isEnabled)
     }
 }
-
-fileprivate extension View {
-    @ViewBuilder func globalSpotlight(center: CGPoint?, areaRadius: CGFloat?, isEnabled: Bool) -> some View {
-        if #available(iOS 17.0, *), let center = center, let areaRadius = areaRadius {
-            self.colorEffect(Shader(function: ShaderFunction(library: ShaderLibrary.bundle(.main), name: "spotlight"), arguments: [.float2(center.x, center.y), .float(areaRadius)]), isEnabled: isEnabled)
-        } else {
-            self
-        }
-    }
-}
-
 extension Notification.Name {
     static let shouldStopEveryEngineNotification: Notification.Name = .init("ShouldStopEveryEngineNotification")
 }

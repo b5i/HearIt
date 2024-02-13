@@ -184,16 +184,13 @@ struct TutorialLevelView: View {
 
 extension View {
     /// Apply a spotlight effect on the view.
-    func spotlight(areaRadius: CGFloat = 10, isEnabled: Bool = true) -> some View {
-        if #available(iOS 17.0, *) {
-            return GeometryReader { geometry in
-                self.onAppear {
-                    SpotlightModel.shared.setNewSpotlight(to: SpotlightModel.Spotlight(position: CGPoint(x: geometry.frame(in: .global).midX, y: geometry.frame(in: .global).midY), areaRadius: areaRadius))
-                    SpotlightModel.shared.setSpotlightActiveStatus(to: isEnabled)
+    func spotlight(type: SpotlightModel.SpotlightType, areaRadius: CGFloat = 10) -> some View {
+        return self.overlay(alignment: .center) {
+            GeometryReader { geometry in
+                Color.clear.onAppear {
+                    SpotlightModel.shared.setSpotlight(withType: type, to: SpotlightModel.Spotlight(position: CGPoint(x: geometry.frame(in: .global).midX, y: geometry.frame(in: .global).midY), areaRadius: areaRadius))
                 }
             }
-        } else {
-            return self
         }
     }
 }

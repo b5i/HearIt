@@ -9,7 +9,7 @@ import SwiftUI
 
 extension PlaybackManager.SongPartsConfiguration.Part {
     func getColor() -> Color {
-        switch self {
+        switch self.type {
         case .themeA:
             return .yellow
         case .themeB:
@@ -22,6 +22,8 @@ extension PlaybackManager.SongPartsConfiguration.Part {
             return .green
         case .pause:
             return .cyan
+        case .custom(color: let color):
+            return Color(cgColor: color)
         }
     }
 }

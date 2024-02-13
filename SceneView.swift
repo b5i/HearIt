@@ -123,7 +123,13 @@ struct ActualSceneView: View {
         
         PM.replaceLoop(by: .init(startTime: 50, endTime: 100, shouldRestart: false, lockLoopZone: false, isEditable: true))
         
-        PM.changeConfiguration(for: .init(songParts: [(0, .introduction), (20, .themeA), (40, .ending)], isEditing: true))
+        PM.changeConfiguration(for: .init(
+            songParts: [
+                .init(startTime: 0, type: .introduction, label: "Intro"),
+                .init(startTime: 40, type: .themeA, label: "Theme A"),
+                .init(startTime: 60, type: .ending, label: "Big pausssssssss")
+            ]
+        ))
     }
 }
 struct NonOptionalSceneView: View {

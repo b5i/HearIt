@@ -24,19 +24,58 @@ struct TwoThemesTestView: View {
             ProgressView()
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
-            VStack {
-                SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "Here is the 20th concerto from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
-                    LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge.", passCondition: { _,_ in
-                        return true
-                    }),
-                    LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
-                        //TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
-                    })
-                ]), MM: MM, PM: PM)
-                NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
-                    .frame(height: geometry.size.height * 0.8)
-            }
+                VStack {
+                    SceneStepsView(levelModel: LevelModel(steps: [
+                        LevelModel.TextStep(text: "Here is the 20th concerto from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
+                        LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge."),
+                        LevelModel.ViewStep(view: {
+                            VStack {
+                                Text("You have access to two buttons, when you think that the song's part changes (i.e Theme A started, bridge started or Theme B started), click on the checkmark button. If you want to reset your last click you can click on the clockwise arrow. The bar will be colored with your selection. Click on the usual arrow to confirm your choice.") // TODO: Find a better explanation and add the possiblity to manually change the selection
+                                HStack {
+                                    Button {
+                                        var newConfig = PM.currentSongPartsConfiguration
+                                        
+                                        if let newStartTime = PM.sounds.values.first?.timeObserver.currentTime, let minusIndex = newConfig?.songParts.firstIndex(where: {$0.startTime == -1}) {
+                                            newConfig?.songParts[minusIndex].startTime = newStartTime
+                                        }
+                                        
+                                        PM.changeConfiguration(for: newConfig)
+                                    } label: {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    //.disabled(PM.currentSongPartsConfiguration?.songParts.contains(where: {$0.startTime == -1}) == false)
+                                    //.id(PM.currentSongPartsConfiguration?.uuid)
+
+                                    Button {
+                                        var newConfig = PM.currentSongPartsConfiguration
+                                        
+                                        if let minusIndex = newConfig?.songParts.firstIndex(where: {$0.startTime != -1 && $0.startTime != 0}) {
+                                            newConfig?.songParts[minusIndex].startTime = -1
+                                        }
+                                        
+                                        PM.changeConfiguration(for: newConfig)
+                                    } label: {
+                                        Image(systemName: "arrow.clockwise")
+                                            .resizable()
+                                            .scaledToFit()
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    //.disabled(PM.currentSongPartsConfiguration?.songParts.contains(where: {$0.startTime != -1 && $0.startTime != 0 /* the first one is always 0*/ }) == false)
+                                    //.id(PM.currentSongPartsConfiguration?.uuid)
+
+                                }
+                            }
+                        }), // TODO: disable the continue button if there still -1 parts
+                        LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
+                            //TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
+                        })
+                    ]), MM: MM, PM: PM)
+                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                        .frame(height: geometry.size.height * 0.8) // TODO: precise here which soundObserver to use
+                }
             .overlay(alignment: .topTrailing, content: {
                 TopTrailingActionsView()
             })
@@ -137,6 +176,13 @@ struct TwoThemesTestView: View {
         await createMusician(withSongName: "ThemesSounds/mozart20piano.m4a", index: 2)
         await createMusician(withSongName: "ThemesSounds/mozart20viola.m4a", index: 3)
         await createMusician(withSongName: "ThemesSounds/mozart20violins.m4a", index: 4)
+        
+        PM.changeConfiguration(for: .init(songParts: [
+            .init(startTime: 0, type: .introduction, label: "Introduction"),
+            .init(startTime: -1, type: .themeA, label: "Theme A"),
+            .init(startTime: -1, type: .bridge, label: "Bridge"),
+            .init(startTime: -1, type: .themeB, label: "Theme B")
+        ]))
     }
 }
 

@@ -10,30 +10,36 @@ import Foundation
 class SpotlightModel: ObservableObject {
     static let shared = SpotlightModel()
     
-    private(set) var spotlight: Spotlight?
-    
-    private(set) var isEnabled: Bool = false
-    
-    func setNewSpotlight(to spotlight: Spotlight?) {
-        self.spotlight = spotlight
+    private(set) var spotlights: [SpotlightType: (spotlight: Spotlight, isEnabled: Bool)] = [:]
         
-        self.isEnabled = spotlight != nil
-        
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-        }
+    func setSpotlight(withType type: SpotlightType, to spotlight: Spotlight) {
+        self.spotlights.updateValue((spotlight, self.spotlights[type]?.isEnabled ?? false), forKey: type)
+                
+        self.update()
     }
     
-    func setSpotlightActiveStatus(to status: Bool) {
-        self.isEnabled = status
+    func setSpotlightActiveStatus(ofType type: SpotlightType, to status: Bool) {
+        self.spotlights[type]?.isEnabled = status
         
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-        }
+        self.update()
     }
     
     struct Spotlight {
         let position: CGPoint
         let areaRadius: CGFloat
+    }
+    
+    enum SpotlightType {
+        case playPause
+        case mute
+        case solo
+        case spotlightChange
+        case door
+    }
+    
+    func update() {
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
     }
 }

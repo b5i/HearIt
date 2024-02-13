@@ -46,6 +46,7 @@ struct TopTrailingActionsView: View {
             }
             .padding()
         }
+        .padding(.top)
     }
     
     class Model {

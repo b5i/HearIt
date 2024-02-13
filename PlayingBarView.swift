@@ -108,6 +108,7 @@ struct PlayingBarView: View {
                 .offset(y: self.playbackManager.currentLoop == nil ? 0 : -35)
             HStack {
                 playPauseButton
+                    .spotlight(type: .playPause, areaRadius: 70)
                 GeometryReader { geometry in
                     let UNUSED_SPACE: Double = Double(geometry.size.width - 2*sidePadding).truncatingRemainder(dividingBy: barSpacing) / 2
                     let bars: [Double] = (0...Int((geometry.size.width - 2*sidePadding) / barSpacing)).map({Double($0) * barSpacing + sidePadding + abs(sidePadding - UNUSED_SPACE) })
@@ -147,7 +148,7 @@ struct PlayingBarView: View {
                                             
                                             SegmentedRectangleView(stops: gradientStopsLeading)
                                                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                                                .frame(width: showZoomedInUI ? 0 : sliderValue * self.size.width, height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
+                                                .frame(width: showZoomedInUI ? 0 : sliderValue * self.size.width + self.capsuleSize.width, height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
                                                 .position(x: showZoomedInUI ? 0 : sliderValue * self.size.width / 2, y: showZoomedInUI ? 25 : 10)
                                                 .opacity(showZoomedInUI ? 0 : 5)
                                             
@@ -376,7 +377,7 @@ struct PlayingBarView: View {
     }
     
     struct SegmentedRectangleView: View {
-        let stops: [(percentage: Double, color: Color)]
+        let stops: [(percentage: Double, color: Color, label: String)]
         
         let direction: Direction = .horizontal
         
@@ -568,43 +569,44 @@ struct PlayingBarView: View {
         }
     }
     
-    var gradientStopsLeading: [(Double, Color)] {
-        func handleEditingMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
-            var toReturn: [(Double, Color)] = []
+    var gradientStopsLeading: [(Double, Color, String)] {
+        func handleEditingMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color, String)] {
+            var toReturn: [(Double, Color, String)] = []
             
             let parts = Array(config.songParts.enumerated())
             let partsCount = parts.count
             
             var distanceCounter: Double = 0
             
-            for (offset, (time, part)) in parts {
+            for (offset, part) in parts {
+                let time = part.startTime
                 if time == -1 {
                     let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
                     
-                    toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                    toReturn.append((distanceOfNextFromCapsule, part.getColor(), part.label))
                     break
                 } else {
                     // normal handling
                     guard time <= self.soundObserver.soundDuration * self.sliderValue else { break }
                     if offset != partsCount - 1 {
                         if parts[offset + 1].element.startTime == -1 {
-                            toReturn.append((1 - distanceCounter, part.getColor()))
+                            toReturn.append((1 - distanceCounter, part.getColor(), part.label))
                             break
                         }
                         if parts[offset + 1].element.startTime > self.soundObserver.soundDuration * self.sliderValue {
-                            toReturn.append((1 - distanceCounter, part.getColor()))
+                            toReturn.append((1 - distanceCounter, part.getColor(), part.label))
                             break
                         } else {
                             let distanceFromNext = (parts[offset + 1].element.startTime - time) / (self.soundObserver.soundDuration * self.sliderValue)
                             
-                            toReturn.append((distanceFromNext, part.getColor()))
+                            toReturn.append((distanceFromNext, part.getColor(), part.label))
                             
                             distanceCounter += distanceFromNext
                         }
                     } else {
                         let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
                         
-                        toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                        toReturn.append((distanceOfNextFromCapsule, part.getColor(), part.label))
                     }
                 }
             }
@@ -612,69 +614,76 @@ struct PlayingBarView: View {
             return toReturn
         }
         
-        func handleNormalMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
-            var toReturn: [(Double, Color)] = []
-            let parts = Array(config.songParts.sorted(by: {$0.0 < $1.0}).enumerated())
-            let partsCount = parts.count
-            
-            var distanceCounter: Double = 0
-            
-            for (offset, (time, part)) in parts {
-                guard time <= self.soundObserver.soundDuration * self.sliderValue else { break }
-                if offset != partsCount - 1 {
-                    if parts[offset + 1].element.startTime > self.soundObserver.soundDuration * self.sliderValue {
-                        toReturn.append((1 - distanceCounter, part.getColor()))
-                        break
-                    } else {
-                        let distanceFromNext = (parts[offset + 1].element.startTime - time) / (self.soundObserver.soundDuration * self.sliderValue)
-                        
-                        toReturn.append((distanceFromNext, part.getColor()))
-                        
-                        distanceCounter += distanceFromNext
-                    }
-                } else {
-                    let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
-                    
-                    toReturn.append((distanceOfNextFromCapsule, part.getColor()))
-                }
-            }
-            
-            return toReturn
-        }
+        /*
+         func handleNormalMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
+         var toReturn: [(Double, Color)] = []
+         let parts = Array(config.songParts.sorted(by: {$0.0 < $1.0}).enumerated())
+         let partsCount = parts.count
+         
+         var distanceCounter: Double = 0
+         
+         for (offset, (time, part)) in parts {
+         guard time <= self.soundObserver.soundDuration * self.sliderValue else { break }
+         if offset != partsCount - 1 {
+         if parts[offset + 1].element.startTime > self.soundObserver.soundDuration * self.sliderValue {
+         toReturn.append((1 - distanceCounter, part.getColor()))
+         break
+         } else {
+         let distanceFromNext = (parts[offset + 1].element.startTime - time) / (self.soundObserver.soundDuration * self.sliderValue)
+         
+         toReturn.append((distanceFromNext, part.getColor()))
+         
+         distanceCounter += distanceFromNext
+         }
+         } else {
+         let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
+         
+         toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+         }
+         }
+         
+         return toReturn
+         }
+         */
         
         guard let config = self.playbackManager.currentSongPartsConfiguration else { return [
-            (1, Color(uiColor: .darkGray))] }
+            (1, Color(uiColor: .darkGray), "")] }
         
-        guard self.sliderValue != 0 else { return [(1, Color(uiColor: .darkGray))] }
+        guard self.sliderValue != 0 else { return [(1, Color(uiColor: .darkGray), "")] }
         
-        return config.isEditing ? handleEditingMode(config: config) : handleNormalMode(config: config)
+        //return config.isEditing ? handleEditingMode(config: config) : handleNormalMode(config: config)
+            return handleEditingMode(config: config)
     }
     
     
-    var gradientStopsTrailing: [(Double, Color)] {
-        func handleEditingMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
-            var toReturn: [(Double, Color)] = []
+    var gradientStopsTrailing: [(Double, Color, String)] {
+        func handleEditingMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color, String)] {
+            var toReturn: [(Double, Color, String)] = []
             
             let parts = Array(config.songParts.enumerated())
             let partsCount = parts.count
             
             var distanceCounter: Double = 0
             
-            for (offset, (time, part)) in parts {
+            for (offset, part) in parts {
+                let time = part.startTime
                 if time == -1 {
-                    toReturn.append((max(1 - distanceCounter, 0), Color(uiColor: .darkGray)))
+                    toReturn.append((max(1 - distanceCounter, 0), Color(uiColor: .darkGray), part.label))
                     break
                 }
                 
                 if offset != partsCount - 1 {
-                    if time < self.soundObserver.soundDuration * self.sliderValue {
+                    if parts[offset + 1].element.startTime == -1 {
+                        toReturn.append((max(1 - distanceCounter, 0), Color(uiColor: .darkGray), part.label))
+                        break
+                    } else if time < self.soundObserver.soundDuration * self.sliderValue {
                         if parts[offset + 1].element.startTime >= self.soundObserver.soundDuration * self.sliderValue {
                             
                             let distanceFromNext = (parts[offset + 1].element.startTime - self.soundObserver.soundDuration * self.sliderValue) / (self.soundObserver.soundDuration * (1 - self.sliderValue))
                             
                             distanceCounter += distanceFromNext
                             
-                            toReturn.append((distanceFromNext, part.getColor()))
+                            toReturn.append((distanceFromNext, part.getColor(), part.label))
                         } else {
                             continue
                         }
@@ -683,17 +692,17 @@ struct PlayingBarView: View {
                         
                         distanceCounter += distanceFromNext
                         
-                        toReturn.append((distanceFromNext, part.getColor()))
+                        toReturn.append((distanceFromNext, part.getColor(), part.label))
                     }
                 } else {
                     if time == -1 {
                         let distanceOfNextFromCapsule = max(1 - distanceCounter, 0) // should be useless but we never know
                         
-                        toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                        toReturn.append((distanceOfNextFromCapsule, part.getColor(), part.label))
                     } else {
                         let distanceOfNextFromCapsule = max(1 - distanceCounter, 0) // should be useless but we never know
                         
-                        toReturn.append((distanceOfNextFromCapsule, part.getColor()))
+                        toReturn.append((distanceOfNextFromCapsule, part.getColor(), part.label))
                     }
                 }
             }
@@ -701,14 +710,16 @@ struct PlayingBarView: View {
             return toReturn
         }
         
+        /*
         func handleNormalMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, Color)] {
             var toReturn: [(Double, Color)] = []
-            let parts = Array(config.songParts.sorted(by: {$0.0 < $1.0}).enumerated())
+            let parts = Array(config.songParts.sorted(by: {$0.startTime < $1.startTime}).enumerated())
             let partsCount = parts.count
             
             var distanceCounter: Double = 0
             
-            for (offset, (time, part)) in parts {
+            for (offset, part) in parts {
+                let time = part.startTime
                 if offset != partsCount - 1 {
                     if time < self.soundObserver.soundDuration * self.sliderValue {
                         if parts[offset + 1].element.startTime >= self.soundObserver.soundDuration * self.sliderValue {
@@ -737,11 +748,13 @@ struct PlayingBarView: View {
             
             return toReturn
         }
+         */
         
         guard let config = self.playbackManager.currentSongPartsConfiguration else { return [
-            (1, Color(uiColor: .darkGray))] }
+            (1, Color(uiColor: .darkGray), "")] }
         
-        return config.isEditing ? handleEditingMode(config: config) : handleNormalMode(config: config)
+        //return config.isEditing ? handleEditingMode(config: config) : handleNormalMode(config: config)
+        return handleEditingMode(config: config)
     }
 }
 
