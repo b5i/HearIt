@@ -25,18 +25,20 @@ struct TwoThemesIntroductionView: View {
         if isLoadingScene {
             ProgressView()
         } else if let scene = scene, let MM = MM {
+            GeometryReader { geometry in
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To distinguish them, compositors usually put a bridge or a little pause between them."),
-                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" around a theme. What he/she actually means is that they recreated a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it."),
-                    LevelModel.TextStep(text: "Let's me show you an example with the 25th concerto from Mozart. I starts with the Theme A played by the violins and the viola.", stepAction: {
+                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To distinguish them each other, compositors usually put a bridge or a little pause between them."),
+                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" around a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it."),
+                    LevelModel.TextStep(text: "Let me show you an example with the 25th symphony from Mozart. I starts with the Theme A played by the violins and the viola.", stepAction: {
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
                         }
                         PM.seekTo(time: 5.6 /* beginning of the Theme A */)
+                        PM.resume()
                     }),
-                    LevelModel.TextStep(text: "Then a bridge follows, it is characterized by the tension it brings and by the fact that it prepares, for example by introducing new instruments, to the next theme. Here, no complex melody is played and all the instruments act as accompaniment ???? à verifier avec Raph.", stepAction: {
+                    LevelModel.TextStep(text: "Then a bridge follows, it is characterized by the tension it brings and by the fact that it prepares, for example by introducing new instruments, to the next theme. In this bridge (all actually) no complex melody is played in th and all the instruments act as accompaniment and the bass (but its not present here) ???? à verifier avec Raph.", stepAction: {
                         // reset states
                         for sound in PM.sounds.values {
                             sound.unsolo()
@@ -44,7 +46,7 @@ struct TwoThemesIntroductionView: View {
                         }
                         PM.seekTo(time: 22.5 /* beginning of the bridge */)
                     }),
-                    LevelModel.TextStep(text: "Then Theme B starts, themes usually start by priority order. You'll generally remember the Theme A of a song better than Theme B and Theme B better than Theme C and so on, (another difference is that the first themes are generally more played than the other ones, for example in the whole concerto 25 from Mozart, ??? a vérifier). Here Theme B is less melodic and less \"iconic\" than Theme A.", stepAction: {
+                    LevelModel.TextStep(text: "Then Theme B starts, themes usually start by priority order. You'll generally remember the Theme A of a song better than Theme B, (another difference is that the first themes are generally more played than the other ones.", stepAction: {
                         // reset states
                         for sound in PM.sounds.values {
                             sound.unsolo()
@@ -60,10 +62,12 @@ struct TwoThemesIntroductionView: View {
                     })
                 ]), MM: MM, PM: PM)
                 NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                    .frame(height: geometry.size.height * 0.8)
             }
             .overlay(alignment: .topTrailing, content: {
                 TopTrailingActionsView()
             })
+        }
         } else {
             Color.clear
                 .onAppear {

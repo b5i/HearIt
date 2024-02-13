@@ -10,6 +10,7 @@ import PHASE
 import SceneKit
 
 struct BoleroLevelIntroductionView: View {
+    
     @StateObject private var PM = PlaybackManager()
         
     @State private var isLoadingScene: Bool = false
@@ -20,69 +21,80 @@ struct BoleroLevelIntroductionView: View {
     @State private var positionObserver: NSKeyValueObservation? = nil
     
     @Binding var finishedIntroduction: Bool
+    
+    @State private var disabledFeatures: DisabledFeatures = 0
         
     var body: some View {
         if isLoadingScene {
             ProgressView()
         } else if let scene = scene, let MM = MM {
-            VStack {
-                SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."),
-                    LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
-                        for sound in PM.sounds.values {
-                            sound.unsolo()
-                            sound.unmute()
-                        }
-                        PM.restartAndSynchronizeSounds()
-                    }),
-                    LevelModel.TextStep(text: "The first thing you hear is definitely the riff of the guitar, it's called the theme or melody of the song. Note that it can be played by more than one instrument.", stepAction: {
-                        // reset states
-                        for (key, sound) in PM.sounds {
-                            if key.hasPrefix("TutorialSounds/melody") {
-                                sound.solo()
-                            } else {
+            GeometryReader { geometry in
+                VStack {
+                    SceneStepsView(levelModel: LevelModel(steps: [
+                        LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."),
+                        LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
+                            self.disabledFeatures = 0
+                            for sound in PM.sounds.values {
                                 sound.unsolo()
+                                sound.unmute()
                             }
-                            sound.unmute()
-                        }
-                        PM.restartAndSynchronizeSounds()
-                    }),
-                    LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by a synthesizer and a some notes from a bass, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
-                        // reset states
-                        for (key, sound) in PM.sounds {
-                            if key.hasPrefix("TutorialSounds/accompaniment") {
-                                sound.solo()
-                            } else {
-                                sound.unsolo()
+                            PM.restartAndSynchronizeSounds()
+                        }),
+                        LevelModel.TextStep(text: "The first thing you hear is definitely the riff of the guitar, it's called the theme or melody of the song. Note that it can be played by more than one instrument.", stepAction: {
+                            self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
+
+                            // reset states
+                            for (key, sound) in PM.sounds {
+                                if key.hasPrefix("TutorialSounds/melody") {
+                                    sound.solo()
+                                } else {
+                                    sound.unsolo()
+                                }
+                                sound.unmute()
                             }
-                            sound.unmute()
-                        }
-                        PM.restartAndSynchronizeSounds()
-                    }),
-                    LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music to support the theme. Note that the bassline can also be played by other instruments than drums/kick.", stepAction: {
-                        // reset states
-                        for (key, sound) in PM.sounds {
-                            if key.hasPrefix("TutorialSounds/bassline") {
-                                sound.solo()
-                            } else {
-                                sound.unsolo()
+                            PM.restartAndSynchronizeSounds()
+                        }),
+                        LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by a synthesizer and a some notes from a bass, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
+                            // reset states
+                            for (key, sound) in PM.sounds {
+                                if key.hasPrefix("TutorialSounds/accompaniment") {
+                                    sound.solo()
+                                } else {
+                                    sound.unsolo()
+                                }
+                                sound.unmute()
                             }
-                            sound.unmute()
-                        }
-                        PM.restartAndSynchronizeSounds()
-                    }),
-                    LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test."),
-                    LevelModel.TextStep(text: "", stepAction: {
-                        withAnimation {
-                            self.finishedIntroduction = true
-                        }
-                    })
-                ]), MM: MM, PM: PM)
-                NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                            PM.restartAndSynchronizeSounds()
+                        }),
+                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music to support the theme. Note that the bassline can also be played by other instruments than drums/kick.", stepAction: {
+                            self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
+                            // reset states
+                            for (key, sound) in PM.sounds {
+                                if key.hasPrefix("TutorialSounds/bassline") {
+                                    sound.solo()
+                                } else {
+                                    sound.unsolo()
+                                }
+                                sound.unmute()
+                            }
+                            PM.restartAndSynchronizeSounds()
+                        }),
+                        LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
+                            self.disabledFeatures = 0
+                        }),
+                        LevelModel.TextStep(text: "", stepAction: {
+                            withAnimation {
+                                self.finishedIntroduction = true
+                            }
+                        })
+                    ]), MM: MM, PM: PM)
+                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM, disabledFeatures: disabledFeatures)
+                        .frame(height: geometry.size.height * 0.8)
+                }
+                .overlay(alignment: .topTrailing, content: {
+                    TopTrailingActionsView()
+                })
             }
-            .overlay(alignment: .topTrailing, content: {
-                TopTrailingActionsView()
-            })
         } else {
             Color.clear
                 .onAppear {
@@ -211,3 +223,42 @@ struct BoleroLevelIntroductionView: View {
     }
 }
 
+enum SceneFeature: UInt8 {
+    case mute = 1
+    case solo = 2
+    case changeSpotlightColor = 4
+    case playAndPause = 8
+    case seek = 16
+    
+    case all = 255
+    
+    static func getFeatures(for flag: UInt8) -> [SceneFeature] {
+        var toReturn: [SceneFeature] = []
+        
+        if flag[0] { toReturn.append(.mute) }
+        if flag[1] { toReturn.append(.solo) }
+        if flag[2] { toReturn.append(.changeSpotlightColor) }
+        if flag[3] { toReturn.append(.playAndPause) }
+        if flag[4] { toReturn.append(.seek) }
+        
+        return toReturn
+    }
+}
+
+extension UInt8 {
+    static let muteFeature: UInt8 = 1
+    static let soloFeature: UInt8 = 2
+    static let changeSpotlightColorFeature: UInt8 = 4
+    static let playAndPauseFeature: UInt8 = 8
+    static let seekFeature: UInt8 = 16
+}
+
+extension UInt8 {
+    func contains(feature: UInt8) -> Bool {
+        return self[feature]
+    }
+    
+    public subscript(index: UInt8) -> Bool {
+        return (self & index != 0)
+    }
+}

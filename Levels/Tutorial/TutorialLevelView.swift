@@ -66,6 +66,7 @@ struct TutorialLevelView: View {
                         })
                     ]), MM: MM, PM: PM)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                        .frame(height: geometry.size.height * 0.8)
                 }
             }
             .overlay(alignment: .topTrailing, content: {
@@ -160,7 +161,7 @@ struct TutorialLevelView: View {
                 }
             }
         }
-        
+                
         await createMusician(withSongName: "TutorialSounds/tutorialkick2.m4a", index: 0)
         await createMusician(withSongName: "TutorialSounds/tutorialhihat2.m4a", index: 1)
         await createMusician(withSongName: "TutorialSounds/tutorialsnare2.m4a", index: 2)
@@ -177,7 +178,7 @@ struct TutorialLevelView: View {
         
         let loopTime = 14.6 // calibrated so there isn't that 2 kicks effect
         
-        PM.replaceLoop(by: .init(startTime: 0, endTime: loopTime, shouldRestart: false, lockLoopZone: true))
+        PM.replaceLoop(by: .init(startTime: 0, endTime: loopTime, shouldRestart: false, lockLoopZone: true, isEditable: false))
     }
 }
 

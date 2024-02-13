@@ -23,21 +23,65 @@ struct BoleroLevelTestView: View {
         if isLoadingScene {
             ProgressView()
         } else if let scene = scene, let MM = MM {
+            GeometryReader { geometry in
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
                     LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly."),
-                    LevelModel.TextStep(text: "Your goal is to find what musician is playing what element, each element can be played by multiple musicians. Good luck! Once you're finished, click on the right arrow to validate your results.", passCondition: { _,_ in
+                    LevelModel.ViewStep(view: {
+                        VStack {
+                            Text("Your goal is to find what musician is playing what element, each element can be played by multiple musicians. To enter your choice, change the color of the musician according to what you think he playing with the color indicated under this text. \n  Once you're finished, click on the right arrow to validate your results. Good luck!")
+                            HStack {
+                                Spacer()
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(.blue)
+                                        .frame(width: 100, height: 40)
+                                    Text("Theme")
+                                        .foregroundStyle(.white)
+                                }
+                                Spacer()
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(.green)
+                                        .frame(width: 180, height: 40)
+                                    Text("Accompaniement")
+                                        .foregroundStyle(.white)
+                                }
+                                Spacer()
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(.red)
+                                        .frame(width: 100, height: 40)
+                                    Text("Bassline")
+                                        .foregroundStyle(.white)
+                                }
+                                Spacer()
+                            }
+                        }
+                    }, passCondition: { mm,_ in
+                        for musician in mm.musicians.values.map({$0.musician}) {
+                            if musician.sound?.infos.assetName.hasPrefix("bolero_theme") == true && musician.status.spotlightColor != .blue {
+                                return false
+                            } else if musician.sound?.infos.assetName.hasPrefix("bolero_bassline") == true && musician.status.spotlightColor != .red {
+                                return false
+                            } else if musician.sound?.infos.assetName.hasPrefix("bolero_accompaniement") == true && musician.status.spotlightColor != .green {
+                                return false
+                            }
+                        }
+                        
                         return true
                     }),
                     LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
-                         TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
+                        TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
                     })
                 ]), MM: MM, PM: PM)
                 NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                    .frame(height: geometry.size.height * 0.8)
             }
             .overlay(alignment: .topTrailing, content: {
                 TopTrailingActionsView()
             })
+        }
         } else {
             Color.clear
                 .onAppear {
@@ -129,12 +173,12 @@ struct BoleroLevelTestView: View {
             }
         }
         
-        await createMusician(withSongName: "BoleroSounds/bolerobassoon.m4a", index: 0)
-        await createMusician(withSongName: "BoleroSounds/boleroclarinet.m4a", index: 1)
-        await createMusician(withSongName: "BoleroSounds/bolerodrum.m4a", index: 2)
-        await createMusician(withSongName: "BoleroSounds/boleroflute.m4a", index: 3)
-        await createMusician(withSongName: "BoleroSounds/bolerohorn.m4a", index: 4)
-        await createMusician(withSongName: "BoleroSounds/bolerooboe.m4a", index: 5)
+        await createMusician(withSongName: "BoleroSounds/bolero_theme_clarinet.m4a", index: 0)
+        await createMusician(withSongName: "BoleroSounds/bolero_bassline_drum.m4a", index: 1)
+        await createMusician(withSongName: "BoleroSounds/bolero_theme_flute.m4a", index: 2)
+        await createMusician(withSongName: "BoleroSounds/bolero_theme_oboe.m4a", index: 3)
+        await createMusician(withSongName: "BoleroSounds/bolero_accompaniement_violin.m4a", index: 4)
+        //await createMusician(withSongName: "BoleroSounds/bolerooboe.m4a", index: 5)
     }
 }
 

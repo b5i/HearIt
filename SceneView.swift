@@ -12,30 +12,44 @@ import PHASE
 
 extension String: Error {}
 
+typealias DisabledFeatures = UInt8
 
 struct ActualSceneView: View {
-    @State private var scene: SCNScene?
+    @StateObject private var PM = PlaybackManager()
+    
     @State private var isLoadingScene: Bool = false
-    
-    @ObservedObject var PM: PlaybackManager
-    
+    @State private var isSceneLoaded: Bool = false
+    @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
     
     @State private var positionObserver: NSKeyValueObservation? = nil
-    
+        
     var body: some View {
-        if let scene = scene, let MM = MM {
-            NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
-        } else if isLoadingScene {
+        if isLoadingScene {
             ProgressView()
+        } else if let scene = scene, let MM = MM {
+            NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
         } else {
-            Color.clear.onAppear {
-                self.isLoadingScene = true
-                self.scene = createScene()
-                self.isLoadingScene = false
-            }
+            Color.clear
+                .onAppear {
+                    if self.scene == nil && !self.isLoadingScene {
+                        self.isLoadingScene = true
+                        let scene = createScene()
+                        self.scene = scene
+                        let manager = MusiciansManager(scene: scene)
+                        self.MM = manager
+                        Task {
+                            await setupTutorial(MM: manager)
+                            DispatchQueue.main.async {
+                                self.isLoadingScene = false
+                                self.isSceneLoaded = true
+                            }
+                        }
+                    }
+                }
         }
     }
+    
     private func createScene() -> SCNScene {
         // create a new scene
         let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
@@ -48,10 +62,10 @@ struct ActualSceneView: View {
         
         // place the camera and observe its position to adapt the listener position in space
         cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { node, _ in
+        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { [weak PM] /* avoid memory leak */ node, _ in
             var matrix = matrix_identity_float4x4
             matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
-            PM.listener.transform = matrix
+            PM?.listener.transform = matrix
         })
         
         // create and add a light to the scene
@@ -77,11 +91,43 @@ struct ActualSceneView: View {
                 
         return scene
     }
+    
+    private func setupTutorial(MM: MusiciansManager) async {
+        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int) async {
+            if PM.sounds[songName] == nil {
+                let newMusician = MM.createMusician(index: index)
+                
+                newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
+                newMusician.node.position = .init(x: 4 * Float(index), y: 0, z: 0)
+                
+                let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
+                distanceParameters.rolloffFactor = 0.5
+                distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
+                
+                
+                
+                let result = await PM.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
+                
+                switch result {
+                case .success(let sound):
+                    newMusician.setSound(sound)
+                    newMusician.soundDidChangePlaybackStatus(isPlaying: false)
+                    sound.delegate = newMusician
+                case .failure(let error):
+                    print("Error: \(error)")
+                }
+            }
+        }
+        
+        await createMusician(withSongName: "TutorialSounds/la_panterra.mp3", index: 0)
+        
+        PM.replaceLoop(by: .init(startTime: 50, endTime: 100, shouldRestart: false, lockLoopZone: false, isEditable: true))
+    }
 }
-
 struct NonOptionalSceneView: View {
     let scene: SCNScene
-    
+    let disabledFeatures: DisabledFeatures
+
     @State private var isStarting: Bool = false
         
     @State private var spotlightIt: Bool = false
@@ -89,15 +135,16 @@ struct NonOptionalSceneView: View {
     @ObservedObject private var MM: MusiciansManager
     @ObservedObject var PM: PlaybackManager
         
-    init(scene: SCNScene, musicianManager: MusiciansManager, playbackManager: PlaybackManager) {
+    init(scene: SCNScene, musicianManager: MusiciansManager, playbackManager: PlaybackManager, disabledFeatures: DisabledFeatures = 0 /* nothing */) {
         self.scene = scene
         self._MM = ObservedObject(wrappedValue: musicianManager)
         self._PM = ObservedObject(wrappedValue: playbackManager)
+        self.disabledFeatures = disabledFeatures
     }
     
     var body: some View {
         SceneViewWrapper(scene: scene, musicianManager: MM)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .takeFullSpace()
             .overlay(alignment: .center, content: {
                 if self.isStarting {
                     ZStack {
@@ -115,6 +162,15 @@ struct NonOptionalSceneView: View {
                         Button("Spotlight") {
                             withAnimation {
                                 spotlightIt.toggle()
+                            }
+                        }
+                        Button("loop") {
+                            withAnimation {
+                                if PM.currentLoop == nil {
+                                    PM.replaceLoop(by: .init(startTime: 0, endTime: 50, shouldRestart: false, lockLoopZone: false, isEditable: true))
+                                } else {
+                                    PM.removeLoop()
+                                }
                             }
                         }
                         /*
@@ -160,11 +216,11 @@ struct NonOptionalSceneView: View {
                          }
                          }
                          */
-                        /*
-                        Button("^") {
+                        
+                        Button("front") {
                             scene.rootNode.getFirstCamera()?.transform.m43 -= 1
                         }
-                        Button("v") {
+                        Button("back") {
                             scene.rootNode.getFirstCamera()?.transform.m43 += 1
                         }
                         Button("down") {
@@ -182,18 +238,18 @@ struct NonOptionalSceneView: View {
                         Button("Synchronize sounds") {
                             PM.restartAndSynchronizeSounds()
                         }
-                         */
+                         
                     }
                     VStack {
                         Spacer()
-                        HStack(alignment: .center) {
-                            ForEach(Array(MM.musicians.values).filter({!$0.musician.status.isHidden}).sorted(by: {$0.index < $1.index}), id: \.index) { (_, musician) in
-                                LittleMusicianView(musician: musician)
-                                    .spotlight(areaRadius: 100, isEnabled: spotlightIt)
-                            }
+                        ForEach(Array(MM.musicians.values).filter({!$0.musician.status.isHidden}).sorted(by: {$0.index < $1.index}), id: \.index) { (_, musician) in
+                            MusicianHeaderView(disabledFeatures: disabledFeatures, musician: musician)
+                            //.spotlight(areaRadius: 100, isEnabled: spotlightIt)
                         }
+                        .horizontallyCentered()
                         if let sound = PM.sounds.first?.value {
                             PlayingBarView(playbackManager: PM, sound: sound, soundObserver: sound.timeObserver)
+                                .disabled(disabledFeatures.contains(feature: .seekFeature))
                             /*
                              PlayingBarView(endOfSlideAction: { newValue in
                              sound.seek(to: newValue * sound.timeObserver.soundDuration)
@@ -257,62 +313,6 @@ struct NonOptionalSceneView: View {
                 .frame(alignment: .bottom)
         }
     }     */
-    
-    private struct LittleMusicianView: View {
-        @ObservedObject var musician: Musician
-        var body: some View {
-            VStack {
-                Image(systemName: self.musician.status.isSpotlightOn ? "figure.wave.circle.fill" : "figure.wave.circle")
-                    .resizable()
-                    .sfReplaceEffect()
-                    .scaledToFit()
-                    .frame(width: 60, height: 60)
-                    .animation(.spring, value: self.musician.status.isSpotlightOn)
-                    .foregroundStyle(Color(cgColor: self.musician.status.spotlightColor.getCGColor()))
-                    .animation(.spring, value: self.musician.status.spotlightColor)
-                    .onTapGesture {
-                        self.musician.goToNextColor()
-                    }
-                HStack(spacing: 10) {
-                    Button {
-                        self.musician.sound?.isMuted.toggle()
-                    } label: {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .foregroundStyle(.white)
-                                .opacity(0.3)
-                                .frame(width: 35, height: 35)
-                            Image(systemName: self.musician.status.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                                .resizable()
-                                .sfReplaceEffect()
-                                .scaledToFit()
-                                .frame(width: 20)
-                                .foregroundStyle(self.musician.status.isMuted ? .red : .white)
-                                .padding(5)
-                        }
-                    }
-                    .frame(width: 35, height: 35)
-                    Button {
-                        self.musician.sound?.isSoloed.toggle()
-                    } label: {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .foregroundStyle(.white)
-                                .opacity(0.3)
-                                .frame(width: 35, height: 35)
-                            Image(systemName: self.musician.status.isSoloed ? "s.circle.fill" : "s.circle")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 20)
-                                .foregroundStyle(self.musician.status.isSoloed ? .yellow : .white)
-                                .padding(5)
-                        }
-                    }
-                    .frame(width: 35, height: 35)
-                }
-            }
-        }
-    }
 
     
     private struct PlaybackProgressView: View {
@@ -337,6 +337,10 @@ struct NonOptionalSceneView: View {
             }
         }
     }
+}
+
+#Preview {
+    TutorialLevelView()
 }
 
 
@@ -420,6 +424,13 @@ extension View {
             return self.contentTransition(.symbolEffect(.replace))
         } else {
             return self
+        }
+    }
+    
+    func takeFullSpace() -> some View {
+        GeometryReader { geometry in
+            self
+                .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
 }

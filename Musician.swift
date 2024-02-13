@@ -205,7 +205,9 @@ class Musician: ObservableObject {
             particleSystem.particleImage = Bundle.main.path(forResource: "musicPlayingParticleTexture", ofType: "png")
         case .muted:
             particleSystem.particleImage = Bundle.main.path(forResource: "mutedParticleTexture", ofType: "png")
+            particleSystem.particleColor = .red
         }
+        
         return particleSystem
     }
     

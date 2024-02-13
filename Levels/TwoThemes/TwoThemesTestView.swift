@@ -23,6 +23,7 @@ struct TwoThemesTestView: View {
         if isLoadingScene {
             ProgressView()
         } else if let scene = scene, let MM = MM {
+            GeometryReader { geometry in
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
                     LevelModel.TextStep(text: "Here is the 20th concerto from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
@@ -30,14 +31,16 @@ struct TwoThemesTestView: View {
                         return true
                     }),
                     LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
-                         //TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
+                        //TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
                     })
                 ]), MM: MM, PM: PM)
                 NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                    .frame(height: geometry.size.height * 0.8)
             }
             .overlay(alignment: .topTrailing, content: {
                 TopTrailingActionsView()
             })
+        }
         } else {
             Color.clear
                 .onAppear {

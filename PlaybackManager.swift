@@ -328,9 +328,8 @@ class PlaybackManager: ObservableObject {
     
     /// Remove the current loop.
     func removeLoop() {
-        DispatchQueue.main.async {
-            self.currentLoop = nil
-        }
+        self.currentLoop = nil
+        self.update()
     }
     
     /// Send the objectWillChange notification.
@@ -368,7 +367,7 @@ class PlaybackManager: ObservableObject {
     
     /// Struct representing a loop in the whole ``PlaybackManager``.
     ///
-    /// - Note: You should not place too close ``PlaybackManager/LoopEvent/startTime`` and ``PlaybackManager/LoopEvent/endTime`` as it could introduce some bugs as some delays might occur in the ``PlaybackManager/engine``.
+    /// - Note: You should not place too close ``PlaybackManager/LoopEvent/startTime`` and ``PlaybackManager/LoopEvent/endTime`` as it could introduce some bugs like delays in the ``PlaybackManager/engine`` or graphical bugs in the PlayingBarView.
     struct LoopEvent {
         /// The unique identifier of the loop, should not be set up anywhere else otherwise the timer that controls the loop might have some unknown behaviors.
         let id = UUID()
@@ -384,6 +383,14 @@ class PlaybackManager: ObservableObject {
         
         /// Boolean indicating if the playback can go after the end of the loop, for example when the playing bar's pilule is scrolled after. Setting this option to true will disable the ability to scroll beyond the end of the loop.
         let lockLoopZone: Bool
+        
+        /// Boolean indicating whether the user can change the loop or not.
+        let isEditable: Bool
+        
+        /// Total duration of the loop.
+        var duration: Double {
+            return self.endTime - self.startTime
+        }
     }
     
     private func prepareForDeletion() {
