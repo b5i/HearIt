@@ -29,6 +29,7 @@ struct SceneStepsView: View {
                                 }
                                 .disabled(!levelModel.previousStepExists)
                                 .opacity(levelModel.previousStepExists ? 1 : 0)
+                                .spotlight(type: .goBackwardArrow, areaRadius: 30)
                             Spacer()
                             Image(systemName: "arrow.forward.circle.fill")
                                 .onTapGesture {
@@ -36,6 +37,7 @@ struct SceneStepsView: View {
                                 }
                                 .disabled(!levelModel.nextStepExists)
                                 .opacity(levelModel.nextStepExists ? 1 : 0)
+                                .spotlight(type: .goForwardArrow, areaRadius: 30)
                         }
                     }
                 }

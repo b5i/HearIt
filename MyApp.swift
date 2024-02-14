@@ -10,7 +10,7 @@ struct MyApp: App {
             //TwoThemesTestView()
             //ActualSceneView()
             ContentView()
-                .globalSpotlight(spotlights: spotlightModel.spotlights)
+                .globalSpotlight()
         }
     }
 }
@@ -23,21 +23,47 @@ fileprivate extension View {
             self
         }
     }
-    @ViewBuilder func globalSpotlight(spotlights: [SpotlightModel.SpotlightType: (spotlight: SpotlightModel.Spotlight, isEnabled: Bool)]) -> some View {
+    @ViewBuilder func globalSpotlight() -> some View {
+        self.modifier(GlobalSpotlightModifier())
+    }
+}
+
+struct GlobalSpotlightModifier: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+    
+    @ObservedObject private var spotlightModel: SpotlightModel = SpotlightModel.shared
+    func body(content: Content) -> some View {
         GeometryReader { geometry in
             ZStack {
                 Rectangle()
-                    .fill(.black)
-                self.mask({
+                    .fill(spotlightModel.isOn ? .black : colorScheme.backgroundColor)
+                content.mask({
                     ZStack {
                         Rectangle()
-                            .opacity(spotlights.values.contains(where: {$0.isEnabled}) ? 0.1 : 1)
-                        ForEach(Array(spotlights.values.enumerated()), id: \.offset) { (_, spotlight) in
+                            .opacity(spotlightModel.spotlights.values.contains(where: {$0.isEnabled}) && spotlightModel.isOn ? 0.1 : 1)
+                        ForEach(Array(spotlightModel.spotlights.enumerated()), id: \.offset) { (_, spotlight) in
                             
-                            let (spotlight, _) = spotlight
+                            let (type, (spotlight, isEnabled)) = spotlight
+                            
+                            var computedIsEnabled: Bool {
+                                switch type {
+                                case .customWithAsset(let name, let assetName):
+                                    if assetName != nil {
+                                        return isEnabled || spotlightModel.spotlights.contains(where: {$0.key == .customWithAsset(name: name, uniqueIdentifier: nil) && $0.value.isEnabled})
+                                    } else { // muteAll like spotlight (it activates the other but doesn't activate itself)
+                                        return false
+                                    }
+                                case .custom:
+                                    return isEnabled
+                                default:
+                                    return isEnabled
+                                }
+                            }
+                            
                             Circle()
                                 .frame(width: spotlight.areaRadius, height: spotlight.areaRadius)
                                 .position(spotlight.position)
+                                .opacity(computedIsEnabled ? 1 : 0)
                         }
                     }
                     .frame(width: geometry.size.width, height: geometry.size.height)

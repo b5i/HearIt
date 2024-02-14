@@ -33,6 +33,8 @@ class LevelModel: ObservableObject {
         var passCondition: (MusiciansManager, PlaybackManager) -> Bool = {_,_  in return true}
         
         /// An action that will be called whenever the step appears. Could be used to set the spotlight position for example.
+        ///
+        /// - Note: Be aware that stepAction will be called before the view appears.
         var stepAction: (() -> Void)?
         
         init(@ViewBuilder view: () -> Content, passCondition: @escaping (MusiciansManager, PlaybackManager) -> Bool = {_,_  in return true}, stepAction: (() -> Void)? = nil) {

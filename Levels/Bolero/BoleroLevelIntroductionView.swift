@@ -31,7 +31,7 @@ struct BoleroLevelIntroductionView: View {
             GeometryReader { geometry in
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."),
+                        LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."), // TODO: à "remanier"
                         LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
                             self.disabledFeatures = 0
                             for sound in PM.sounds.values {
@@ -66,7 +66,8 @@ struct BoleroLevelIntroductionView: View {
                             }
                             PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music to support the theme. Note that the bassline can also be played by other instruments than drums/kick.", stepAction: {
+                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks.", stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
                             // reset states
                             for (key, sound) in PM.sounds {
@@ -81,8 +82,11 @@ struct BoleroLevelIntroductionView: View {
                         }),
                         LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
                             self.disabledFeatures = 0
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
                         }),
                         LevelModel.TextStep(text: "", stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
                             withAnimation {
                                 self.finishedIntroduction = true
                             }

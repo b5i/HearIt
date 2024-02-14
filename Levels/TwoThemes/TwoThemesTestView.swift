@@ -10,6 +10,8 @@ import PHASE
 import SceneKit
 
 struct TwoThemesTestView: View {
+    private let threshold: Double = 5.0
+    
     @StateObject private var PM = PlaybackManager()
         
     @State private var isLoadingScene: Bool = false
@@ -27,7 +29,9 @@ struct TwoThemesTestView: View {
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
                         LevelModel.TextStep(text: "Here is the 20th concerto from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
-                        LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge."),
+                        LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge.", stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                        }),
                         LevelModel.ViewStep(view: {
                             VStack {
                                 Text("You have access to two buttons, when you think that the song's part changes (i.e Theme A started, bridge started or Theme B started), click on the checkmark button. If you want to reset your last click you can click on the clockwise arrow. The bar will be colored with your selection. Click on the usual arrow to confirm your choice.") // TODO: Find a better explanation and add the possiblity to manually change the selection
@@ -46,13 +50,14 @@ struct TwoThemesTestView: View {
                                             .scaledToFit()
                                     }
                                     .frame(width: 40, height: 40)
+                                    .spotlight(type: .addPart, areaRadius: 40)
                                     //.disabled(PM.currentSongPartsConfiguration?.songParts.contains(where: {$0.startTime == -1}) == false)
                                     //.id(PM.currentSongPartsConfiguration?.uuid)
 
                                     Button {
                                         var newConfig = PM.currentSongPartsConfiguration
                                         
-                                        if let minusIndex = newConfig?.songParts.firstIndex(where: {$0.startTime != -1 && $0.startTime != 0}) {
+                                        if let minusIndex = newConfig?.songParts.lastIndex(where: {$0.startTime != -1 && $0.startTime != 0}) {
                                             newConfig?.songParts[minusIndex].startTime = -1
                                         }
                                         
@@ -63,14 +68,54 @@ struct TwoThemesTestView: View {
                                             .scaledToFit()
                                     }
                                     .frame(width: 40, height: 40)
+                                    .spotlight(type: .removeLastPart, areaRadius: 40)
                                     //.disabled(PM.currentSongPartsConfiguration?.songParts.contains(where: {$0.startTime != -1 && $0.startTime != 0 /* the first one is always 0*/ }) == false)
                                     //.id(PM.currentSongPartsConfiguration?.uuid)
 
                                 }
                             }
+                            .onAppear {
+                                print("appear")
+                                SpotlightModel.shared.disactivateAllSpotlights()
+                                SpotlightModel.shared.setSpotlightActiveStatus(ofType: .addPart, to: true)
+                                SpotlightModel.shared.setSpotlightActiveStatus(ofType: .removeLastPart, to: true)
+                            }
+                        }, passCondition: { _, pm in
+                            if let config = pm.currentSongPartsConfiguration {
+                                for part in config.songParts {
+                                    switch part.type {
+                                    case .themeA:
+                                        if abs(part.startTime - 10.0 /*actual startTime*/) > self.threshold {
+                                            return false
+                                        }
+                                    case .themeB:
+                                        if abs(part.startTime - 40.0 /*actual startTime*/) > self.threshold {
+                                            return false
+                                        }
+                                    case .introduction:
+                                        if abs(part.startTime - 0.0 /*actual startTime*/) > self.threshold {
+                                            return false
+                                        }
+                                    case .ending:
+                                        if abs(part.startTime - 55.0 /*actual startTime*/) > self.threshold {
+                                            return false
+                                        }
+                                    case .bridge:
+                                        if abs(part.startTime - 20.0 /*actual startTime*/) > self.threshold {
+                                            return false
+                                        }
+                                    default:
+                                        break
+                                    }
+                                }
+                                
+                                return true
+                            } else {
+                                return true
+                            }
                         }), // TODO: disable the continue button if there still -1 parts
                         LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
-                            //TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
+                            SpotlightModel.shared.disactivateAllSpotlights()
                         })
                     ]), MM: MM, PM: PM)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
@@ -184,6 +229,12 @@ struct TwoThemesTestView: View {
             .init(startTime: -1, type: .themeB, label: "Theme B")
         ]))
     }
+}
+
+extension SpotlightModel.SpotlightType {
+    static let addPart: SpotlightModel.SpotlightType = .custom(name: "addPart")
+    
+    static let removeLastPart: SpotlightModel.SpotlightType = .custom(name: "removeLastPart")
 }
 
 #Preview {

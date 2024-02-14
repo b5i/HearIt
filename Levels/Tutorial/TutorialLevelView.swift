@@ -26,15 +26,27 @@ struct TutorialLevelView: View {
             GeometryReader { geometry in
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "Welcome in \(appName)! To begin I'll teach you the basic controls that you have over the app: \n To go to the next instruction, click on the circled arrow at your right. \n If you can't find it, do a long press on the light bulb at the top right, it will highlight the right button."),
+                        LevelModel.TextStep(text: "Welcome in \(appName)! To begin I'll teach you the basic controls that you have over the app: \n To go to the next instruction, click on the circled arrow at your right. \n If you can't find it, do a long press on the light bulb at the top right, it will highlight the right button.", stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .lightBulb, to: true)
+                        }),
                         LevelModel.TextStep(text: "Let's start with the basics playback controls of the app. For the music to start playing, click on the rectangular button next to the timeline and its orange cursor.", passCondition: { mm, pm in
                             return pm.sounds.first?.value.timeObserver.isPlaying ?? false // - TODO: maybe set true as default value
+                        }, stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .playPause, to: true)
                         }),
-                        LevelModel.TextStep(text: "Great! You can now hear a little melody, to move forward or backwards in it, move the orange cursor to the time you want to listen to. If you move slowly, the bar will become bigger and let you select the precise second that you want to listen to."),
+                        LevelModel.TextStep(text: "Great! You can now hear a little melody, to move forward or backwards in it, move the orange cursor to the time you want to listen to. If you move slowly, the bar will become bigger and let you select the precise second that you want to listen to.", stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .playbackCapsule, to: true)
+                        }),
                         LevelModel.TextStep(text: "Let's move on to the controls that you have over the musician, you can mute and unmute the musician by clicking on the speaker icon under the musician or directly by clicking on the musician. Mute him to go to the next step.", passCondition: { mm, pm in
                             let sound = MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialkick2"})?.value.musician.sound
                             return sound?.isMuted ?? false
                         }, stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .mute(assetName: "tutorialkick2"), to: true) // TODO: as there's multiple mute buttons, check if the spotlight is at the correct spot
+                            
                             MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.sound?.mute()
                             
                             MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.hide()
@@ -47,7 +59,10 @@ struct TutorialLevelView: View {
                             let sound = MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialkick2"})?.value.musician.sound
                             return !(sound?.isMuted ?? false) && (sound?.isSoloed ?? false)
                         }, stepAction: {
-                            // TODO: add some other musicians
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .solo(assetName: "tutorialkick2"), to: true)
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .mute(assetName: "tutorialkick2"), to: true)
+                            
                             MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.sound?.unmute()
                             
                             MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialhihat2"})?.value.musician.show()
@@ -60,9 +75,13 @@ struct TutorialLevelView: View {
                             return MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialkick2"})?.value.musician.status.spotlightColor == .green
                         }, stepAction: {
                             TopTrailingActionsView.Model.shared.unlockedLevel = nil
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .spotlightChange(assetName: "tutorialkick2"), to: true)
                         }),
                         LevelModel.TextStep(text: "Congrats you finished the tutorial phase and you now know everything about the controls of the app. To quit this tutorial, click on the opened door at the top right next to the light bulb button.", stepAction: {
                             TopTrailingActionsView.Model.shared.unlockedLevel = .boleroTheme
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .door, to: true)
                         })
                     ]), MM: MM, PM: PM)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
@@ -179,19 +198,6 @@ struct TutorialLevelView: View {
         let loopTime = 14.6 // calibrated so there isn't that 2 kicks effect
         
         PM.replaceLoop(by: .init(startTime: 0, endTime: loopTime, shouldRestart: false, lockLoopZone: true, isEditable: false))
-    }
-}
-
-extension View {
-    /// Apply a spotlight effect on the view.
-    func spotlight(type: SpotlightModel.SpotlightType, areaRadius: CGFloat = 10) -> some View {
-        return self.overlay(alignment: .center) {
-            GeometryReader { geometry in
-                Color.clear.onAppear {
-                    SpotlightModel.shared.setSpotlight(withType: type, to: SpotlightModel.Spotlight(position: CGPoint(x: geometry.frame(in: .global).midX, y: geometry.frame(in: .global).midY), areaRadius: areaRadius))
-                }
-            }
-        }
     }
 }
 

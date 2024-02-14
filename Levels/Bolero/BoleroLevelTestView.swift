@@ -26,10 +26,12 @@ struct BoleroLevelTestView: View {
             GeometryReader { geometry in
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly."),
+                    LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly.", stepAction: {
+                        SpotlightModel.shared.disactivateAllSpotlights()
+                    }),
                     LevelModel.ViewStep(view: {
                         VStack {
-                            Text("Your goal is to find what musician is playing what element, each element can be played by multiple musicians. To enter your choice, change the color of the musician according to what you think he playing with the color indicated under this text. \n  Once you're finished, click on the right arrow to validate your results. Good luck!")
+                            Text("Your goal is to find what musician is playing what element, each element can be played by multiple musicians at the same time. To enter your choice, change the color of the musician according to what you think he playing with the color indicated under this text. \n  Once you're finished, click on the right arrow to validate your results. Good luck!") // TODO: "remanier"
                             HStack {
                                 Spacer()
                                 ZStack {
@@ -70,8 +72,14 @@ struct BoleroLevelTestView: View {
                         }
                         
                         return true
+                    }, stepAction: {
+                        SpotlightModel.shared.disactivateAllSpotlights()
+                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
+                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .allSpotlightChanges, to: true)
                     }),
                     LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
+                        SpotlightModel.shared.disactivateAllSpotlights()
+                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .door, to: true)
                         TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
                     })
                 ]), MM: MM, PM: PM)

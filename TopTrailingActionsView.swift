@@ -21,7 +21,7 @@ struct TopTrailingActionsView: View {
              .frame(width: 30, height: 30)
              .foregroundStyle(colorScheme.textColor)
              }*/
-            Image(systemName: SM.isEnabled ? "lightbulb.max.fill" : "lightbulb")
+            Image(systemName: SM.isOn ? "lightbulb.max.fill" : "lightbulb")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 30, height: 30)
@@ -29,12 +29,13 @@ struct TopTrailingActionsView: View {
                 .gesture(
                     DragGesture(minimumDistance: 0.0) // infinite time longpressgesture
                         .onChanged({ currentValue in
-                            SM.setSpotlightActiveStatus(to: true)
+                            SM.turnOnSpotlight()
                         })
                         .onEnded({ _ in
-                            SM.setSpotlightActiveStatus(to: false)
+                            SM.turnOffSpotlight()
                         })
                 )
+                .spotlight(type: .lightBulb, areaRadius: 50)
             Button {
                 LevelsManager.shared.returnToLevelsView(unlockingLevel: Model.shared.unlockedLevel) // TODO: add a confirmation dialog
             } label: {
@@ -45,6 +46,7 @@ struct TopTrailingActionsView: View {
                     .foregroundStyle(.red)
             }
             .padding()
+            .spotlight(type: .door, areaRadius: 50)
         }
         .padding(.top)
     }

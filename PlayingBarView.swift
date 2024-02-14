@@ -186,6 +186,7 @@ struct PlayingBarView: View {
                                                 //sliderValue = min(sliderValue + 1, self.size.width)
                                             }
                                         })
+                                        .spotlight(type: .playbackCapsule, areaRadius: 50, customPosition: (self.showZoomedInUI ? self.zoomedInSliderValue * self.size.width + geometry.frame(in: .global).minX : sliderValue * self.size.width + geometry.frame(in: .global).minX, nil))
                                 } else { // no haptic feedback \:
                                     RoundedRectangle(cornerRadius: 10)
                                         .fill(.orange)
@@ -198,7 +199,7 @@ struct PlayingBarView: View {
                                                 //sliderValue = min(sliderValue + 1, self.size.width)
                                             }
                                         })
-                                    
+                                        .spotlight(type: .playbackCapsule, areaRadius: 50, customPosition: (self.showZoomedInUI ? self.zoomedInSliderValue * self.size.width + geometry.frame(in: .global).minX : sliderValue * self.size.width + geometry.frame(in: .global).minX, nil))
                                 }
                             }
                             .onAppear {

@@ -28,9 +28,9 @@ struct TwoThemesIntroductionView: View {
             GeometryReader { geometry in
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To distinguish them each other, compositors usually put a bridge or a little pause between them."),
-                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" around a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it."),
-                    LevelModel.TextStep(text: "Let me show you an example with the 25th symphony from Mozart. I starts with the Theme A played by the violins and the viola.", stepAction: {
+                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To distinguish them each other, compositors usually put a bridge (a moment with no melody, just the accompaniment//// and maybe a bassline) or a little pause between them."),
+                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" on a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it."),
+                    LevelModel.TextStep(text: "Let me show you an example with the 25th symphony from Mozart. I starts with the Theme A played by the violins and the viola.", stepAction: { // TODO: commencer avec le concerto 20, mettre pause avec la touche space
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
@@ -47,6 +47,7 @@ struct TwoThemesIntroductionView: View {
                         PM.seekTo(time: 22.5 /* beginning of the bridge */)
                     }),
                     LevelModel.TextStep(text: "Then Theme B starts, themes usually start by priority order. You'll generally remember the Theme A of a song better than Theme B, (another difference is that the first themes are generally more played than the other ones.", stepAction: {
+                        SpotlightModel.shared.disactivateAllSpotlights()
                         // reset states
                         for sound in PM.sounds.values {
                             sound.unsolo()
@@ -54,8 +55,12 @@ struct TwoThemesIntroductionView: View {
                         }
                         PM.seekTo(time: 52.2 /* beginning of the Theme B */)
                     }),
-                    LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test."),
+                    LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
+                        SpotlightModel.shared.disactivateAllSpotlights()
+                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .door, to: true)
+                    }),
                     LevelModel.TextStep(text: "", stepAction: {
+                        SpotlightModel.shared.disactivateAllSpotlights()
                         withAnimation {
                             self.finishedIntroduction = true
                         }
@@ -164,11 +169,18 @@ struct TwoThemesIntroductionView: View {
             }
         }
                 
-        await createMusician(withSongName: "ThemesSounds/mozart25cellandbass.m4a", index: 0, color: .green)
+        await createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, color: .green)
         await createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, color: .green)
         await createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, color: .red)
         await createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, color: .red)
         await createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, color: .red)
+        PM.changeConfiguration(for: .init(songParts: [
+            .init(startTime: 0.0, type: .introduction, label: "Introduction"),
+            .init(startTime: 5.6, type: .themeA, label: "Theme A"),
+            .init(startTime: 17.2, type: .bridge, label: "Bridge"),
+            .init(startTime: 40.2, type: .themeB, label: "Theme B")
+        ]))
+        // a verifier avec raph
     }
 }
 
