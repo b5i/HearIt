@@ -12,16 +12,22 @@ struct MusicianHeaderView: View {
     
     @ObservedObject var musician: Musician
     var body: some View {
-        VStack {
-            SpotlightColorButton(isDisabled: disabledFeatures.contains(feature: .changeSpotlightColorFeature), musician: musician)
-                .spotlight(type: .spotlightChange(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 60)
-            HStack(spacing: 10) {
-                MuteButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
-                    .spotlight(type: .mute(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
-                SoloButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
-                    .spotlight(type: .solo(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
+        ZStack {
+            RoundedRectangle(cornerRadius: 15)
+                .stroke(lineWidth: 3)
+            VStack {
+                SpotlightColorButton(isDisabled: disabledFeatures.contains(feature: .changeSpotlightColorFeature), musician: musician)
+                    .spotlight(type: .spotlightChange(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 60)
+                HStack(spacing: 10) {
+                    MuteButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
+                        .spotlight(type: .mute(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
+                    SoloButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
+                        .spotlight(type: .solo(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
+                }
             }
+            .padding()
         }
+        .frame(width: 100, height: 140)
     }
     
     struct SpotlightColorButton: View {

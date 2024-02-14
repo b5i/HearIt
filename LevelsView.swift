@@ -12,7 +12,7 @@ struct LevelsView: View {
     
     //@State private var selection: NavigationModel.Level = LevelsManager.shared.levelSelection
     
-    @ObservedObject private var LM = LevelsManager.shared
+    @ObservedObject private var LM = LevelsManager.shared    
     var body: some View {
         // - TODO: Remove that log function when finished
         Self._printChanges()
@@ -46,10 +46,12 @@ struct LevelsView: View {
                                     Line()
                                         .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
                                         .fill(colorScheme.textColor)
+                                        //.foregroundStyle(colorScheme.textColor)
                                         .frame(width: geometry.size.width * 0.4, height: 1)
                                     RoundedRectangle(cornerRadius: 20)
                                         .foregroundStyle(colorScheme.textColor)
-                                        .frame(width: LM.unlockedLevels[levels[offset]] ?? 0 > 1 ? geometry.size.width * 0.4 : 0, height: 11)
+                                        .frame(width: LM.unlockedLevels[levels[offset]] ?? 0 > 1 ? geometry.size.width * 0.40 : 0, height: 10.5)
+                                        .offset(x: 5, y: -1) // fix little visual bug
                                 }
                                 .verticallyCentered()
                                 .opacity(LM.levelStarted ? 0 : 1)
@@ -63,12 +65,12 @@ struct LevelsView: View {
                             }
                             .opacity(LM.levelStarted ? 0 : 8)
                             .frame(width: geometry.size.width * 0.2)
+                            
                             if offset == lastLevelIndex {
                                 Spacer()
                                     .frame(width: geometry.size.width * 0.4)
                                     .opacity(LM.levelStarted ? 0 : 1)
                             } else {
-                                
                                 ZStack(alignment: .leading) {
                                     Line()
                                         .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
@@ -76,7 +78,8 @@ struct LevelsView: View {
                                         .frame(width: geometry.size.width * 0.4, height: 1)
                                     RoundedRectangle(cornerRadius: 20)
                                         .foregroundStyle(colorScheme.textColor)
-                                        .frame(width: LM.unlockedLevels[levels[offset + 1]] ?? 0 > 0 ? geometry.size.width * 0.4 : 0, height: 11)
+                                        .frame(width: LM.unlockedLevels[levels[offset + 1]] ?? 0 > 0 ? geometry.size.width * 0.4 : 0, height: 10.5)
+                                        .offset(x: -5, y: -1) // fix little visual bug
                                 }
                                 .verticallyCentered()
                                 .opacity(LM.levelStarted ? 0 : 1)
@@ -94,11 +97,17 @@ struct LevelsView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .overlay(alignment: .bottom, content: {
                     HStack {
+                        Button("Home") {
+                            NavigationModel.shared.currentStep = .homeScreen
+                        }
                         Button("Reset") {
                             LM.reset()
                         }
                         Button("Unlock tutorial") {
                             LM.unlockLevel(.boleroTheme)
+                        }
+                        Button("Unlock sec") {
+                            LM.unlockLevel(.twoThemes)
                         }
                     }
                     .opacity(LM.levelStarted ? 0 : 1)
@@ -132,3 +141,4 @@ extension View {
         }
     }
 }
+

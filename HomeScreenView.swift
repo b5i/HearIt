@@ -8,7 +8,7 @@
 import SwiftUI
 import AVKit
 
-struct HomeScreenView: View {
+struct HomeScreenView: View {    
     @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         ZStack {
@@ -19,8 +19,9 @@ struct HomeScreenView: View {
             VStack {
                 Text(appName)
                     .foregroundStyle(colorScheme.textColor)
-                    .font(.largeTitle)
+                    .font(.system(size: 100))
                     .bold()
+                    .padding()
                 Spacer()
                 HStack(spacing: 30) {
                     Image(systemName: "airpodsmax")
@@ -28,7 +29,7 @@ struct HomeScreenView: View {
                         .foregroundStyle(colorScheme.textColor)
                         .scaledToFit()
                         .frame(width: 50, height: 50)
-                    Image(systemName: "airpods.gen3") // check spatial audio compatiblity
+                    Image(systemName: "airpods.gen3")
                         .resizable()
                         .foregroundStyle(colorScheme.textColor)
                         .scaledToFit()
@@ -45,14 +46,13 @@ struct HomeScreenView: View {
                         .frame(width: 50, height: 50)
                 }
                 .padding()
-                Text("For a better audio experience, connect this device to a Spatial Audio compatible device like AirPods.")
+                Text("For an enhanced audio experience, connect this device to a compatible Spatial Audio device such as AirPods.")
                     .foregroundStyle(colorScheme.textColor)
                     .multilineTextAlignment(.center)
                     .frame(width: 300)
                 
                 AirPlayButton(color: colorScheme.textColor == .white ? .white : .black)
                     .scaledToFit()
-                    .blendMode(.screen)
                     .frame(width: 50)
                 
                 Spacer()
@@ -65,8 +65,8 @@ struct HomeScreenView: View {
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(colorScheme.textColor, style: StrokeStyle(lineWidth: 3))
                             .foregroundStyle(colorScheme.backgroundColor)
-                            //.stroke(colorScheme.textColor, style: StrokeStyle(lineWidth: 3))
-                            //.fill(colorScheme.backgroundColor)
+                        //.stroke(colorScheme.textColor, style: StrokeStyle(lineWidth: 3))
+                        //.fill(colorScheme.backgroundColor)
                         Text("Start")
                             .foregroundStyle(colorScheme.textColor)
                             .bold()
@@ -77,8 +77,4 @@ struct HomeScreenView: View {
             }
         }
     }
-}
-
-#Preview {
-    HomeScreenView()
 }

@@ -100,7 +100,7 @@ struct PlayingBarView: View {
     @Namespace private var animation
     
     @State private var bars: [Double] = []
-
+    
     var body: some View {
         VStack(spacing: 0) {
             currentTimeLabel
@@ -148,14 +148,14 @@ struct PlayingBarView: View {
                                             
                                             SegmentedRectangleView(stops: gradientStopsLeading)
                                                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                                                .frame(width: showZoomedInUI ? 0 : sliderValue * self.size.width + self.capsuleSize.width, height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
-                                                .position(x: showZoomedInUI ? 0 : sliderValue * self.size.width / 2, y: showZoomedInUI ? 25 : 10)
+                                                .frame(width: showZoomedInUI ? 0 : max(sliderValue * size.width + capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
+                                                .position(x: showZoomedInUI ? 0 : sliderValue * size.width / 2, y: showZoomedInUI ? 25 : 10)
                                                 .opacity(showZoomedInUI ? 0 : 5)
                                             
                                             SegmentedRectangleView(stops: gradientStopsTrailing)
                                                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                                                .frame(width: showZoomedInUI ? 0 : max(geometry.size.width - sliderValue * geometry.size.width + capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
-                                                .position(x: showZoomedInUI ? geometry.size.width : (sliderValue * geometry.size.width + geometry.size.width) / 2, y: showZoomedInUI ? 25 : 10)
+                                                .frame(width: showZoomedInUI ? 0 : max(size.width - sliderValue * size.width + capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
+                                                .position(x: showZoomedInUI ? size.width : (sliderValue * size.width + size.width) / 2, y: showZoomedInUI ? 25 : 10)
                                                 .opacity(showZoomedInUI ? 0 : 5)
                                             
                                             /*RoundedRectangle(cornerRadius: 10)
@@ -220,6 +220,7 @@ struct PlayingBarView: View {
                         self.bars = bars
                     }
                 }
+                loopButton
             }
         }
         .padding(10)
@@ -288,6 +289,66 @@ struct PlayingBarView: View {
         .padding(.horizontal)
     }
     
+    var loopButton: some View {
+        HStack {
+            Button {
+                if let currentLoop = playbackManager.currentLoop, currentLoop.isEditable {
+                    self.playbackManager.removeLoop()
+                } else {
+                    let potentialLoopEnd = sliderValue * soundObserver.soundDuration + 20
+                    if potentialLoopEnd > soundObserver.soundDuration {
+                        self.playbackManager.replaceLoop(by: .init(startTime: soundObserver.soundDuration - 20, endTime: soundObserver.soundDuration, shouldRestart: false, lockLoopZone: false, isEditable: true))
+                    } else {
+                        self.playbackManager.replaceLoop(by: .init(startTime: potentialLoopEnd - 20, endTime: potentialLoopEnd, shouldRestart: false, lockLoopZone: true, isEditable: true))
+                    }
+                }
+            } label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .foregroundStyle(self.playbackManager.currentLoop == nil ? .white.opacity(0.3) : .yellow)
+                        .frame(width: 55)
+                    Image(systemName: self.playbackManager.currentLoop == nil ? "repeat.circle" : "repeat.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30)
+                        .foregroundStyle(self.playbackManager.currentLoop == nil ? .yellow : .black)
+                        .padding(10)
+                }
+                .animation(nil, value: self.playbackManager.currentLoop == nil)
+            }
+            .frame(width: 55)
+            .spotlight(type: .loopActivation, areaRadius: 55)
+            .disabled(playbackManager.currentLoop?.isEditable == false)
+            VStack {
+                Image(systemName: (self.playbackManager.currentLoop?.lockLoopZone ?? true) ? "lock.fill" : "lock.open.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .sfReplaceEffect()
+                    .foregroundStyle(.white)
+                    .frame(width: 20, height: 20)
+                    .onTapGesture {
+                        if let currentLoop = playbackManager.currentLoop, currentLoop.isEditable {
+                            let newLoop = PlaybackManager.LoopEvent.init(startTime: currentLoop.startTime, endTime: currentLoop.endTime, shouldRestart: false, lockLoopZone: !currentLoop.lockLoopZone, isEditable: true)
+                            self.playbackManager.replaceLoop(by: newLoop)
+                        }
+                    }
+                    .disabled(!(self.playbackManager.currentLoop?.isEditable ?? false))
+                    .spotlight(type: .loopLock, areaRadius: 30)
+                Image(systemName: (self.playbackManager.currentLoop?.isEditable ?? true) ? "pencil" : "pencil.slash")
+                    .resizable()
+                    .scaledToFit()
+                    .sfReplaceEffect()
+                    .foregroundStyle((self.playbackManager.currentLoop?.isEditable ?? true) ? .white : .red)
+                    .frame(width: 20, height: 20)
+                    .spotlight(type: .loopEditability, areaRadius: 30)
+            }
+            .padding()
+        }
+        .frame(height: zoomedInHeight)
+        .padding(.horizontal)
+        .animation(.spring, value: playbackManager.currentLoop == nil)
+    }
+    
     func handleBeginningSwipe(gesture: DragGesture.Value, bars: [Double]) {
         if !self.isSliding {
             self.isSliding = true
@@ -295,12 +356,32 @@ struct PlayingBarView: View {
         if self.showZoomedInUI {
             handleSwipe(gesture: gesture, bars: bars)
         } else if velocityThreshold >= abs(gesture.velocity.width) {
-            self.sliderValue = min(max(gesture.location.x, 0) / self.size.width, 1)
+            let shouldTakeCareOfLoop = self.playbackManager.currentLoop?.lockLoopZone == true
+            
+            let potentialSliderValue = min(max(gesture.location.x, 0) / self.size.width, 1)
+            
+            if shouldTakeCareOfLoop {
+                let endOfLoopValue = (self.playbackManager.currentLoop?.endTime ?? self.soundObserver.soundDuration) / self.soundObserver.soundDuration
+                self.sliderValue = min(endOfLoopValue, potentialSliderValue)
+            } else {
+                self.sliderValue = potentialSliderValue
+            }
+            
             if self.timeSinceVelocityCheck == nil {
                 self.timeSinceVelocityCheck = Double(mach_absolute_time()) / 10_000_000
             }
         } else {
-            self.sliderValue = min(max(gesture.location.x, 0) / self.size.width, 1)
+            let shouldTakeCareOfLoop = self.playbackManager.currentLoop?.lockLoopZone == true
+            
+            let potentialSliderValue = min(max(gesture.location.x, 0) / self.size.width, 1)
+            
+            if shouldTakeCareOfLoop {
+                let endOfLoopValue = (self.playbackManager.currentLoop?.endTime ?? self.soundObserver.soundDuration) / self.soundObserver.soundDuration
+                self.sliderValue = min(endOfLoopValue, potentialSliderValue)
+            } else {
+                self.sliderValue = potentialSliderValue
+            }
+            
             self.timeSinceVelocityCheck = nil
         }
     }
@@ -433,8 +514,10 @@ struct PlayingBarView: View {
             HStack(spacing: 0) {
                 UnevenRoundedRectangle(topLeadingRadius: 5, bottomLeadingRadius: 5, bottomTrailingRadius: 5, topTrailingRadius: 0, style: .continuous)
                     .fill(yellow)
-                    .animation(nil, value: loopRectangleSize)
+                    //.animation(self.soundObserver.currentTime == 0 ? nil : .spring, value: loopRectangleSize)
+                    //.animation(nil, value: loopRectangleSize)
                     .frame(width: sideBarsWidth, height: loopRectangleSize.height)
+                    //.animation(nil, value: loopRectangleSize)
                     .overlay(alignment: .center, content: { // have a greater hitbox
                         Rectangle()
                             .fill(.clear)
@@ -449,6 +532,9 @@ struct PlayingBarView: View {
                                     .onEnded({ newValue in
                                         self.isChangingLeading = false
                                         handleLeadingLoopChange(gesture: newValue)
+                                        if let currentLoop = playbackManager.currentLoop, soundObserver.currentTime >= currentLoop.endTime {
+                                            self.playbackManager.seekTo(time: currentLoop.startTime)
+                                        }
                                     })
                                 )
                     })
@@ -482,6 +568,10 @@ struct PlayingBarView: View {
                             self.isChangingLeading = false
                             self.isChangingTrailing = false
                             handleTopLoopChange(gesture: newValue)
+                            
+                            if let currentLoop = playbackManager.currentLoop, soundObserver.currentTime >= currentLoop.endTime {
+                                self.playbackManager.seekTo(time: currentLoop.startTime)
+                            }
                         })
                 )
                 UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 5, bottomTrailingRadius: 5, topTrailingRadius: 5, style: .continuous)
@@ -501,6 +591,10 @@ struct PlayingBarView: View {
                                     .onEnded({ newValue in
                                         self.isChangingTrailing = false
                                         handleTrailingLoopChange(gesture: newValue)
+                                        
+                                        if let currentLoop = playbackManager.currentLoop, soundObserver.currentTime >= currentLoop.endTime {
+                                            self.playbackManager.seekTo(time: currentLoop.startTime)
+                                        }
                                     })
                                 )
                     })

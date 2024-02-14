@@ -174,7 +174,14 @@ class Sound {
             }
         }
         
-        let soundDuration: Double
+        var soundDuration: Double {
+            return actualSoundDuration * Double(durationMultiplier)
+        }
+        
+        private let actualSoundDuration: Double
+        
+        /// Multiplier that will mulitply itself to the actualSoundDuration to give the soundDuration.
+        var durationMultiplier: UInt = 1
         
         private(set) var isPlaying: Bool = false
 
@@ -187,7 +194,7 @@ class Sound {
         private var updateTimer: AnyCancellable?
         
         init(soundDuration: Double) {
-            self.soundDuration = soundDuration
+            self.actualSoundDuration = soundDuration
             self.updateTimer = Timer.publish(every: 0.1, on: .main, in: .default)
                                     .autoconnect()
                                     .sink(receiveValue: { _ in

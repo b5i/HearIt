@@ -135,6 +135,9 @@ struct ActualSceneView: View {
 struct NonOptionalSceneView: View {
     let scene: SCNScene
     let disabledFeatures: DisabledFeatures
+    
+    /// Will try to take observe the playback of the song that has this string as assetName
+    let soundToObserveName: String?
 
     @State private var isStarting: Bool = false
         
@@ -143,11 +146,12 @@ struct NonOptionalSceneView: View {
     @ObservedObject private var MM: MusiciansManager
     @ObservedObject var PM: PlaybackManager
         
-    init(scene: SCNScene, musicianManager: MusiciansManager, playbackManager: PlaybackManager, disabledFeatures: DisabledFeatures = 0 /* nothing */) {
+    init(scene: SCNScene, musicianManager: MusiciansManager, playbackManager: PlaybackManager, disabledFeatures: DisabledFeatures = 0 /* nothing */, soundToObserveName: String? = nil) {
         self.scene = scene
         self._MM = ObservedObject(wrappedValue: musicianManager)
         self._PM = ObservedObject(wrappedValue: playbackManager)
         self.disabledFeatures = disabledFeatures
+        self.soundToObserveName = soundToObserveName
     }
     
     var body: some View {
@@ -255,8 +259,17 @@ struct NonOptionalSceneView: View {
                             //.spotlight(areaRadius: 100, isEnabled: spotlightIt)
                         }
                         .horizontallyCentered()
-                        if let sound = PM.sounds.first?.value {
-                            PlayingBarView(playbackManager: PM, sound: sound, soundObserver: sound.timeObserver)
+                        .padding(40)
+                        var soundToUse: Sound? {
+                            if let soundToObserveName = soundToObserveName, let sound = PM.sounds.first(where: {$0.value.infos.assetName == soundToObserveName})?.value {
+                                return sound
+                            } else {
+                                return PM.sounds.first?.value
+                            }
+                        }
+                        
+                        if let soundToUse = soundToUse {
+                            PlayingBarView(playbackManager: PM, sound: soundToUse, soundObserver: soundToUse.timeObserver)
                                 .disabled(disabledFeatures.contains(feature: .seekFeature))
                             /*
                              PlayingBarView(endOfSlideAction: { newValue in
@@ -288,6 +301,7 @@ struct NonOptionalSceneView: View {
                          }
                          */
                     }
+                    .padding(.bottom)
                 }
             }
     }

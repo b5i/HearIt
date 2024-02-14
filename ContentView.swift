@@ -3,11 +3,12 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject private var spotlightModel = SpotlightModel.shared
     @ObservedObject private var NM = NavigationModel.shared
+    
     var body: some View {
         switch NM.currentStep {
         case .homeScreen:
             HomeScreenView()
-                .animation(.bouncy, value: NM.currentStep == .homeScreen)
+                //.animation(.bouncy, value: NM.currentStep == .homeScreen)
                 .transition(.move(edge: .top))
         case .levelsView:
             LevelsView()

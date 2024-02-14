@@ -58,6 +58,9 @@ class SpotlightModel: ObservableObject {
         case door
         case lightBulb
         case playbackCapsule
+        case loopActivation
+        case loopLock
+        case loopEditability
         case goForwardArrow
         case goBackwardArrow
         
