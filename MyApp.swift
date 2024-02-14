@@ -10,6 +10,7 @@ struct MyApp: App {
             //TwoThemesTestView()
             //ActualSceneView()
             ContentView()
+            //ARTestView2()
                 .globalSpotlight()
         }
     }

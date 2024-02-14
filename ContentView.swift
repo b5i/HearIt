@@ -37,4 +37,6 @@ struct ContentView: View {
 }
 extension Notification.Name {
     static let shouldStopEveryEngineNotification: Notification.Name = .init("ShouldStopEveryEngineNotification")
+    
+    static let shouldStopAREngine: Notification.Name = .init("ShouldStopAREngine")
 }

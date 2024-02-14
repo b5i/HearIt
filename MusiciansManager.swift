@@ -24,7 +24,7 @@ class MusiciansManager: ObservableObject {
         musicians.updateValue((index, musician), forKey: name)
         musician.setMuteStatus(isMuted: musician.status.isMuted)
         
-        scene.rootNode.addChildNode(musician.node)
+        scene.rootNode.childNodes.first?.addChildNode(musician.node)
         
         return musician
     }
@@ -33,12 +33,12 @@ class MusiciansManager: ObservableObject {
         return musicians.first(where: {$0.value.musician.node == node})?.value.musician
     }
     
-    func updateCanBeHeardStatus() {
+    func updateMusicianParticles(isAROn: Bool? = nil) {
         for musician in self.musicians.values.map({$0.musician}) {
             if musician.status.isStopped {
                 musician.hideParticles()
             } else {
-                musician.showParticles(canBeHeard: self.musicianCanBeHeard(musician: musician))
+                musician.showParticles(canBeHeard: self.musicianCanBeHeard(musician: musician), isAROn: isAROn ?? ARManager.shared.isAROn)
             }
         }
     }

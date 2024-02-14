@@ -31,6 +31,9 @@ let package = Package(
                 .landscapeRight,
                 .landscapeLeft,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+            ],
+            capabilities: [
+                .camera(purposeString: "To display the alternative AR experience of the app!")
             ]
         )
     ],
@@ -38,15 +41,15 @@ let package = Package(
         .executableTarget(
             name: "AppModule",
             path: ".",
-	    resources: [
-		.copy("Resources/getPath"),
-		.copy("Resources/kick.m4a"),
-		.copy("Resources/kick2.m4a"),
-		.copy("Resources/TutorialSounds"),
-		.copy("Resources/ThemesSounds"),
- 		.copy("Resources/BoleroSounds"),
-		.copy("Resources/musicPlayingParticleTexture.png"),
-		.copy("Resources/mutedParticleTexture.png"),
+            resources: [
+                .copy("Resources/getPath"),
+                .copy("Resources/kick.m4a"),
+                .copy("Resources/kick2.m4a"),
+                .copy("Resources/TutorialSounds"),
+                .copy("Resources/ThemesSounds"),
+                .copy("Resources/BoleroSounds"),
+                .copy("Resources/musicPlayingParticleTexture.png"),
+                .copy("Resources/mutedParticleTexture.png"),
                 .copy("Resources/art.scnassets")
             ]
         )

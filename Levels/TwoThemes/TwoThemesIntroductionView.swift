@@ -99,11 +99,15 @@ struct TwoThemesIntroductionView: View {
         // create a new scene
         let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
         
+        let secondRootNote = SCNNode()
+        
+        scene.rootNode.addChildNode(secondRootNote)
+        
         // create and add a camera to the scene
         let cameraNode = SCNNode()
         cameraNode.name = "WWDC24-Camera"
         cameraNode.camera = SCNCamera()
-        scene.rootNode.addChildNode(cameraNode)
+        secondRootNote.addChildNode(cameraNode)
         
         // place the camera and observe its position to adapt the listener position in space
         cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
@@ -119,20 +123,20 @@ struct TwoThemesIntroductionView: View {
         lightNode.light!.type = .omni
         lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
         lightNode.light?.intensity = 100
-        scene.rootNode.addChildNode(lightNode)
+        secondRootNote.addChildNode(lightNode)
         
         let spotlightLightNode = SCNNode()
         spotlightLightNode.light = SCNLight()
         spotlightLightNode.light?.type = .spot
         spotlightLightNode.light?.intensity = 1000
-        scene.rootNode.addChildNode(spotlightLightNode)
+        secondRootNote.addChildNode(spotlightLightNode)
         
         // create and add an ambient light to the scene
         let ambientLightNode = SCNNode()
         ambientLightNode.light = SCNLight()
         ambientLightNode.light!.type = .ambient
         ambientLightNode.light!.color = UIColor.darkGray
-        scene.rootNode.addChildNode(ambientLightNode)
+        secondRootNote.addChildNode(ambientLightNode)
                 
         return scene
     }

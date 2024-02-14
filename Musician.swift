@@ -59,20 +59,20 @@ class Musician: ObservableObject {
     
     func setSoloStatus(isSoloed: Bool) {
         self.status.isSoloed = isSoloed
-        self.manager.updateCanBeHeardStatus()
+        self.manager.updateMusicianParticles()
         self.update()
     }
     
-    func showParticles(canBeHeard: Bool? = nil) {
+    func showParticles(canBeHeard: Bool? = nil, isAROn: Bool? = nil) {
         if !self.status.isStopped {
             self.node.removeAllParticleSystems()
             
             if let canBeHeard = canBeHeard {
-                self.node.addParticleSystem(createParticleSystem(type: canBeHeard ? .musicPlaying : .muted))
+                self.node.addParticleSystem(createParticleSystem(type: canBeHeard ? .musicPlaying : .muted, isAROn: isAROn ?? ARManager.shared.isAROn))
             } else {
                 
                 // set up all the particles
-                self.node.addParticleSystem(createParticleSystem(type: manager.musicianCanBeHeard(musician: self) ? .musicPlaying : .muted))
+                self.node.addParticleSystem(createParticleSystem(type: manager.musicianCanBeHeard(musician: self) ? .musicPlaying : .muted, isAROn: isAROn ?? ARManager.shared.isAROn))
             }
         }
     }
@@ -190,15 +190,15 @@ class Musician: ObservableObject {
         }
     }
 
-    private func createParticleSystem(type: ParticleSystem) -> SCNParticleSystem {
+    private func createParticleSystem(type: ParticleSystem, isAROn: Bool) -> SCNParticleSystem {
         let particleSystem = SCNParticleSystem()
         particleSystem.birthRate = 4
-        particleSystem.particleSize = 0.3
+        particleSystem.particleSize = isAROn ? 0.03 : 0.3
         particleSystem.particleSizeVariation = 0
         particleSystem.emissionDuration = 1.5
         particleSystem.loops = true
         particleSystem.particleLifeSpan = 1.2
-        particleSystem.particleVelocity = 8
+        particleSystem.particleVelocity = isAROn ? 0.8 : 8
         particleSystem.birthDirection = .constant // .random
         switch type {
         case .musicPlaying:

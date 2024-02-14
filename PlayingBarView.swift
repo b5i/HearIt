@@ -11,6 +11,7 @@ struct PlayingBarView: View {
     let playbackManager: PlaybackManager
     let sound: Sound
     @ObservedObject var soundObserver: Sound.SoundPlaybackObserver
+    @ObservedObject private var DOM = DeviceOrientationModel.shared
     
     //var endOfSlideAction: (_ sliderValue: Double) -> () // action that will be called when the user stops scrolling
     //var endOfZoomAction: (_ sliderValue: Double, _ zoomedInSliderValue: Double) -> () // action that will be called when the zoomed in UI disappear
@@ -96,10 +97,13 @@ struct PlayingBarView: View {
     @State private var timeWhenStartedSliding: Double = 0.0
     @State private var zoomedInSliderValue: Double = 0.5 // middle of the screen
     @State private var startedWithZoomedInSliderValue: Double = 0.5
-    
+        
     @Namespace private var animation
     
     @State private var bars: [Double] = []
+    
+    // - MARK: Loop button propreties
+    @State private var loopButtonShakes: CGFloat = 0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -205,6 +209,7 @@ struct PlayingBarView: View {
                             .onAppear {
                                 self.size = geometry.size
                             }
+                            .id(DOM.orientation) // so geometry.size is updated
                         }
                         .gesture(
                             DragGesture(minimumDistance: 10)
@@ -236,6 +241,7 @@ struct PlayingBarView: View {
                     if animatedIsSliding {
                         Text("\(potentialNewTime.timestampFormatted())")
                             .foregroundStyle(.yellow)
+                            .fixedSize(horizontal: true, vertical: false) // avoid having "..." instead of the actual number
                             .animation(.spring, value: self.animatedIsSliding)
                             .matchedGeometryEffect(id: "yellowTextPlayingBar", in: self.animation)
                     } else {
@@ -249,6 +255,7 @@ struct PlayingBarView: View {
                     } else {
                         Text("\(self.soundObserver.currentTime.timestampFormatted())")
                             .foregroundStyle(.white)
+                            .fixedSize(horizontal: true, vertical: false)
                             .animation(.spring, value: self.animatedIsSliding)
                             .matchedGeometryEffect(id: "yellowTextPlayingBar", in: self.animation)
                     }
@@ -292,8 +299,14 @@ struct PlayingBarView: View {
     var loopButton: some View {
         HStack {
             Button {
-                if let currentLoop = playbackManager.currentLoop, currentLoop.isEditable {
-                    self.playbackManager.removeLoop()
+                if let currentLoop = playbackManager.currentLoop {
+                    if currentLoop.isEditable {
+                        self.playbackManager.removeLoop()
+                    } else {
+                        withAnimation {
+                            self.loopButtonShakes += 2
+                        }
+                    }
                 } else {
                     let potentialLoopEnd = sliderValue * soundObserver.soundDuration + 20
                     if potentialLoopEnd > soundObserver.soundDuration {
@@ -318,7 +331,7 @@ struct PlayingBarView: View {
             }
             .frame(width: 55)
             .spotlight(type: .loopActivation, areaRadius: 55)
-            .disabled(playbackManager.currentLoop?.isEditable == false)
+            .shake(with: loopButtonShakes)
             VStack {
                 Image(systemName: (self.playbackManager.currentLoop?.lockLoopZone ?? true) ? "lock.fill" : "lock.open.fill")
                     .resizable()

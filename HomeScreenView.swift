@@ -46,7 +46,7 @@ struct HomeScreenView: View {
                         .frame(width: 50, height: 50)
                 }
                 .padding()
-                Text("For an enhanced audio experience, connect this device to a compatible Spatial Audio device such as AirPods.")
+                Text("For an enhanced audio experience, connect this device to a compatible Spatial Audio device such as AirPods. If you don't connect this device to anything make sure that silent mode is off.")
                     .foregroundStyle(colorScheme.textColor)
                     .multilineTextAlignment(.center)
                     .frame(width: 300)

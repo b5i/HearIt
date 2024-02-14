@@ -54,11 +54,15 @@ struct ActualSceneView: View {
         // create a new scene
         let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
         
+        let secondRootNote = SCNNode()
+        
+        scene.rootNode.addChildNode(secondRootNote)
+        
         // create and add a camera to the scene
         let cameraNode = SCNNode()
         cameraNode.name = "WWDC24-Camera"
         cameraNode.camera = SCNCamera()
-        scene.rootNode.addChildNode(cameraNode)
+        secondRootNote.addChildNode(cameraNode)
         
         // place the camera and observe its position to adapt the listener position in space
         cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
@@ -74,20 +78,20 @@ struct ActualSceneView: View {
         lightNode.light!.type = .omni
         lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
         lightNode.light?.intensity = 100
-        scene.rootNode.addChildNode(lightNode)
+        secondRootNote.addChildNode(lightNode)
         
         let spotlightLightNode = SCNNode()
         spotlightLightNode.light = SCNLight()
         spotlightLightNode.light?.type = .spot
         spotlightLightNode.light?.intensity = 1000
-        scene.rootNode.addChildNode(spotlightLightNode)
+        secondRootNote.addChildNode(spotlightLightNode)
         
         // create and add an ambient light to the scene
         let ambientLightNode = SCNNode()
         ambientLightNode.light = SCNLight()
         ambientLightNode.light!.type = .ambient
         ambientLightNode.light!.color = UIColor.darkGray
-        scene.rootNode.addChildNode(ambientLightNode)
+        secondRootNote.addChildNode(ambientLightNode)
                 
         return scene
     }
@@ -155,7 +159,7 @@ struct NonOptionalSceneView: View {
     }
     
     var body: some View {
-        SceneViewWrapper(scene: scene, musicianManager: MM)
+        SceneOptionalARWrapper(scene: scene, musicianManager: MM, playbackManager: PM)
             .takeFullSpace()
             .overlay(alignment: .center, content: {
                 if self.isStarting {
@@ -365,6 +369,28 @@ struct NonOptionalSceneView: View {
     TutorialLevelView()
 }
 
+struct SceneOptionalARWrapper: View {
+    let scene: SCNScene
+    let musicianManager: MusiciansManager
+    let playbackManager: PlaybackManager
+    
+    @ObservedObject private var ARM: ARManager = .shared
+    var body: some View {
+        Group {
+            if ARM.isAROn {
+                ARSceneView(scene: scene, musicianManager: musicianManager, playbackManager: playbackManager)
+            } else {
+                SceneViewWrapper(scene: scene, musicianManager: musicianManager)
+            }
+        }
+        .onAppear {
+            ARM.setup(MM: musicianManager, PM: playbackManager)
+        }
+        .onDisappear {
+            ARM.reset()
+        }
+    }
+}
 
 struct SceneViewWrapper: UIViewControllerRepresentable {
     typealias UIViewControllerType = SceneViewController
