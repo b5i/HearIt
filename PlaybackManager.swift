@@ -6,8 +6,9 @@
 //
 
 import PHASE
+import CoreMotion
 
-class PlaybackManager: ObservableObject {
+class PlaybackManager: NSObject, ObservableObject {
     //static let shared = PlaybackManager()
     
     struct SoundCharacteristic {
@@ -90,20 +91,48 @@ class PlaybackManager: ObservableObject {
     let engine: PHASEEngine
     let listener: PHASEListener
     
+    private let headphonesManager: CMHeadphoneMotionManager
+    
     @Published var sounds: [String: Sound] = [:]
     
     @Published private(set) var currentSongPartsConfiguration: SongPartsConfiguration? = nil
         
     private(set) var currentLoop: LoopEvent? = nil
         
-    private weak var stopNotificationObserver: NSObjectProtocol?
+    private weak var stopNotificationObserver: NSObjectProtocol? = nil
     
-    init() {
+    private var headphoneAvailabilityObserver: NSKeyValueObservation? = nil
+    
+    private var headphoneTrackingObserver: NSKeyValueObservation? = nil
+    
+    private(set) var headphonesPosition: CMRotationMatrix? = nil
+    
+    override init() {
         self.engine = PHASEEngine(updateMode: .automatic)
         self.listener = PHASEListener(engine: self.engine)
         self.listener.transform = matrix_identity_float4x4
         try! self.engine.rootObject.addChild(self.listener) // todo: remove that force unwrap
+                        
+        self.headphonesManager = CMHeadphoneMotionManager()
+        super.init()
         
+        self.headphonesManager.delegate = self
+                        
+        if self.headphonesManager.isDeviceMotionAvailable, CMHeadphoneMotionManager.requestAuthorizationStatus() == .authorized {
+            self.startHeadphoneTrackingObservation()
+        }
+        
+        self.headphoneAvailabilityObserver = self.headphonesManager.observe(\.isDeviceMotionAvailable, changeHandler: { [weak self] manager, _ in
+            guard let self = self else { manager.stopDeviceMotionUpdates(); return }
+            if self.headphonesManager.isDeviceMotionAvailable, CMHeadphoneMotionManager.authorizationStatus() == .authorized {
+                if self.headphoneTrackingObserver == nil {
+                    self.startHeadphoneTrackingObservation()
+                }
+            } else {
+                self.stopHeadphoneTrackingObservation()
+            }
+        })
+                
         self.engine.defaultReverbPreset = .largeChamber
         self.startEngine()
         
@@ -445,17 +474,67 @@ class PlaybackManager: ObservableObject {
             self.stopNotificationObserver = nil
             NotificationCenter.default.removeObserver(stopNotificationObserver)
         }
+        self.stopHeadphoneTrackingObservation()
+        self.headphoneAvailabilityObserver?.invalidate()
     }
         
     deinit {
         self.prepareForDeletion()
-        print("deinited")
     }
+}
+
+extension PlaybackManager: CMHeadphoneMotionManagerDelegate {
+    func startHeadphoneTrackingObservation() {
+        self.headphonesManager.startDeviceMotionUpdates(to: .main, withHandler: { newValue, _ in
+            self.headphonesPosition = newValue?.attitude.rotationMatrix
+        })
+    }
+    
+    func stopHeadphoneTrackingObservation() {
+        if self.headphonesManager.isDeviceMotionActive {
+            self.headphonesManager.stopDeviceMotionUpdates()
+        }
+        self.headphoneTrackingObserver?.invalidate()
+    }
+    
+    func headphoneMotionManagerDidDisconnect(_ manager: CMHeadphoneMotionManager) {
+        self.headphonesPosition = nil
+    }
+    
 }
 
 extension simd_float4x4 {
     init(position: simd_float3) {
         self = matrix_identity_float4x4
         self.columns.3 = simd_float4(position, 1)
+    }
+}
+
+extension CMRotationMatrix {
+    func toSIMDMatrix() -> simd_float4x4 {
+        var returnMatrix = matrix_identity_float4x4
+        returnMatrix.columns.0 = .init(Float(self.m11), Float(self.m12), Float(self.m13), 0)
+        returnMatrix.columns.1 = .init(Float(self.m21), Float(self.m22), Float(self.m23), 0)
+        returnMatrix.columns.2 = .init(Float(self.m31), Float(self.m32), Float(self.m33), 0)
+        return returnMatrix
+    }
+}
+
+extension CMHeadphoneMotionManager {
+    static func requestAuthorizationStatus() -> CMAuthorizationStatus {
+        // little hacky but it works as expected
+        
+        var tempManager: CMHeadphoneMotionManager? = .init()
+        
+        CMHeadphoneMotionManager.authorizationStatus()
+        tempManager?.startDeviceMotionUpdates()
+        tempManager?.stopDeviceMotionUpdates()
+        tempManager = nil
+        
+        while CMHeadphoneMotionManager.authorizationStatus() == .notDetermined {
+            sleep(1)
+        }
+        
+        return CMHeadphoneMotionManager.authorizationStatus()
     }
 }

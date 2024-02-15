@@ -14,6 +14,8 @@ class ARManager: ObservableObject {
     
     static let shared = ARManager()
     
+    static let ARScale: Float = 0.1
+    
     private var MM: MusiciansManager?
     
     private var PM: PlaybackManager?
@@ -41,11 +43,29 @@ class ARManager: ObservableObject {
         self.update()
         
         if newStatus {
-            MM?.scene.rootNode.getAllMusicianChildren().forEach({$0.scale = .init(x: 0.005, y: 0.005, z: 0.005); $0.position.x /= 10; $0.position.y /= 10; $0.position.z /= 10 }) // TODO: Check if there's a method to reduce the FOV of the camera to avoid dealing with that kind of things
+            MM?.scene.rootNode.getAllMusicianChildren().forEach({
+                $0.scale.x *= Self.ARScale
+                $0.scale.y *= Self.ARScale
+                $0.scale.z *= Self.ARScale
+                
+                $0.position.x *= Self.ARScale
+                $0.position.y *= Self.ARScale
+                $0.position.z *= Self.ARScale
+            }) // TODO: Check if there's a method to reduce the FOV of the camera to avoid dealing with that kind of thing
+            PM?.sounds.values.forEach({$0.position *= Self.ARScale})
         } else {
             NotificationCenter.default.post(name: .shouldStopAREngine, object: nil)
             MM?.scene.background.contents = CGColor(red: 0, green: 0, blue: 0, alpha: 1) // to remove the last frame from the camera
-            MM?.scene.rootNode.getAllMusicianChildren().forEach({$0.scale = .init(x: 0.05, y: 0.05, z: 0.05); $0.position.x *= 10; $0.position.y *= 10; $0.position.z *= 10 })
+            MM?.scene.rootNode.getAllMusicianChildren().forEach({
+                $0.scale.x /= Self.ARScale
+                $0.scale.y /= Self.ARScale
+                $0.scale.z /= Self.ARScale
+                
+                $0.position.x /= Self.ARScale
+                $0.position.y /= Self.ARScale
+                $0.position.z /= Self.ARScale
+            })
+            PM?.sounds.values.forEach({$0.position /= Self.ARScale})
             MM?.scene.rootNode.childNodes.first?.position = .init(0, 0, 0)
         }
         

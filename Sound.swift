@@ -167,9 +167,9 @@ class Sound {
         var currentTime: Double {
             get {
                 if self.startedAt != -1 {
-                    return self.secondsPlayed + max((Double(Date().timeIntervalSince1970) - self.startedAt), 0) * self.rate
+                    return (self.secondsPlayed + max((Double(Date().timeIntervalSince1970) - self.startedAt), 0) * self.rate).truncatingRemainder(dividingBy: self.soundDuration)
                 } else { // paused
-                    return self.secondsPlayed
+                    return self.secondsPlayed.truncatingRemainder(dividingBy: self.soundDuration)
                 }
             }
         }

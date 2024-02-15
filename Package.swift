@@ -33,7 +33,8 @@ let package = Package(
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
             capabilities: [
-                .camera(purposeString: "To display the alternative AR experience of the app!")
+                .camera(purposeString: "To display the alternative AR experience of the app!"),
+                .motion(purposeString: "To use your AirPods' position from the screen and offer an even more spatial audio experience.")
             ]
         )
     ],

@@ -380,7 +380,7 @@ struct SceneOptionalARWrapper: View {
             if ARM.isAROn {
                 ARSceneView(scene: scene, musicianManager: musicianManager, playbackManager: playbackManager)
             } else {
-                SceneViewWrapper(scene: scene, musicianManager: musicianManager)
+                SceneViewWrapper(scene: scene, musicianManager: musicianManager, playbackManager: playbackManager)
             }
         }
         .onAppear {
@@ -398,9 +398,10 @@ struct SceneViewWrapper: UIViewControllerRepresentable {
     let scene: SCNScene
     let showsStatistics: Bool = false
     let musicianManager: MusiciansManager
+    let playbackManager: PlaybackManager
     
     func makeUIViewController(context: Context) -> SceneViewController {
-        let controller = SceneViewController(scene: scene, showStatistics: showsStatistics, musicianManager: musicianManager)
+        let controller = SceneViewController(scene: scene, showStatistics: showsStatistics, musicianManager: musicianManager, playbackManager: playbackManager)
         
         return controller
     }
@@ -408,15 +409,17 @@ struct SceneViewWrapper: UIViewControllerRepresentable {
     func updateUIViewController(_ uiView: SceneViewController, context: Context) {}
 }
 
-class SceneViewController: UIViewController {
+class SceneViewController: UIViewController, SCNSceneRendererDelegate {
     let scene: SCNScene
     var showStatistics: Bool = false
     let musicianManager: MusiciansManager
+    let playbackManager: PlaybackManager
     
-    init(scene: SCNScene, showStatistics: Bool = false, musicianManager: MusiciansManager) {
+    init(scene: SCNScene, showStatistics: Bool = false, musicianManager: MusiciansManager, playbackManager: PlaybackManager) {
         self.scene = scene
         self.showStatistics = showStatistics
         self.musicianManager = musicianManager
+        self.playbackManager = playbackManager
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -428,6 +431,7 @@ class SceneViewController: UIViewController {
     override func viewDidLoad() {
         let view = SCNView()
         view.scene = self.scene
+        view.delegate = self
         view.showsStatistics = self.showStatistics
         //view.allowsCameraControl = true
         
@@ -461,6 +465,18 @@ class SceneViewController: UIViewController {
                     didTogglePlayback = true
                 }
             }
+        }
+    }
+    
+    func renderer(_ renderer: any SCNSceneRenderer, didRenderScene scene: SCNScene, atTime time: TimeInterval) {
+        if let camera = scene.rootNode.getFirstCamera() {
+            if let headphonesPosition = self.playbackManager.headphonesPosition {
+                self.playbackManager.listener.worldTransform = matrix_multiply(camera.simdWorldTransform, headphonesPosition.toSIMDMatrix())
+            } else {
+                self.playbackManager.listener.worldTransform = camera.simdWorldTransform
+            }
+        } else {
+            self.playbackManager.listener.worldTransform = matrix_identity_float4x4
         }
     }
 }

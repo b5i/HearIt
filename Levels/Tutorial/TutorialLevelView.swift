@@ -59,7 +59,6 @@ struct TutorialLevelView: View {
                             let sound = MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialkick2"})?.value.musician.sound
                             return !(sound?.isMuted ?? false) && (sound?.isSoloed ?? false)
                         }, stepAction: {
-                            PM.replaceLoop(by: .init(startTime: 0, endTime: 58.5, shouldRestart: false, lockLoopZone: true, isEditable: false))
                             SpotlightModel.shared.disactivateAllSpotlights()
                             SpotlightModel.shared.setSpotlightActiveStatus(ofType: .solo(assetName: "tutorialkick2"), to: true)
                             SpotlightModel.shared.setSpotlightActiveStatus(ofType: .mute(assetName: "tutorialkick2"), to: true)
@@ -72,12 +71,12 @@ struct TutorialLevelView: View {
                             
                             MM.musicians.first(where: {$0.value.musician.sound?.infos.assetName == "tutorialsnare2"})?.value.musician.show()
                         }),
-                        LevelModel.TextStep(text: "You perhaps already noticed it but there is a yellow line above the playing bar. It indicates that there's a loop on the song. If the pencil next to the button is not crossed out you can modify the length of the loop by dragging one of its side to the left or right. To keep the length of the loop and just move it you can drag the middle of the top yellow line.", passCondition: { _,_ in return true}, stepAction: {
+                        LevelModel.TextStep(text: "You can also set a loop to the song using the button at the right of the playing bar. If there's a yellow line above the playing bar, it indicates that there's a loop on the song. If the pencil next to the button is not crossed out you can modify the length of the loop by dragging one of its side to the left or right. To keep the length of the loop and just move it you can drag the middle of the top yellow line.", passCondition: { _,_ in return true}, stepAction: {
                             TopTrailingActionsView.Model.shared.unlockedLevel = nil
                             SpotlightModel.shared.disactivateAllSpotlights()
                             SpotlightModel.shared.setSpotlightActiveStatus(ofType: .loopActivation, to: true)
                             SpotlightModel.shared.setSpotlightActiveStatus(ofType: .loopEditability, to: true)
-                            PM.replaceLoop(by: .init(startTime: 0, endTime: 58.5, shouldRestart: false, lockLoopZone: true, isEditable: true))
+                            PM.replaceLoop(by: .init(startTime: 0, endTime: 20, shouldRestart: false, lockLoopZone: true, isEditable: true))
                         }),
                         LevelModel.TextStep(text: "If the little lock next to the loop activation button is open it means that if you seek to a moment after the end of the loop, the loop will disappear. But if the lock is closed then you won't be able to seek further than the end of the loop. If the pencil is not crossed, it means that you can also modify this behavior by clicking on the lock.", passCondition: { _,_ in return true}, stepAction: {
                             TopTrailingActionsView.Model.shared.unlockedLevel = nil
@@ -214,7 +213,7 @@ struct TutorialLevelView: View {
         
         //let loopTime = (PM.sounds.values.map({$0.timeObserver.soundDuration}).min() ?? 3.6) + 0.1 /* approximated value of the duration, a bit more than the actual to that if the user scrolls to the end of the playing bar it won't get out of the loop */
                 
-        PM.replaceLoop(by: .init(startTime: 0, endTime: 58.5, shouldRestart: false, lockLoopZone: true, isEditable: false))
+        //PM.replaceLoop(by: .init(startTime: 0, endTime: 58.5, shouldRestart: false, lockLoopZone: true, isEditable: false))
     }
 }
 

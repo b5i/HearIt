@@ -310,9 +310,9 @@ struct PlayingBarView: View {
                 } else {
                     let potentialLoopEnd = sliderValue * soundObserver.soundDuration + 20
                     if potentialLoopEnd > soundObserver.soundDuration {
-                        self.playbackManager.replaceLoop(by: .init(startTime: soundObserver.soundDuration - 20, endTime: soundObserver.soundDuration, shouldRestart: false, lockLoopZone: false, isEditable: true))
+                        self.playbackManager.replaceLoop(by: .init(startTime: max(soundObserver.soundDuration - 20, 0), endTime: soundObserver.soundDuration, shouldRestart: false, lockLoopZone: false, isEditable: true))
                     } else {
-                        self.playbackManager.replaceLoop(by: .init(startTime: potentialLoopEnd - 20, endTime: potentialLoopEnd, shouldRestart: false, lockLoopZone: true, isEditable: true))
+                        self.playbackManager.replaceLoop(by: .init(startTime: max(potentialLoopEnd - 20, 0), endTime: potentialLoopEnd, shouldRestart: false, lockLoopZone: true, isEditable: true))
                     }
                 }
             } label: {

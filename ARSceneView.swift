@@ -29,7 +29,11 @@ struct ARSceneView: UIViewRepresentable {
         var hasAnchor: HasAnchorStatus? = nil
                 
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
-            PM?.listener.transform = frame.camera.transform
+            if let headphonesPosition = PM?.headphonesPosition {
+                PM?.listener.worldTransform = matrix_multiply(frame.camera.transform, headphonesPosition.toSIMDMatrix())
+            } else {
+                PM?.listener.worldTransform = frame.camera.transform
+            }
         }
         
         func renderer(_ renderer: any SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
