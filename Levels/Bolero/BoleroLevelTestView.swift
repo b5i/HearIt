@@ -17,79 +17,84 @@ struct BoleroLevelTestView: View {
     @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
     
+    @ObservedObject private var AM = AnswersModel.shared
+    
     @State private var positionObserver: NSKeyValueObservation? = nil
-            
     var body: some View {
         if isLoadingScene {
             Color.clear.frame(width: 0, height: 0)
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
-            VStack {
-                SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly.", stepAction: {
-                        SpotlightModel.shared.disactivateAllSpotlights()
-                    }),
-                    LevelModel.ViewStep(view: {
-                        VStack {
-                            Text("Your goal is to find what musician is playing what element, each element can be played by multiple musicians at the same time. To enter your choice, change the color of the musician according to what you think he playing with the color indicated under this text. \n  Once you're finished, click on the right arrow to validate your results. Good luck!") // TODO: "remanier"
-                            HStack {
-                                Spacer()
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(.blue)
-                                        .frame(width: 100, height: 40)
-                                    Text("Theme")
-                                        .foregroundStyle(.white)
+                VStack {
+                    SceneStepsView(levelModel: LevelModel(steps: [
+                        LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly.", stepAction: {
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            AM.hideButton()
+                        }),
+                        LevelModel.ViewStep(view: {
+                            VStack {
+                                Text("Your goal is to find what musician is playing what element, each element can be played by multiple musicians at the same time. To enter your choice, change the color of the musician according to what you think he playing with the color indicated under this text. \n  Once you're finished, click on the right arrow to validate your results. Good luck!") // TODO: "remanier"
+                                HStack {
+                                    Spacer()
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(.blue)
+                                            .frame(width: 100, height: 40)
+                                        Text("Theme")
+                                            .foregroundStyle(.white)
+                                    }
+                                    Spacer()
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(.green)
+                                            .frame(width: 180, height: 40)
+                                        Text("Accompaniement")
+                                            .foregroundStyle(.white)
+                                    }
+                                    Spacer()
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(.red)
+                                            .frame(width: 100, height: 40)
+                                        Text("Bassline")
+                                            .foregroundStyle(.white)
+                                    }
+                                    Spacer()
                                 }
-                                Spacer()
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(.green)
-                                        .frame(width: 180, height: 40)
-                                    Text("Accompaniement")
-                                        .foregroundStyle(.white)
-                                }
-                                Spacer()
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(.red)
-                                        .frame(width: 100, height: 40)
-                                    Text("Bassline")
-                                        .foregroundStyle(.white)
-                                }
-                                Spacer()
                             }
-                        }
-                    }, passCondition: { mm,_ in
-                        for musician in mm.musicians.values.map({$0.musician}) {
-                            if musician.sound?.infos.assetName.hasPrefix("bolero_theme") == true && musician.status.spotlightColor != .blue {
-                                return false
-                            } else if musician.sound?.infos.assetName.hasPrefix("bolero_bassline") == true && musician.status.spotlightColor != .red {
-                                return false
-                            } else if musician.sound?.infos.assetName.hasPrefix("bolero_accompaniment") == true && musician.status.spotlightColor != .green {
-                                return false
+                        }, passCondition: { mm,_ in
+                            for musician in mm.musicians.values.map({$0.musician}) {
+                                if musician.sound?.infos.assetName.hasPrefix("bolero_theme") == true && musician.status.spotlightColor != .blue {
+                                    return false
+                                } else if musician.sound?.infos.assetName.hasPrefix("bolero_bassline") == true && musician.status.spotlightColor != .red {
+                                    return false
+                                } else if musician.sound?.infos.assetName.hasPrefix("bolero_accompaniment") == true && musician.status.spotlightColor != .green {
+                                    return false
+                                }
                             }
-                        }
-                        
-                        return true
-                    }, stepAction: {
-                        SpotlightModel.shared.disactivateAllSpotlights()
-                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
-                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .allSpotlightChanges, to: true)
-                    }),
-                    LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
-                        SpotlightModel.shared.disactivateAllSpotlights()
-                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .door, to: true)
-                        TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
-                    })
-                ]), MM: MM, PM: PM)
-                NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
-                    .frame(height: geometry.size.height * 0.8)
+                            
+                            return true
+                        }, stepAction: {
+                            AM.showButton(answersView: BoleroAnswers())
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .allSpotlightChanges, to: true)
+                        }),
+                        LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
+                            AM.hideButton()
+                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.setSpotlightActiveStatus(ofType: .door, to: true)
+                            TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
+                        })
+                    ]), MM: MM, PM: PM)
+                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                        .frame(height: geometry.size.height * 0.8)
+                }
+                .overlay(alignment: .topTrailing, content: {
+                    TopTrailingActionsView()
+                })
+                .answersOverlay()
             }
-            .overlay(alignment: .topTrailing, content: {
-                TopTrailingActionsView()
-            })
-        }
         } else {
             Color.clear
                 .onAppear {
@@ -124,3 +129,64 @@ struct BoleroLevelTestView: View {
     }
 }
 
+struct BoleroAnswers: LevelAnswers {
+    var view: some View {
+        HStack {
+            Spacer()
+            let answers: [Color] = [.blue, .red, .blue, .blue, .green]
+            ForEach(Array(answers.enumerated()), id: \.offset) { offset, color in
+                VStack(alignment: .center) {
+                    Text("Musician nº \(offset + 1)")
+                    SingleAnswerView(color: color)
+                }
+                    .frame(width: 110)
+                Spacer()
+            }
+        }
+    }
+    
+    struct SingleAnswerView: View {
+        let color: Color
+        
+        @State private var showAnswer: Bool = false
+        var body: some View {
+            if showAnswer {
+                VStack {
+                    Image(systemName: "figure.wave.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                        .foregroundStyle(color)
+                    
+                    var role: String {
+                        switch color {
+                        case .blue:
+                            return "Theme"
+                        case .green:
+                            return "Accompaniment"
+                        case .red:
+                            return "Bassline"
+                        default:
+                            return ""
+                        }
+                    }
+                    Text(role)
+                        .font(.caption)
+                }
+            } else {
+                VStack {
+                    Image(systemName: "eye.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                    Text("See answer")
+                }
+                .onTapGesture {
+                    withAnimation {
+                        self.showAnswer = true
+                    }
+                }
+            }
+        }
+    }
+}

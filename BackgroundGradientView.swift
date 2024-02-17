@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 struct BackgroundGradientView: View {
-    static let middleAnimationDuration: Double = 1.5
+    static let middleAnimationDuration: Double = 0.7
     
     @Environment(\.colorScheme) private var colorScheme
 
@@ -83,6 +83,7 @@ struct BackgroundGradientView: View {
                     }
                     Point(geometry: geometry, shouldStayInRect: .init(x: topLeadingPoint.x, y: topLeadingPoint.y, width: geometry.size.width / 2, height: geometry.size.height / 2), colors: colors, shouldGoToMiddle: shouldGoToMiddle)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .id(geometry.size)
                 }
             }
         }
@@ -91,7 +92,7 @@ struct BackgroundGradientView: View {
             if shouldGoToMiddle {
                 ProgressView()
                     .transition(.scale.combined(with: .opacity))
-                    .animation(.smooth(duration: Self.middleAnimationDuration - 1.2).delay(1.2), value: shouldGoToMiddle)
+                    .animation(.smooth(duration: Self.middleAnimationDuration - 0.5).delay(0.5), value: shouldGoToMiddle)
             }
         })
     }
@@ -175,4 +176,11 @@ struct BackgroundGradientView: View {
 
 #Preview {
     BackgroundGradientView(level: .tutorial, shouldGoToMiddle: false)
+}
+
+extension CGSize: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.width)
+        hasher.combine(self.height)
+    }
 }

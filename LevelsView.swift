@@ -66,7 +66,7 @@ struct LevelsView: View {
                                     //.scaleEffect(LM.levelStarted ? 10 : 1)
                                         .foregroundStyle(colorScheme.textColor)
                                 }
-                                .opacity(LM.levelStarted ? 0 : 8)
+                                .opacity(LM.levelStarted ? 0 : 1)
                                 .frame(width: geometry.size.width * 0.2)
                                 
                                 if offset == lastLevelIndex {

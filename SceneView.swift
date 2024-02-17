@@ -306,7 +306,9 @@ struct SceneOptionalARWrapper: View {
     var body: some View {
         Group {
             if ARM.isAROn {
-                ARSceneView(scene: scene, musicianManager: musicianManager, playbackManager: playbackManager)
+                GeometryReader { geometry in
+                    ARSceneView(scene: scene, musicianManager: musicianManager, playbackManager: playbackManager, frame: .init(x: 0, y: geometry.size.height * 0.2, width: geometry.size.width, height: geometry.size.height * 0.8))
+                }
             } else {
                 SceneViewWrapper(scene: scene, musicianManager: musicianManager, playbackManager: playbackManager)
             }

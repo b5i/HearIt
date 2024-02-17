@@ -10,6 +10,7 @@ import SwiftUI
 struct TopTrailingActionsView: View {
     @ObservedObject private var SM = SpotlightModel.shared
     @ObservedObject private var ARM = ARManager.shared
+    @ObservedObject private var AM = AnswersModel.shared
     var body: some View {
         HStack {
             /*
@@ -22,6 +23,19 @@ struct TopTrailingActionsView: View {
              .frame(width: 30, height: 30)
              .foregroundStyle(colorScheme.textColor)
              }*/
+                Button {
+                    withAnimation {
+                        AnswersModel.shared.showSheet = true
+                    }
+                } label: {
+                    Image(systemName: "questionmark.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: AM.shouldShowButton ? 30 : 0, height: 30)
+                        .foregroundStyle(.green)
+                }
+                .padding()
+                
             if ARManager.isAREnabled {
                 Button {
                     ARM.toggleARMode()

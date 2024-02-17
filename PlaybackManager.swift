@@ -454,7 +454,7 @@ class PlaybackManager: NSObject, ObservableObject {
             self.songParts = songParts
         }
         
-        struct Part {
+        struct Part: Equatable {
             /// Time when this part starts, in seconds.
             ///
             /// - Note: The endtime is the starTime of the part after this one, it there's no part after, the end is the duration of the song.
