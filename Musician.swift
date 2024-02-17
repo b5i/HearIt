@@ -131,6 +131,8 @@ class Musician: ObservableObject {
             changeSpotlightColor(color: .green)
         case .green:
             changeSpotlightColor(color: .blue)
+        case .white:
+            changeSpotlightColor(color: .blue)
         }
     }
     
@@ -147,8 +149,46 @@ class Musician: ObservableObject {
         SCNTransaction.commit()
     }
     
+    /// powerOnOff: values that have a pair index means spotlight on, start the array by 0.0 if the player start with the spotlight off
+    static func handleTime(sound: Sound, powerOnOff: [Double], colors: [(time: Double, color: Musician.SpotlightColor)]) {
+        guard let musician = sound.infos.musician else { return }
+        
+        
+        let currentTime = sound.timeObserver.currentTime
+        
+        guard sound.timeObserver.isPlaying else { musician.hideParticles(); return }
+        
+        if let currentSpotlightStatus = powerOnOff.firstIndex(where: {$0 > currentTime}) {
+            if Int(currentSpotlightStatus) % 2 == 0 {
+                musician.powerOnSpotlight()
+                
+                // Color animations
+
+                if let currentColor = colors.first(where: {$0.time > currentTime})?.color {
+                    musician.changeSpotlightColor(color: currentColor)
+                }
+            } else {
+                musician.powerOffSpotlight()
+            }
+        } else {
+            if powerOnOff.count % 2 == 0 {
+                musician.powerOnSpotlight()
+                
+                // Color animations
+
+                if let currentColor = colors.first(where: {$0.time > currentTime})?.color {
+                    musician.changeSpotlightColor(color: currentColor)
+                }
+            } else {
+                musician.powerOffSpotlight()
+            }
+        }
+    }
+    
     enum SpotlightColor {
         static let defaultIntensity: CGFloat = 50000
+        
+        case white
         
         case blue
         case red
@@ -162,6 +202,8 @@ class Musician: ObservableObject {
                 return CGColor(red: 1, green: 0, blue: 0, alpha: 1)
             case .green:
                 return CGColor(red: 0, green: 1, blue: 0, alpha: 1)
+            case .white:
+                return CGColor(red: 1, green: 1, blue: 1, alpha: 1)
             }
         }
         
@@ -173,17 +215,21 @@ class Musician: ObservableObject {
                 return 25000
             case .green:
                 return 10000
+            case .white:
+                return 10000
             }
         }
         
         static func getSpotlightColorFromCGColor(_ color: CGColor) -> SpotlightColor? {
             switch color {
             case SpotlightColor.red.getCGColor():
-                return SpotlightColor.red
+                return .red
             case SpotlightColor.green.getCGColor():
-                return SpotlightColor.green
+                return .green
             case SpotlightColor.blue.getCGColor():
-                return SpotlightColor.blue
+                return .blue
+            case SpotlightColor.white.getCGColor():
+                return .white
             default:
                 return nil
             }
@@ -227,7 +273,7 @@ class Musician: ObservableObject {
         var isSoloed: Bool = false
         var isStopped: Bool = true
         
-        var spotlightColor: SpotlightColor = .blue
+        var spotlightColor: SpotlightColor = .white
         var isSpotlightOn: Bool = true
         
         var isHidden: Bool = false
@@ -251,7 +297,11 @@ extension Musician: SoundDelegate {
         if isPlaying {
             self.status.isStopped = false
             self.update()
-            self.powerOnSpotlight()
+            if let sound = self.sound, let timeHandler = sound.timeHandler {
+                timeHandler(sound)
+            } else {
+                self.powerOnSpotlight()
+            }
         } else {
             self.status.isStopped = true
             self.update()

@@ -12,7 +12,7 @@ import SceneKit
 struct BoleroLevelTestView: View {
     @StateObject private var PM = PlaybackManager()
         
-    @State private var isLoadingScene: Bool = false
+    @Binding var isLoadingScene: Bool
     @State private var isSceneLoaded: Bool = false
     @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
@@ -21,7 +21,7 @@ struct BoleroLevelTestView: View {
             
     var body: some View {
         if isLoadingScene {
-            ProgressView()
+            Color.clear.frame(width: 0, height: 0)
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
             VStack {
@@ -66,7 +66,7 @@ struct BoleroLevelTestView: View {
                                 return false
                             } else if musician.sound?.infos.assetName.hasPrefix("bolero_bassline") == true && musician.status.spotlightColor != .red {
                                 return false
-                            } else if musician.sound?.infos.assetName.hasPrefix("bolero_accompaniement") == true && musician.status.spotlightColor != .green {
+                            } else if musician.sound?.infos.assetName.hasPrefix("bolero_accompaniment") == true && musician.status.spotlightColor != .green {
                                 return false
                             }
                         }
@@ -95,7 +95,7 @@ struct BoleroLevelTestView: View {
                 .onAppear {
                     if self.scene == nil && !self.isLoadingScene {
                         self.isLoadingScene = true
-                        let scene = createScene()
+                        let scene = SCNScene.createDefaultScene()
                         self.scene = scene
                         let manager = MusiciansManager(scene: scene)
                         self.MM = manager
@@ -111,90 +111,16 @@ struct BoleroLevelTestView: View {
         }
     }
 
-    
-    private func createScene() -> SCNScene {
-        // create a new scene
-        let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
-        
-        let secondRootNote = SCNNode()
-        
-        scene.rootNode.addChildNode(secondRootNote)
-        
-        // create and add a camera to the scene
-        let cameraNode = SCNNode()
-        cameraNode.name = "WWDC24-Camera"
-        cameraNode.camera = SCNCamera()
-        secondRootNote.addChildNode(cameraNode)
-        
-        // place the camera and observe its position to adapt the listener position in space
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { [weak PM] /* avoid memory leak */ node, _ in
-            var matrix = matrix_identity_float4x4
-            matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
-            PM?.listener.transform = matrix
-        })
-        
-        // create and add a light to the scene
-        let lightNode = SCNNode()
-        lightNode.light = SCNLight()
-        lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
-        lightNode.light?.intensity = 100
-        secondRootNote.addChildNode(lightNode)
-        
-        let spotlightLightNode = SCNNode()
-        spotlightLightNode.light = SCNLight()
-        spotlightLightNode.light?.type = .spot
-        spotlightLightNode.light?.intensity = 1000
-        secondRootNote.addChildNode(spotlightLightNode)
-        
-        // create and add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        ambientLightNode.light = SCNLight()
-        ambientLightNode.light!.type = .ambient
-        ambientLightNode.light!.color = UIColor.darkGray
-        secondRootNote.addChildNode(ambientLightNode)
-                
-        return scene
-    }
-    
     private func setupTutorial(MM: MusiciansManager) async {
-        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int) async {
-            if PM.sounds[songName] == nil {
-                let newMusician = MM.createMusician(index: index)
-                
-                newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
-                newMusician.node.position = .init(x: 4 * Float(index), y: 0, z: 0)
-                
-                let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
-                distanceParameters.rolloffFactor = 0.5
-                distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
-                
-                
-                
-                let result = await PM.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
-                
-                switch result {
-                case .success(let sound):
-                    newMusician.setSound(sound)
-                    newMusician.soundDidChangePlaybackStatus(isPlaying: false)
-                    sound.delegate = newMusician
-                case .failure(let error):
-                    print("Error: \(error)")
-                }
-            }
-        }
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_clarinet.m4a", index: 0, PM: PM)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_bassline_snare.m4a", index: 1, PM: PM)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_flute.m4a", index: 2, PM: PM)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_oboe.m4a", index: 3, PM: PM)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_accompaniment_violins2.m4a", index: 4, PM: PM)
         
-        await createMusician(withSongName: "BoleroSounds/bolero_theme_clarinet.m4a", index: 0)
-        await createMusician(withSongName: "BoleroSounds/bolero_bassline_drum.m4a", index: 1)
-        await createMusician(withSongName: "BoleroSounds/bolero_theme_flute.m4a", index: 2)
-        await createMusician(withSongName: "BoleroSounds/bolero_theme_oboe.m4a", index: 3)
-        await createMusician(withSongName: "BoleroSounds/bolero_accompaniement_violin.m4a", index: 4)
-        //await createMusician(withSongName: "BoleroSounds/bolerooboe.m4a", index: 5)
+        MM.recenterCamera()
+        
+        await PM.reloadEngine()
     }
-}
-
-#Preview {
-    BoleroLevelTestView()
 }
 

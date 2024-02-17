@@ -26,7 +26,7 @@ struct ARSceneView: UIViewRepresentable {
             }
         }
         
-        var hasAnchor: HasAnchorStatus? = nil
+        var hasAnchor: (status: HasAnchorStatus, anchor: ARAnchor?)? = nil
                 
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
             if let headphonesPosition = PM?.headphonesPosition {
@@ -37,14 +37,20 @@ struct ARSceneView: UIViewRepresentable {
         }
         
         func renderer(_ renderer: any SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-            if self.hasAnchor != .anchorFound, let scene = self.arView?.scene, let masterNode = scene.rootNode.childNodes.first {
+            if self.hasAnchor?.status != .anchorFound, let scene = self.arView?.scene, let masterNode = scene.rootNode.childNodes.first {
                 masterNode.transform = .init(anchor.transform)
-                self.hasAnchor = .anchorFound
+                self.hasAnchor = (.anchorFound, anchor)
+            }
+        }
+        
+        func renderer(_ renderer: any SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
+            if anchor == self.hasAnchor?.anchor, let scene = self.arView?.scene, let masterNode = scene.rootNode.childNodes.first {
+                masterNode.transform = .init(anchor.transform)
             }
         }
                 
-        func coachingOverlayViewWillActivate(_ coachingOverlayView: ARCoachingOverlayView) {
-            self.hasAnchor = .placingInProgress
+        func coachingOverlayViewWillActivate(_ coachingOverlayView: ARCoachingOverlayView) { // TODO: center this overlay or hide it
+            self.hasAnchor = (.placingInProgress, nil)
 
             guard let anchorNode = self.arView?.scene.rootNode.childNodes.first, let scene = self.arView?.scene, let masterNode = scene.rootNode.childNodes.first else { return }
             

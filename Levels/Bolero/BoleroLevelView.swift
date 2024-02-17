@@ -9,11 +9,12 @@ import SwiftUI
 
 struct BoleroLevelView: View {
     @State private var finishedIntroduction: Bool = false
+    @Binding var isLoadingScene: Bool
     var body: some View {
         if finishedIntroduction {
-            BoleroLevelTestView()
+            BoleroLevelTestView(isLoadingScene: $isLoadingScene)
         } else {
-            BoleroLevelIntroductionView(finishedIntroduction: $finishedIntroduction)
+            BoleroLevelIntroductionView(isLoadingScene: $isLoadingScene, finishedIntroduction: $finishedIntroduction)
         }
     }
 }

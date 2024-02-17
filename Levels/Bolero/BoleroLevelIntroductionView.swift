@@ -10,10 +10,14 @@ import PHASE
 import SceneKit
 
 struct BoleroLevelIntroductionView: View {
+    static private var basslinePath = "BoleroSounds/tutorial_bassline.m4a"
+    static private var melodyPath = "BoleroSounds/tutorial_melody2.m4a"
+    static private var accompaniment1Path = "BoleroSounds/tutorial_accompaniment1.m4a"
+    static private var accompaniment2Path = "BoleroSounds/tutorial_accompaniment2.m4a"
     
     @StateObject private var PM = PlaybackManager()
         
-    @State private var isLoadingScene: Bool = false
+    @Binding var isLoadingScene: Bool
     @State private var isSceneLoaded: Bool = false
     @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
@@ -26,26 +30,26 @@ struct BoleroLevelIntroductionView: View {
         
     var body: some View {
         if isLoadingScene {
-            ProgressView()
+            Color.clear.frame(width: 0, height: 0)
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
                         LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."), // TODO: à "remanier"
                         LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
-                            self.disabledFeatures = 0
+                            self.disabledFeatures = .changeSpotlightColorFeature
                             for sound in PM.sounds.values {
                                 sound.unsolo()
                                 sound.unmute()
                             }
                             PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "The first thing you hear is definitely the riff of the guitar, it's called the theme or melody of the song. Note that it can be played by more than one instrument.", stepAction: {
+                        LevelModel.TextStep(text: "The first thing you hear is definitely the lead played by a synthesizers////, it's called the theme or melody of the song. Be aware that it can be played by more than one instrument.", stepAction: {
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
 
                             // reset states
                             for (key, sound) in PM.sounds {
-                                if key.hasPrefix("TutorialSounds/melody") {
+                                if key == Self.melodyPath {
                                     sound.solo()
                                 } else {
                                     sound.unsolo()
@@ -54,10 +58,10 @@ struct BoleroLevelIntroductionView: View {
                             }
                             PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by a synthesizer and a some notes from a bass, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
+                        LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by two other synthesizers, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
                             // reset states
                             for (key, sound) in PM.sounds {
-                                if key.hasPrefix("TutorialSounds/accompaniment") {
+                                if key == Self.accompaniment1Path || key == Self.accompaniment2Path {
                                     sound.solo()
                                 } else {
                                     sound.unsolo()
@@ -71,7 +75,7 @@ struct BoleroLevelIntroductionView: View {
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
                             // reset states
                             for (key, sound) in PM.sounds {
-                                if key.hasPrefix("TutorialSounds/bassline") {
+                                if key == Self.basslinePath {
                                     sound.solo()
                                 } else {
                                     sound.unsolo()
@@ -81,12 +85,13 @@ struct BoleroLevelIntroductionView: View {
                             PM.restartAndSynchronizeSounds()
                         }),
                         LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
-                            self.disabledFeatures = 0
+                            self.disabledFeatures = .changeSpotlightColorFeature
                             SpotlightModel.shared.disactivateAllSpotlights()
                             SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
                         }),
                         LevelModel.TextStep(text: "", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
+                            NotificationCenter.default.post(name: .shouldStopEveryEngineNotification, object: nil)
                             withAnimation {
                                 self.finishedIntroduction = true
                             }
@@ -104,7 +109,7 @@ struct BoleroLevelIntroductionView: View {
                 .onAppear {
                     if self.scene == nil && !self.isLoadingScene {
                         self.isLoadingScene = true
-                        let scene = createScene()
+                        let scene = SCNScene.createDefaultScene()
                         self.scene = scene
                         let manager = MusiciansManager(scene: scene)
                         self.MM = manager
@@ -119,113 +124,17 @@ struct BoleroLevelIntroductionView: View {
                 }
         }
     }
-
-    
-    private func createScene() -> SCNScene {
-        // create a new scene
-        let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
-        
-        let secondRootNote = SCNNode()
-        
-        scene.rootNode.addChildNode(secondRootNote)
-        
-        // create and add a camera to the scene
-        let cameraNode = SCNNode()
-        cameraNode.name = "WWDC24-Camera"
-        cameraNode.camera = SCNCamera()
-        secondRootNote.addChildNode(cameraNode)
-        
-        // place the camera and observe its position to adapt the listener position in space
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { [weak PM] /* avoid memory leak */ node, _ in
-            var matrix = matrix_identity_float4x4
-            matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
-            PM?.listener.transform = matrix
-        })
-        
-        // create and add a light to the scene
-        let lightNode = SCNNode()
-        lightNode.light = SCNLight()
-        lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
-        lightNode.light?.intensity = 100
-        secondRootNote.addChildNode(lightNode)
-        
-        let spotlightLightNode = SCNNode()
-        spotlightLightNode.light = SCNLight()
-        spotlightLightNode.light?.type = .spot
-        spotlightLightNode.light?.intensity = 1000
-        secondRootNote.addChildNode(spotlightLightNode)
-        
-        // create and add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        ambientLightNode.light = SCNLight()
-        ambientLightNode.light!.type = .ambient
-        ambientLightNode.light!.color = UIColor.darkGray
-        secondRootNote.addChildNode(ambientLightNode)
-                
-        return scene
-    }
     
     private func setupTutorial(MM: MusiciansManager) async {
-        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, color: Musician.SpotlightColor = .blue, handler: ((Sound) -> ())? = nil) async {
-            if PM.sounds[songName] == nil {
-                let newMusician = MM.createMusician(index: index)
-                
-                newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
-                newMusician.node.position = .init(x: 4 * Float(index), y: 0, z: 0)
-                
-                let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
-                distanceParameters.rolloffFactor = 0.5
-                distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
-                                
-                let result = await PM.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
-                
-                switch result {
-                case .success(let sound):
-                    sound.infos.musician = newMusician
-                    sound.infos.musiciansManager = MM
-                    sound.infos.playbackManager = PM
-                    sound.timeHandler = handler
-                    newMusician.setSound(sound)
-                    newMusician.soundDidChangePlaybackStatus(isPlaying: false)
-                    newMusician.changeSpotlightColor(color: color)
-                    sound.delegate = newMusician
-                case .failure(let error):
-                    print("Error: \(error)")
-                }
-            }
-        }
         
-        //await createMusician(withSongName: "TutorialSounds/la_panterra.mp3", audioLevel: -8, index: 0)
+        await MM.createMusician(withSongName: Self.accompaniment1Path, index: 0, PM: PM, color: .green)
+        await MM.createMusician(withSongName: Self.basslinePath, index: 1, PM: PM, color: .red)
+        await MM.createMusician(withSongName: Self.melodyPath, index: 2, PM: PM, color: .blue)
+        await MM.createMusician(withSongName: Self.accompaniment2Path, index: 3, PM: PM, color: .green)
         
+        MM.recenterCamera()
         
-        await createMusician(withSongName: "TutorialSounds/melody.m4a", index: 0, color: .blue, handler: { sound in
-            guard let musician = sound.infos.musician else { return }
-            
-            let currentTime = sound.timeObserver.currentTime
-            
-            if currentTime < 2, musician.status.spotlightColor != .blue {
-                musician.changeSpotlightColor(color: .blue)
-            } else if currentTime < 4, musician.status.spotlightColor != .red {
-                musician.changeSpotlightColor(color: .red)
-            } else if musician.status.spotlightColor != .green {
-                musician.changeSpotlightColor(color: .green)
-            }
-        })
-        await createMusician(withSongName: "TutorialSounds/accompaniment1.m4a", index: 1, color: .green)
-        await createMusician(withSongName: "TutorialSounds/accompaniment2.m4a", index: 2, color: .green)
-        await createMusician(withSongName: "TutorialSounds/bassline.m4a", index: 3, color: .red)
-        
-         
-       /*
-        await createMusician(withSongName: "TutorialSounds/tutorial_drums.m4a", index: 0)
-        await createMusician(withSongName: "TutorialSounds/tutorial_hihats.m4a", index: 1)
-        await createMusician(withSongName: "TutorialSounds/tutorial_kick.m4a", index: 2)
-        await createMusician(withSongName: "TutorialSounds/tutorial_synth.m4a", audioLevel: -3, index: 3)
-         */
-                
-        //self.PM.restartAndSynchronizeSounds()
+        await PM.reloadEngine()
     }
 }
 

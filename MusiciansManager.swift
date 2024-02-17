@@ -7,6 +7,7 @@
 
 import SceneKit
 import AVFoundation
+import PHASE
 
 class MusiciansManager: ObservableObject {
     let scene: SCNScene
@@ -17,7 +18,39 @@ class MusiciansManager: ObservableObject {
         self.scene = scene
     }
     
-    func createMusician(index: Int) -> Musician {
+    @MainActor
+    func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, PM: PlaybackManager, color: Musician.SpotlightColor = .white, handler: ((Sound) -> ())? = nil) async {
+        if PM.sounds[songName] == nil {
+            let newMusician = self.createMusician(index: index)
+            
+            newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
+            newMusician.node.position = .init(x: 4 * Float(index), y: 0, z: 0)
+            
+            let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
+            distanceParameters.rolloffFactor = 0.5
+            distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
+            
+            
+            
+            let result = await PM.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
+            
+            switch result {
+            case .success(let sound):
+                sound.infos.musician = newMusician
+                sound.infos.musiciansManager = self
+                sound.infos.playbackManager = PM
+                sound.timeHandler = handler
+                newMusician.setSound(sound)
+                newMusician.soundDidChangePlaybackStatus(isPlaying: false)
+                newMusician.changeSpotlightColor(color: color)
+                sound.delegate = newMusician
+            case .failure(let error):
+                print("Error: \(error)")
+            }
+        }
+    }
+    
+    private func createMusician(index: Int) -> Musician {
         let musician = createUniqueMusician(verifyWithScene: scene)
         let name = "WWDC24-Musician-\(UUID().uuidString)"
         musician.node.name = name
@@ -41,6 +74,10 @@ class MusiciansManager: ObservableObject {
                 musician.showParticles(canBeHeard: self.musicianCanBeHeard(musician: musician), isAROn: isAROn ?? ARManager.shared.isAROn)
             }
         }
+    }
+    
+    func recenterCamera() {
+        self.scene.rootNode.getFirstCamera()?.position.x = Float((self.musicians.count - 1) * 2)
     }
     
     private func createUniqueMusician(verifyWithScene scene: SCNScene) -> Musician {
@@ -116,7 +153,7 @@ class MusiciansManager: ObservableObject {
             spotlightLightNode.light = spotlightLight
             //spotlightLightNode.scale = SCNVector3(x: 10, y: 10, z: 10)
             spotlightLight.type = .area
-            spotlightLight.color = Musician.SpotlightColor.blue.getCGColor()
+            spotlightLight.color = Musician.SpotlightColor.white.getCGColor()
             spotlightLight.intensity = 0
             
             //spotlightLight.spotInnerAngle = 180

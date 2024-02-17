@@ -14,21 +14,23 @@ struct TwoThemesTestView: View {
     
     @StateObject private var PM = PlaybackManager()
         
-    @State private var isLoadingScene: Bool = false
+    @Binding var isLoadingScene: Bool
     @State private var isSceneLoaded: Bool = false
     @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
     
     @State private var positionObserver: NSKeyValueObservation? = nil
+    
+    @State private var isLevelFinished: Bool = false
             
     var body: some View {
         if isLoadingScene {
-            ProgressView()
+            Color.clear.frame(width: 0, height: 0)
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "Here is the 20th concerto from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
+                        LevelModel.TextStep(text: "Here is the 25th symphony from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
                         LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge.", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
                         }),
@@ -75,7 +77,6 @@ struct TwoThemesTestView: View {
                                 }
                             }
                             .onAppear {
-                                print("appear")
                                 SpotlightModel.shared.disactivateAllSpotlights()
                                 SpotlightModel.shared.setSpotlightActiveStatus(ofType: .addPart, to: true)
                                 SpotlightModel.shared.setSpotlightActiveStatus(ofType: .removeLastPart, to: true)
@@ -85,11 +86,11 @@ struct TwoThemesTestView: View {
                                 for part in config.songParts {
                                     switch part.type {
                                     case .themeA:
-                                        if abs(part.startTime - 10.0 /*actual startTime*/) > self.threshold {
+                                        if abs(part.startTime - 5.6 /*actual startTime*/) > self.threshold {
                                             return false
                                         }
                                     case .themeB:
-                                        if abs(part.startTime - 40.0 /*actual startTime*/) > self.threshold {
+                                        if abs(part.startTime - 39.52 /*actual startTime*/) > self.threshold {
                                             return false
                                         }
                                     case .introduction:
@@ -97,11 +98,11 @@ struct TwoThemesTestView: View {
                                             return false
                                         }
                                     case .ending:
-                                        if abs(part.startTime - 55.0 /*actual startTime*/) > self.threshold {
+                                        if abs(part.startTime - 68.5 /*actual startTime*/) > self.threshold {
                                             return false
                                         }
                                     case .bridge:
-                                        if abs(part.startTime - 20.0 /*actual startTime*/) > self.threshold {
+                                        if abs(part.startTime - 17 /*actual startTime*/) > self.threshold {
                                             return false
                                         }
                                     default:
@@ -115,6 +116,7 @@ struct TwoThemesTestView: View {
                             }
                         }), // TODO: disable the continue button if there still -1 parts
                         LevelModel.TextStep(text: "Congratulations you did it all right!!! You can now explore the song in its entirety. When you want to quit, tap on the door icon like in the tutorial, have fun!", stepAction: {
+                            self.isLevelFinished = true
                             SpotlightModel.shared.disactivateAllSpotlights()
                         })
                     ]), MM: MM, PM: PM)
@@ -130,7 +132,7 @@ struct TwoThemesTestView: View {
                 .onAppear {
                     if self.scene == nil && !self.isLoadingScene {
                         self.isLoadingScene = true
-                        let scene = createScene()
+                        let scene = SCNScene.createDefaultScene()
                         self.scene = scene
                         let manager = MusiciansManager(scene: scene)
                         self.MM = manager
@@ -145,93 +147,39 @@ struct TwoThemesTestView: View {
                 }
         }
     }
-
-    
-    private func createScene() -> SCNScene {
-        // create a new scene
-        let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
-        
-        let secondRootNote = SCNNode()
-        
-        scene.rootNode.addChildNode(secondRootNote)
-        
-        // create and add a camera to the scene
-        let cameraNode = SCNNode()
-        cameraNode.name = "WWDC24-Camera"
-        cameraNode.camera = SCNCamera()
-        secondRootNote.addChildNode(cameraNode)
-        
-        // place the camera and observe its position to adapt the listener position in space
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { [weak PM] /* avoid memory leak */ node, _ in
-            var matrix = matrix_identity_float4x4
-            matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
-            PM?.listener.transform = matrix
-        })
-        
-        // create and add a light to the scene
-        let lightNode = SCNNode()
-        lightNode.light = SCNLight()
-        lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
-        lightNode.light?.intensity = 100
-        secondRootNote.addChildNode(lightNode)
-        
-        let spotlightLightNode = SCNNode()
-        spotlightLightNode.light = SCNLight()
-        spotlightLightNode.light?.type = .spot
-        spotlightLightNode.light?.intensity = 1000
-        secondRootNote.addChildNode(spotlightLightNode)
-        
-        // create and add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        ambientLightNode.light = SCNLight()
-        ambientLightNode.light!.type = .ambient
-        ambientLightNode.light!.color = UIColor.darkGray
-        secondRootNote.addChildNode(ambientLightNode)
-                
-        return scene
-    }
     
     private func setupTutorial(MM: MusiciansManager) async {
-        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int) async {
-            if PM.sounds[songName] == nil {
-                let newMusician = MM.createMusician(index: index)
-                
-                newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
-                newMusician.node.position = .init(x: 4 * Float(index), y: 0, z: 0)
-                
-                let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
-                distanceParameters.rolloffFactor = 0.5
-                distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
-                
-                
-                
-                let result = await PM.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
-                
-                switch result {
-                case .success(let sound):
-                    newMusician.setSound(sound)
-                    newMusician.soundDidChangePlaybackStatus(isPlaying: false)
-                    sound.delegate = newMusician
-                case .failure(let error):
-                    print("Error: \(error)")
-                }
-            }
-        }
-        
-        await createMusician(withSongName: "ThemesSounds/mozart20celloandbass.m4a", index: 0)
-        await createMusician(withSongName: "ThemesSounds/mozart20flutesandoboe.m4a", index: 1)
-        await createMusician(withSongName: "ThemesSounds/mozart20piano.m4a", index: 2)
-        await createMusician(withSongName: "ThemesSounds/mozart20viola.m4a", index: 3)
-        await createMusician(withSongName: "ThemesSounds/mozart20violins.m4a", index: 4)
-        
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, PM: PM, color: .green, handler: { sound in
+            guard self.isLevelFinished else { return }
+            Musician.handleTime(sound: sound, powerOnOff: [] /* always playing */, colors: [(25.4, .green), (44.4, .red), (52.9, .blue), (70.5, .red), (sound.timeObserver.soundDuration, .blue)]) // raph
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, PM: PM, color: .green, handler: { sound in
+            guard self.isLevelFinished else { return }
+            Musician.handleTime(sound: sound, powerOnOff: [0.0, 6.3], colors: [(55.7, .green), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)])
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, PM: PM, color: .green, handler: { sound in
+            guard self.isLevelFinished else { return }
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .green), (18.7, .blue), (70.5, .green) ,(sound.timeObserver.soundDuration, .blue)])
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, PM: PM, color: .red, handler: { sound in
+            guard self.isLevelFinished else { return }
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .red), (18.7, .blue), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)])
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, PM: PM, color: .red, handler: { sound in
+            guard self.isLevelFinished else { return }
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .red), (18.7, .blue), (24.7, .red), (41.6, .green), (sound.timeObserver.soundDuration, .blue)])
+        })
         PM.changeConfiguration(for: .init(songParts: [
-            .init(startTime: 0, type: .introduction, label: "Introduction"),
+            .init(startTime: 0.0, type: .introduction, label: "Introduction"),
             .init(startTime: -1, type: .themeA, label: "Theme A"),
             .init(startTime: -1, type: .bridge, label: "Bridge"),
-            .init(startTime: -1, type: .themeB, label: "Theme B")
+            .init(startTime: -1, type: .themeB, label: "Theme B"),
+            .init(startTime: -1, type: .ending, label: "CODA")
         ]))
+        
+        MM.recenterCamera()
+        
+        await PM.reloadEngine()
     }
 }
 
@@ -239,9 +187,5 @@ extension SpotlightModel.SpotlightType {
     static let addPart: SpotlightModel.SpotlightType = .custom(name: "addPart")
     
     static let removeLastPart: SpotlightModel.SpotlightType = .custom(name: "removeLastPart")
-}
-
-#Preview {
-    TwoThemesTestView()
 }
 

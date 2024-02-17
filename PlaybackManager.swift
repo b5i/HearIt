@@ -335,6 +335,7 @@ class PlaybackManager: NSObject, ObservableObject {
         
         if loop.shouldRestart {
             self.seekTo(time: loop.startTime, soundNames: soundNames)
+            self.resume(soundNames: soundNames)
         } else if let currentTime = self.sounds[soundNames?.first ?? UUID().uuidString]?.timeObserver.currentTime ?? self.sounds.first?.value.timeObserver.currentTime, loop.endTime <= currentTime {
             self.seekTo(time: loop.startTime, soundNames: soundNames)
         }
@@ -367,6 +368,18 @@ class PlaybackManager: NSObject, ObservableObject {
     func changeConfiguration(for configuration: SongPartsConfiguration?) {
         self.currentSongPartsConfiguration = configuration
         self.update()
+    }
+    
+    /// Sounds may have some weird problems at the when they weren't played once, to avoid this, call this function.
+    func reloadEngine() async {
+        for sound in self.sounds.values {
+            sound.gain = 0
+            sound.play()
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            await sound.seek(to: 0.0)
+            sound.pause()
+            sound.gain = 1
+        }
     }
     
     /// Send the objectWillChange notification.
@@ -454,7 +467,7 @@ class PlaybackManager: NSObject, ObservableObject {
             var label: String = ""
         }
         
-        enum PartType {
+        enum PartType: Equatable {
             case themeA, themeB
             case introduction
             case ending

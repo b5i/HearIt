@@ -9,11 +9,13 @@ import SwiftUI
 
 struct TwoThemesView: View {
     @State private var finishedIntroduction: Bool = false
+    
+    @Binding var isLoadingScene: Bool
     var body: some View {
         if finishedIntroduction {
-            TwoThemesTestView()
+            TwoThemesTestView(isLoadingScene: $isLoadingScene)
         } else {
-            TwoThemesIntroductionView(finishedIntroduction: $finishedIntroduction)
+            TwoThemesIntroductionView(isLoadingScene: $isLoadingScene, finishedIntroduction: $finishedIntroduction)
         }
     }
 }

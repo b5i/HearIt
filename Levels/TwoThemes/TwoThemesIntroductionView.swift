@@ -12,7 +12,7 @@ import SceneKit
 struct TwoThemesIntroductionView: View {
     @StateObject private var PM = PlaybackManager()
         
-    @State private var isLoadingScene: Bool = false
+    @Binding var isLoadingScene: Bool
     @State private var isSceneLoaded: Bool = false
     @State private var scene: SCNScene?
     @State private var MM: MusiciansManager?
@@ -23,44 +23,83 @@ struct TwoThemesIntroductionView: View {
         
     var body: some View {
         if isLoadingScene {
-            ProgressView()
+            Color.clear.frame(width: 0, height: 0)
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To distinguish them each other, compositors usually put a bridge (a moment with no melody, just the accompaniment//// and maybe a bassline) or a little pause between them."),
-                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" on a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it."),
-                    LevelModel.TextStep(text: "Let me show you an example with the 25th symphony from Mozart. I starts with the Theme A played by the violins and the viola.", stepAction: { // TODO: commencer avec le concerto 20, mettre pause avec la touche space
+                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To separate them from each other, compositors usually put a bridge (a moment with no melody, just the accompaniment//// and maybe a bassline) and/or a little pause between them."),
+                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" on a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it.", stepAction: {
+                        if !(PM.currentLoop?.isEditable ?? true) { // remove the loop only if it has been set up by the game and not by the player
+                            PM.removeLoop()
+                        }
+                    }),
+                    LevelModel.TextStep(text: "Let me show you an example with the 20th concerto for piano from Mozart. I starts with the introduction, it generally directly precede the Theme A. It can be very short or very long depending on the song.", stepAction: { // TODO: mettre un peu plus de texte la
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
                         }
-                        PM.seekTo(time: 5.6 /* beginning of the Theme A */)
-                        PM.resume()
+                        
+                        guard let introduction = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .introduction}), let themeA = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .themeA}) else { return }
+                        
+                        PM.replaceLoop(by: .init(startTime: introduction.startTime, endTime: themeA.startTime, shouldRestart: true, lockLoopZone: true, isEditable: false))
                     }),
-                    LevelModel.TextStep(text: "Then a bridge follows, it is characterized by the tension it brings and by the fact that it prepares, for example by introducing new instruments, to the next theme. In this bridge (all actually) no complex melody is played in th and all the instruments act as accompaniment and the bass (but its not present here) ???? à verifier avec Raph.", stepAction: {
+                    LevelModel.TextStep(text: "Then follows the Theme A, played by the violins. Notice how \"devilish\" this theme is made by the gliding of the accompaniment //// and the melody that's always out of sync.", stepAction: { // TODO: commencer avec le concerto 20, mettre pause avec la touche space -> checker si ca demarre bien avec les violins et viola hellish
+                        for sound in PM.sounds.values {
+                            sound.unsolo()
+                            sound.unmute()
+                        }
+                        
+                        guard let themeA = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .themeA}), let bridge = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .bridge}) else { return }
+                        
+                        PM.replaceLoop(by: .init(startTime: themeA.startTime, endTime: bridge.startTime, shouldRestart: true, lockLoopZone: true, isEditable: false))
+                    }),
+                    LevelModel.TextStep(text: "Then a bridge follows, it is characterized by the tension it brings and by the fact that it prepares, for example by introducing new instruments, to the next theme. In this bridge (all actually) no complex melody is played in and all the instruments act as accompaniment or bassline.", stepAction: {
                         // reset states
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
                         }
-                        PM.seekTo(time: 22.5 /* beginning of the bridge */)
+                        
+                        guard let bridge = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .bridge}), let themeB = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .themeB}) else { return }
+                        
+                        PM.replaceLoop(by: .init(startTime: bridge.startTime, endTime: themeB.startTime, shouldRestart: true, lockLoopZone: true, isEditable: false))
                     }),
-                    LevelModel.TextStep(text: "Then Theme B starts, themes usually start by priority order. You'll generally remember the Theme A of a song better than Theme B, (another difference is that the first themes are generally more played than the other ones.", stepAction: {
+                    LevelModel.TextStep(text: "Then Theme B starts, themes usually start by priority order. You'll generally remember the Theme A of a song better than Theme B. Another difference is the change of atmosphere, remember when I said that theme A was kind of devilish, here Theme B is the opposite: it starts \"peacefully\" /// with a sort of dialog between the piano and the woodwinds (the oboe and the flutes).", stepAction: {
                         SpotlightModel.shared.disactivateAllSpotlights()
                         // reset states
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
                         }
-                        PM.seekTo(time: 52.2 /* beginning of the Theme B */)
+                        
+                        guard let themeB = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .themeB}), let coda = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .ending}) else { return }
+                        
+                        PM.replaceLoop(by: .init(startTime: themeB.startTime, endTime: coda.startTime, shouldRestart: true, lockLoopZone: true, isEditable: false))
                     }),
-                    LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
+                    LevelModel.TextStep(text: "Finally, the CODA (the name of the end of a song in music) concludes the song.", stepAction: {
                         SpotlightModel.shared.disactivateAllSpotlights()
-                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .door, to: true)
+                        // reset states
+                        for sound in PM.sounds.values {
+                            sound.unsolo()
+                            sound.unmute()
+                        }
+                        
+                        guard let coda = PM.currentSongPartsConfiguration?.songParts.first(where: {$0.type == .ending}), let songDuration = PM.sounds.first?.value.timeObserver.soundDuration else { return }
+                        
+                        PM.replaceLoop(by: .init(startTime: coda.startTime, endTime: songDuration, shouldRestart: true, lockLoopZone: true, isEditable: false))
+                    }),
+                    LevelModel.TextStep(text: "You now have time to observe the song and when you're ready to take the test, click on the right arrow", stepAction: {
+                        SpotlightModel.shared.disactivateAllSpotlights()
+                        SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
+                        
+                        if !(PM.currentLoop?.isEditable ?? true) { // remove the loop only if it has been set up by the game and not by the player
+                            PM.removeLoop()
+                        }
                     }),
                     LevelModel.TextStep(text: "", stepAction: {
                         SpotlightModel.shared.disactivateAllSpotlights()
+                        NotificationCenter.default.post(name: .shouldStopEveryEngineNotification, object: nil)
                         withAnimation {
                             self.finishedIntroduction = true
                         }
@@ -78,7 +117,7 @@ struct TwoThemesIntroductionView: View {
                 .onAppear {
                     if self.scene == nil && !self.isLoadingScene {
                         self.isLoadingScene = true
-                        let scene = createScene()
+                        let scene = SCNScene.createDefaultScene()
                         self.scene = scene
                         let manager = MusiciansManager(scene: scene)
                         self.MM = manager
@@ -93,98 +132,38 @@ struct TwoThemesIntroductionView: View {
                 }
         }
     }
-
-    
-    private func createScene() -> SCNScene {
-        // create a new scene
-        let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
-        
-        let secondRootNote = SCNNode()
-        
-        scene.rootNode.addChildNode(secondRootNote)
-        
-        // create and add a camera to the scene
-        let cameraNode = SCNNode()
-        cameraNode.name = "WWDC24-Camera"
-        cameraNode.camera = SCNCamera()
-        secondRootNote.addChildNode(cameraNode)
-        
-        // place the camera and observe its position to adapt the listener position in space
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        self.positionObserver = cameraNode.observe(\.transform, options: [.new], changeHandler: { [weak PM] /* avoid memory leak */ node, _ in
-            var matrix = matrix_identity_float4x4
-            matrix.columns.3 = .init(x: node.transform.m41, y: node.transform.m42, z: node.transform.m43, w: 1)
-            PM?.listener.transform = matrix
-        })
-        
-        // create and add a light to the scene
-        let lightNode = SCNNode()
-        lightNode.light = SCNLight()
-        lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
-        lightNode.light?.intensity = 100
-        secondRootNote.addChildNode(lightNode)
-        
-        let spotlightLightNode = SCNNode()
-        spotlightLightNode.light = SCNLight()
-        spotlightLightNode.light?.type = .spot
-        spotlightLightNode.light?.intensity = 1000
-        secondRootNote.addChildNode(spotlightLightNode)
-        
-        // create and add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        ambientLightNode.light = SCNLight()
-        ambientLightNode.light!.type = .ambient
-        ambientLightNode.light!.color = UIColor.darkGray
-        secondRootNote.addChildNode(ambientLightNode)
-                
-        return scene
-    }
     
     private func setupTutorial(MM: MusiciansManager) async {
-        func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, color: Musician.SpotlightColor = .blue, handler: ((Sound) -> ())? = nil) async {
-            if PM.sounds[songName] == nil {
-                let newMusician = MM.createMusician(index: index)
-                
-                newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
-                newMusician.node.position = .init(x: 4 * Float(index), y: 0, z: 0)
-                
-                let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
-                distanceParameters.rolloffFactor = 0.5
-                distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
-                
-                
-                
-                let result = await PM.loadSound(soundPath: songName, emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping, audioCalibration: (.relativeSpl, audioLevel)))
-                
-                switch result {
-                case .success(let sound):
-                    sound.infos.musician = newMusician
-                    sound.infos.musiciansManager = MM
-                    sound.infos.playbackManager = PM
-                    sound.timeHandler = handler
-                    newMusician.setSound(sound)
-                    newMusician.soundDidChangePlaybackStatus(isPlaying: false)
-                    newMusician.changeSpotlightColor(color: color)
-                    sound.delegate = newMusician
-                case .failure(let error):
-                    print("Error: \(error)")
-                }
-            }
-        }
-                
-        await createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, color: .green)
-        await createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, color: .green)
-        await createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, color: .red)
-        await createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, color: .red)
-        await createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, color: .red)
+ 
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20celloandbass.m4a", index: 0, PM: PM, color: .red, handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [0.0, 5.5, 37, 43.75, 48, 60.5], colors: [(31.8, .red), (sound.timeObserver.soundDuration, .green)])
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20flutesandoboe.m4a", index: 1, PM: PM, color: .blue, handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [5.5, 40.2, 60], colors: [(8, .blue), (49.5, .green), (sound.timeObserver.soundDuration, .blue)])
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20piano.m4a", audioLevel: 4, index: 2, PM: PM, color: .blue, handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [5.5, 12.9, 44.5, 51.5], colors: [(11.2, .blue), (31.8, .green), (sound.timeObserver.soundDuration, .blue)])
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20viola.m4a", index: 3, PM: PM, color: .green, handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [37, 43.5, 48, 60.5], colors: [(sound.timeObserver.soundDuration, .green)])
+        })
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20violins.m4a", index: 4, PM: PM, color: .blue, handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [37, 43.5, 48, 51.5], colors: [(31.8, .blue), (43.5, .green), (51.5, .blue), (sound.timeObserver.soundDuration, .green)])
+        })
+        
+        MM.recenterCamera()
+        
         PM.changeConfiguration(for: .init(songParts: [
-            .init(startTime: 0.0, type: .introduction, label: "Introduction"),
-            .init(startTime: 5.6, type: .themeA, label: "Theme A"),
-            .init(startTime: 17.2, type: .bridge, label: "Bridge"),
-            .init(startTime: 40.2, type: .themeB, label: "Theme B")
+            .init(startTime: 0, type: .introduction, label: "Introduction"),
+            .init(startTime: 7.38, type: .themeA, label: "Theme A"),
+            .init(startTime: 37, type: .bridge, label: "Bridge"),
+            .init(startTime: 49, type: .themeB, label: "Theme B"),
+            .init(startTime: 66.5, type: .ending, label: "CODA (end)")
         ]))
-        // a verifier avec raph
+        
+        MM.recenterCamera()
+        
+        await PM.reloadEngine()
     }
 }
 

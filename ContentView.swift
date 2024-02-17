@@ -3,15 +3,17 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject private var spotlightModel = SpotlightModel.shared
     @ObservedObject private var NM = NavigationModel.shared
+    @ObservedObject private var LM = LevelsManager.shared
     
+    @State private var isLoadingAScene: Bool = false
     var body: some View {
         switch NM.currentStep {
         case .homeScreen:
             HomeScreenView()
-                //.animation(.bouncy, value: NM.currentStep == .homeScreen)
+            //.animation(.bouncy, value: NM.currentStep == .homeScreen)
                 .transition(.move(edge: .top))
         case .levelsView:
-            LevelsView()
+            LevelsView(shouldGradientGoToMiddle: LM.levelStarted || isLoadingAScene)
         case .levelView(let level):
             ZStack {
                 Rectangle()
@@ -19,19 +21,19 @@ struct ContentView: View {
                     .ignoresSafeArea()
                 switch level {
                 case .tutorial:
-                    TutorialLevelView()
+                    TutorialLevelView(isLoadingScene: $isLoadingAScene)
                 case .boleroTheme:
-                    BoleroLevelView()
+                    BoleroLevelView(isLoadingScene: $isLoadingAScene)
                 case .twoThemes:
-                    TwoThemesView()
+                    TwoThemesView(isLoadingScene: $isLoadingAScene)
                 }
             }
         }
         /*
-        VStack {
-            TutorialLevelView()
-            //ActualSceneView()
-        }*/
+         VStack {
+         TutorialLevelView()
+         //ActualSceneView()
+         }*/
         //.globalSpotlight(center: spotlightModel.spotlight?.position, areaRadius: spotlightModel.spotlight?.areaRadius, isEnabled: spotlightModel.isEnabled)
     }
 }

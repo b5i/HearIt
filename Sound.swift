@@ -50,12 +50,6 @@ class Sound {
         self.timeObserver = SoundPlaybackObserver(soundDuration: infos.soundDuration)
         self.timeHandler = timeHandler
         self.delegate = delegate
-        
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { [weak self] timer in
-            guard let self = self else { timer.invalidate(); return }
-            
-            self.timeHandler?(self)
-        })
     }
     
     // MARK: Sound's properties
@@ -66,6 +60,11 @@ class Sound {
             self.timeObserver.resume()
             self.delegate?.soundDidChangePlaybackStatus(isPlaying: true)
         }
+        Timer.scheduledTimer(withTimeInterval: 0.7 /* should be more than the animation time (currently 0.5s) */, repeats: true, block: { [weak self] timer in
+            guard let self = self, self.timeObserver.isPlaying else { timer.invalidate(); return }
+            
+            self.timeHandler?(self)
+        })
         //self.event.resume()
         //self.timeObserver.resume()
         //self.delegate?.soundDidChangePlaybackStatus(isPlaying: true)
@@ -75,14 +74,31 @@ class Sound {
         self.event.pause()
         self.timeObserver.pause()
         self.delegate?.soundDidChangePlaybackStatus(isPlaying: false)
+        
+        self.timeHandler?(self)
     }
     
     func restart() { self.seek(to: 0.0); self.play() }
     
     func seek(to time: Double) {
-        self.event.seek(to: time)
-        self.timeObserver.seek(to: time)
-        self.delegate?.soundDidSeekTo(time: time)
+        self.event.seek(to: time) { _ in
+            self.timeObserver.seek(to: time)
+            self.delegate?.soundDidSeekTo(time: time)
+            
+            self.timeHandler?(self)
+        }
+    }
+    
+    func seek(to time: Double) async {
+        _ = await withCheckedContinuation({ (continuation: CheckedContinuation<Bool, Never>) in
+            self.event.seek(to: time, completion: { _ in
+                self.timeObserver.seek(to: time)
+                self.delegate?.soundDidSeekTo(time: time)
+                
+                self.timeHandler?(self)
+                continuation.resume(returning: true)
+            })
+        })
     }
     
     // MARK: Group's properties
@@ -183,7 +199,11 @@ class Sound {
         /// Multiplier that will mulitply itself to the actualSoundDuration to give the soundDuration.
         var durationMultiplier: UInt = 1
         
-        private(set) var isPlaying: Bool = false
+        private(set) var isPlaying: Bool = false {
+            didSet {
+                print("newValue: \(isPlaying)")
+            }
+        }
 
         private var secondsPlayed: Double = 0.0
         
