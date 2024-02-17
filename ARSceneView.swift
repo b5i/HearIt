@@ -66,7 +66,7 @@ struct ARSceneView: UIViewRepresentable {
             }
         }
                 
-        func coachingOverlayViewWillActivate(_ coachingOverlayView: ARCoachingOverlayView) { // TODO: center this overlay or hide it
+        func coachingOverlayViewWillActivate(_ coachingOverlayView: ARCoachingOverlayView) {
             self.hasAnchor = (.placingInProgress, nil)
 
             guard let scene = self.arView?.scene, let masterNode = scene.rootNode.childNodes.first else { return }

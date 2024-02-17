@@ -35,7 +35,7 @@ struct BoleroLevelIntroductionView: View {
             GeometryReader { geometry in
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be described as a composition of those 3 elements."), // TODO: à "remanier"
+                        LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be characterized as compositions consisting of these three elements."),
                         LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
                             self.disabledFeatures = .changeSpotlightColorFeature
                             for sound in PM.sounds.values {

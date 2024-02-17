@@ -44,7 +44,7 @@ struct TwoThemesIntroductionView: View {
                         
                         PM.replaceLoop(by: .init(startTime: introduction.startTime, endTime: themeA.startTime, shouldRestart: true, lockLoopZone: true, isEditable: false))
                     }),
-                    LevelModel.TextStep(text: "Then follows the Theme A, played by the violins. Notice how \"devilish\" this theme is made by the gliding of the accompaniment //// and the melody that's always out of sync.", stepAction: { // TODO: commencer avec le concerto 20, mettre pause avec la touche space -> checker si ca demarre bien avec les violins et viola hellish
+                    LevelModel.TextStep(text: "Then follows the Theme A, played by the violins. Notice how \"devilish\" this theme is made by the gliding of the accompaniment and the melody that's always out of sync.", stepAction: { // TODO: checker si ca demarre bien avec les violins et viola hellish
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()

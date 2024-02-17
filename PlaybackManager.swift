@@ -111,7 +111,7 @@ class PlaybackManager: NSObject, ObservableObject {
         self.engine = PHASEEngine(updateMode: .automatic)
         self.listener = PHASEListener(engine: self.engine)
         self.listener.transform = matrix_identity_float4x4
-        try! self.engine.rootObject.addChild(self.listener) // todo: remove that force unwrap
+        try? self.engine.rootObject.addChild(self.listener) // shouldn't throws as listener doesn't have any other parent
                         
         self.headphonesManager = CMHeadphoneMotionManager()
         super.init()
@@ -444,9 +444,6 @@ class PlaybackManager: NSObject, ObservableObject {
     }
     
     struct SongPartsConfiguration {
-        /// UUID that can be used as an ID for a view that depends on songParts (otherwise the view won't update as songParts is an array).
-        //let uuid = UUID() // TODO: fix the bug
-        
         /// If editingMode is on (at least one -1 in the startTimes), you should sort by the part in ascending order and set the "unknown" startTime to -1, otherwise it will be sorted by startTime. Editing mode won't care about values that are not -1 and are preceded by -1 value(s).
         var songParts: [Part] = []
         

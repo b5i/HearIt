@@ -90,7 +90,7 @@ class Musician: ObservableObject {
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.5
         
-        if let cgColor = self.spotlightNode.light?.color as! CGColor?, let color = SpotlightColor.getSpotlightColorFromCGColor(cgColor) { // TODO: Remove the force unwrap
+        if let cgColor = self.spotlightNode.light?.color, String(describing: cgColor).hasPrefix("<CGColor"), let validColor = cgColor as! CGColor?, let color = SpotlightColor.getSpotlightColorFromCGColor(validColor) { // TODO: Remove the force unwrap (apparently it's an xcode bug not to allow the optional cast)
             self.spotlightNode.light?.intensity = color.getPreferredIntensity()
         } else {
             self.spotlightNode.light?.intensity = SpotlightColor.defaultIntensity

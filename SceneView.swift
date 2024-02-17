@@ -107,64 +107,6 @@ struct NonOptionalSceneView: View {
                 VStack {
                     Spacer()
                     HStack {
-                        Button("Spotlight") {
-                            withAnimation {
-                                spotlightIt.toggle()
-                            }
-                        }
-                        Button("loop") {
-                            withAnimation {
-                                if PM.currentLoop == nil {
-                                    PM.replaceLoop(by: .init(startTime: 0, endTime: 50, shouldRestart: false, lockLoopZone: false, isEditable: true))
-                                } else {
-                                    PM.removeLoop()
-                                }
-                            }
-                        }
-                        /*
-                         Button("Load tutorial") {
-                         self.isStarting = true
-                         Task {
-                         await setupTutorial()
-                         DispatchQueue.main.async {
-                         self.isStarting = false
-                         PM.restartAndSynchronizeSounds()
-                         }
-                         }
-                         }
-                         
-                         Button("Duplicate new sprite") {
-                         let newMusician = MM.createMusician()
-                         
-                         newMusician.node.scale = .init(x: 0.05, y: 0.05, z: 0.05)
-                         newMusician.node.position = .init(x: 4 * Float(amountOfSprites), y: 0, z: 0)
-                         amountOfSprites += 1
-                         
-                         let distanceParameters = PHASEGeometricSpreadingDistanceModelParameters()
-                         distanceParameters.rolloffFactor = 0.5
-                         distanceParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 30)
-                         if PlaybackManager.shared.sounds["kick.m4a"] == nil {
-                         PlaybackManager.shared.loadSound(soundPath: "kick.m4a", emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping), completionHandler: { result in
-                         switch result {
-                         case .success(let sound):
-                         newMusician.addSound(sound)
-                         case .failure(let error):
-                         print("Error: \(error)")
-                         }
-                         })
-                         } else if PlaybackManager.shared.sounds["kick2.m4a"] == nil {
-                         PlaybackManager.shared.loadSound(soundPath: "kick2.m4a", emittedFromPosition: .init(), options: .init(distanceModelParameters: distanceParameters, playbackMode: .looping), completionHandler: { result in
-                         switch result {
-                         case .success(let sound):
-                         newMusician.addSound(sound)
-                         case .failure(let error):
-                         print("Error: \(error)")
-                         }
-                         })
-                         }
-                         }
-                         */
-                        
                         Button("front") {
                             scene.rootNode.getFirstCamera()?.transform.m43 -= 1
                         }
@@ -183,10 +125,6 @@ struct NonOptionalSceneView: View {
                         Button("->") {
                             scene.rootNode.getFirstCamera()?.transform.m41 += 1
                         }
-                        Button("Synchronize sounds") {
-                            PM.restartAndSynchronizeSounds()
-                        }
-                         
                     }
                     VStack {
                         Spacer()

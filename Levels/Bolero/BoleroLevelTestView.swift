@@ -33,7 +33,7 @@ struct BoleroLevelTestView: View {
                         }),
                         LevelModel.ViewStep(view: {
                             VStack {
-                                Text("Your goal is to find what musician is playing what element, each element can be played by multiple musicians at the same time. To enter your choice, change the color of the musician according to what you think he playing with the color indicated under this text. \n  Once you're finished, click on the right arrow to validate your results. Good luck!") // TODO: "remanier"
+                                Text("Your objective is to identify which musician is performing each element. Multiple musicians can play the same element simultaneously. To submit your choice, adjust the color of the musician corresponding to what you believe they are playing, as explained in the tutorial. Once you've completed your selections, click the right arrow to confirm your results. Best of luck!")
                                 HStack {
                                     Spacer()
                                     ZStack {
@@ -48,7 +48,7 @@ struct BoleroLevelTestView: View {
                                         RoundedRectangle(cornerRadius: 10)
                                             .fill(.green)
                                             .frame(width: 180, height: 40)
-                                        Text("Accompaniement")
+                                        Text("Accompaniment")
                                             .foregroundStyle(.white)
                                     }
                                     Spacer()

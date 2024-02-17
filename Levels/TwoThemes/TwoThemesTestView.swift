@@ -37,7 +37,7 @@ struct TwoThemesTestView: View {
                         }),
                         LevelModel.ViewStep(view: {
                             VStack {
-                                Text("You have access to two buttons, when you think that the song's part changes (i.e Theme A started, bridge started or Theme B started), click on the checkmark button. If you want to reset your last click you can click on the clockwise arrow. The bar will be colored with your selection. Click on the usual arrow to confirm your choice.") // TODO: Find a better explanation and add the possiblity to manually change the selection
+                                Text("You have control over two buttons. When you discern a change in the song's section (e.g. Theme A, the bridge or Theme B started), press the checkmark button. If you wish to undo your previous selection, simply click the clockwise arrow. Your selections will be visually represented by the colored playing bar. Finally, click the standard arrow to confirm your choice.") // TODO: add the possiblity to manually change the selection
                                 HStack {
                                     Button {
                                         var newConfig = PM.currentSongPartsConfiguration

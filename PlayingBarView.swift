@@ -294,6 +294,13 @@ struct PlayingBarView: View {
         }
         .frame(width: 55, height: zoomedInHeight)
         .padding(.horizontal)
+        .observeKeyboard(keys: [" "], handler: { _ in // this is obviously the space bar
+            if self.sound.timeObserver.isPlaying {
+                playbackManager.pause()
+            } else {
+                playbackManager.resume()
+            }
+        })
     }
     
     var loopButton: some View {
@@ -886,4 +893,82 @@ extension Double {
 
 #Preview {
     ActualSceneView()
+}
+
+struct KeyboardObserverViewModifier: ViewModifier {
+    let observedKeys: Set<String>
+    let handler: (String) -> ()
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                KeyboardObserver(keyPressHandler: { presses in
+                    var found: Bool = false // has the loop found at least one letter it was observing
+                    
+                    for press in presses {
+                        // Get the pressed key.
+                        guard let key = press.key?.charactersIgnoringModifiers else { continue }
+                        
+                        if observedKeys.contains(key) {
+                            handler(key)
+                            found = true
+                        }
+                    }
+                    
+                    return found
+                })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(0  )
+                .allowsHitTesting(false)
+            }
+    }
+}
+
+extension View {
+    func observeKeyboard(keys: Set<String>, handler: @escaping (String) -> ()) -> some View {
+        self.modifier(KeyboardObserverViewModifier(observedKeys: keys, handler: handler))
+    }
+}
+
+// check if i shouldn't put a "shared" view that would redistribute the inputs everyhwere
+struct KeyboardObserver: UIViewRepresentable {
+    let keyPressHandler: (Set<UIPress>) -> Bool
+    
+    func makeUIView(context: Context) -> KeyboardObserverView {
+        let view = KeyboardObserverView(keyPressHandler: keyPressHandler)
+            
+        view.becomeFirstResponder()
+        return view
+    }
+    
+    func updateUIView(_ uiView: KeyboardObserverView, context: Context) {
+        uiView.keyPressHandler = self.keyPressHandler
+        uiView.becomeFirstResponder()
+    }
+}
+
+class KeyboardObserverView: UIView {
+    var keyPressHandler: (Set<UIPress>) -> Bool
+    
+    init(keyPressHandler: @escaping (Set<UIPress>) -> Bool) {
+        self.keyPressHandler = keyPressHandler
+        super.init(frame: .zero)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override var canBecomeFirstResponder: Bool { true }
+    
+    // https://developer.apple.com/documentation/uikit/mac_catalyst/handling_key_presses_made_on_a_physical_keyboard
+    // Handle someone pressing a key on a physical keyboard.
+    override func pressesBegan(_ presses: Set<UIPress>,
+                               with event: UIPressesEvent?) {
+                
+        if !self.keyPressHandler(presses) {
+            
+            super.pressesBegan(presses, with: event)
+        }
+    }
 }

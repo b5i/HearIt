@@ -15,12 +15,8 @@ struct LevelsView: View {
     let shouldGradientGoToMiddle: Bool
     @ObservedObject private var LM = LevelsManager.shared
     var body: some View {
-        // - TODO: Remove that log function when finished
-        Self._printChanges()
-
-        return GeometryReader { geometry in
+        GeometryReader { geometry in
             ZStack {
-                // - TODO: Make a gradient: black/white background with moving centers that emit colors creating "random" shapes
                 //Rectangle()
                 //    .fill(.ellipticalGradient(colors: [.pink, .gray, .blue]))
                 //    .ignoresSafeArea()
