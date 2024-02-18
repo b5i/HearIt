@@ -36,10 +36,16 @@ struct BackgroundGradientView: View {
                     }
                     
                     var colors: [Color] {
+                        /*
                         let redCombination: [Color] = [.red, .orange, shouldGoToMiddle ? colorScheme.backgroundColor : .yellow]
                         let yellowCombination: [Color] = [.yellow, .green, shouldGoToMiddle ? colorScheme.backgroundColor : .cyan]
                         let cyanCombination: [Color] = [.cyan, .blue, shouldGoToMiddle ? colorScheme.backgroundColor : .purple]
                         let purpleCombination: [Color] = [.purple, .pink, shouldGoToMiddle ? colorScheme.backgroundColor : .red]
+                         */
+                        let redCombination: [Color] = [.red, .orange, shouldGoToMiddle ? .black : .yellow]
+                        let yellowCombination: [Color] = [.yellow, .green, shouldGoToMiddle ? .black : .cyan]
+                        let cyanCombination: [Color] = [.cyan, .blue, shouldGoToMiddle ? .black : .purple]
+                        let purpleCombination: [Color] = [.purple, .pink, shouldGoToMiddle ? .black : .red]
                         switch index {
                         case 1:
                             switch level {
@@ -100,7 +106,7 @@ struct BackgroundGradientView: View {
     struct Point: View {
         let geometry: GeometryProxy
         let destinationDistance: Double = 70
-        let shouldStayInRect: CGRect
+        let rectArea: CGRect
         let colors: [Color]
         var timeTillRefresh: Double = 5
         @State private var position: CGPoint = .zero
@@ -117,7 +123,7 @@ struct BackgroundGradientView: View {
             self.geometry = geometry
             //self.position = .init(x: Double.random(in: shouldStayInRect.minX...shouldStayInRect.maxX), y: Double.random(in: shouldStayInRect.minY...shouldStayInRect.maxY))
             self.position = .init(x: shouldStayInRect.midX * Double.random(in: 0.7...1.3), y: shouldStayInRect.midY * Double.random(in: 0.7...1.3))
-            self.shouldStayInRect = shouldStayInRect
+            self.rectArea = shouldStayInRect
             self.colors = colors
             self.timeTillRefresh = timeTillRefresh
             self.timer = Timer.publish(every: timeTillRefresh, on: .main, in: .common).autoconnect()
@@ -145,10 +151,10 @@ struct BackgroundGradientView: View {
                 var newWidth = currentElipseSize.width + Double.random(in: -elipseVariation...elipseVariation)
                 var newHeight = currentElipseSize.height + Double.random(in: -elipseVariation...elipseVariation)
                 while
-                    destination.x - newWidth / 2 < shouldStayInRect.minX ||
-                        destination.y - newHeight / 2 < shouldStayInRect.minY ||
-                        destination.x + newWidth / 2 > shouldStayInRect.maxX ||
-                        destination.y + newHeight / 2 > shouldStayInRect.maxY ||
+                    destination.x - newWidth / 2 < rectArea.minX ||
+                        destination.y - newHeight / 2 < rectArea.minY ||
+                        destination.x + newWidth / 2 > rectArea.maxX ||
+                        destination.y + newHeight / 2 > rectArea.maxY ||
                         abs(newHeight - elipseSize.height) > elipseVariation ||
                         abs(newWidth - elipseSize.width) > elipseVariation { // check if the bubbles stay in their attributed rectangle, otherwise regenerate the values
                     newDirection = Double.random(in: 0...2*Double.pi)

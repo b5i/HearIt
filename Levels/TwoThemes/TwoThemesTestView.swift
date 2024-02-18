@@ -30,7 +30,7 @@ struct TwoThemesTestView: View {
             GeometryReader { geometry in
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "Here is the 25th symphony from Mozart, it's a bit easier than the 25th. Let's see if you understood the theory correctly."),
+                        LevelModel.TextStep(text: "Here is the 25th symphony from Mozart, it's a bit easier than the 20th concerto that you've heard before. Let's see if you understood the theory correctly."),
                         LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge and the beginning of the CODA (conclusion).", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
                             AnswersModel.shared.hideButton()
@@ -160,23 +160,23 @@ struct TwoThemesTestView: View {
     }
     
     private func setupTutorial(MM: MusiciansManager) async {
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, PM: PM, color: .green, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, PM: PM, color: .green, name: "Cello & Contrabass", handler: { sound in
             guard self.isLevelFinished else { return }
             Musician.handleTime(sound: sound, powerOnOff: [] /* always playing */, colors: [(25.4, .green), (44.4, .red), (52.9, .blue), (70.5, .red), (sound.timeObserver.soundDuration, .blue)]) // raph
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, PM: PM, color: .green, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, PM: PM, color: .green, name: "French Horns", handler: { sound in
             guard self.isLevelFinished else { return }
             Musician.handleTime(sound: sound, powerOnOff: [0.0, 6.3], colors: [(55.7, .green), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, PM: PM, color: .green, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, PM: PM, color: .green, name: "Oboe", handler: { sound in
             guard self.isLevelFinished else { return }
             Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .green), (18.7, .blue), (70.5, .green) ,(sound.timeObserver.soundDuration, .blue)])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, PM: PM, color: .red, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, PM: PM, color: .red, name: "Violas", handler: { sound in
             guard self.isLevelFinished else { return }
             Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .red), (18.7, .blue), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, PM: PM, color: .red, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, PM: PM, color: .red, name: "Violins", handler: { sound in
             guard self.isLevelFinished else { return }
             Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .red), (18.7, .blue), (24.7, .red), (41.6, .green), (sound.timeObserver.soundDuration, .blue)])
         })
@@ -257,10 +257,12 @@ struct TwoThemesAnswers: LevelAnswers {
         var body: some View {
             HStack(alignment: .center, spacing: 0) {
                 Text("\(answer.label) begins at \(showAnswer ? answer.startTime.timestampFormatted() : "")")
+                    .foregroundStyle(.white)
                 if !showAnswer {
                     Image(systemName: "eye.fill")
                         .resizable()
                         .scaledToFit()
+                        .foregroundStyle(.white)
                         .frame(width: 20, height: 20)
                         .onTapGesture {
                             withAnimation {

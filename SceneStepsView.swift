@@ -16,34 +16,72 @@ struct SceneStepsView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .center) {
-                RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(.cyan.opacity(0.3))
-                    .background(RoundedRectangle(cornerRadius: 10).fill(.cyan))
                 if let currentStep = levelModel.currentStep {
-                    VStack {
-                        AnyView(currentStep.view)
-                        HStack {
-                            Image(systemName: "arrow.backward.circle.fill")
-                                .onTapGesture {
-                                    levelModel.goToPreviousStep()
-                                }
-                                .disabled(!levelModel.previousStepExists)
-                                .opacity(levelModel.previousStepExists ? 1 : 0)
-                                .spotlight(type: .goBackwardArrow, areaRadius: 30)
+                    ZStack {
+                        //BlurView()
+                        //    .clipShape(RoundedRectangle(cornerRadius: 25))
+                        RoundedRectangle(cornerRadius: 25)
+                            .strokeBorder(.white, lineWidth: 3)
+                            .background(RoundedRectangle(cornerRadius: 25).fill(.black.opacity(1)))
+                        VStack(alignment: .leading) {
+                            AnyView(currentStep.view)
+                                .padding()
                             Spacer()
-                            Image(systemName: "arrow.forward.circle.fill")
-                                .onTapGesture {
-                                    levelModel.goToNextStep(musicianManager: MM, playbackManager: PM)
-                                }
-                                .disabled(!levelModel.nextStepExists)
-                                .opacity(levelModel.nextStepExists ? 1 : 0)
-                                .spotlight(type: .goForwardArrow, areaRadius: 30)
+                        }
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Image(systemName: "arrow.backward.circle.fill")
+                                    .foregroundStyle(.white)
+                                    .onTapGesture {
+                                        levelModel.goToPreviousStep()
+                                    }
+                                    .disabled(!levelModel.previousStepExists)
+                                    .opacity(levelModel.previousStepExists ? 1 : 0)
+                                    .spotlight(type: .goBackwardArrow, areaRadius: 30)
+                                Spacer()
+                                Image(systemName: "arrow.forward.circle.fill")
+                                    .foregroundStyle(.white)
+                                    .onTapGesture {
+                                        levelModel.goToNextStep(musicianManager: MM, playbackManager: PM)
+                                    }
+                                    .disabled(!levelModel.nextStepExists)
+                                    .opacity(levelModel.nextStepExists ? 1 : 0)
+                                    .spotlight(type: .goForwardArrow, areaRadius: 30)
+                            }
+                            .padding()
                         }
                     }
+                    .transition(.asymmetric(insertion: .push(from: .top), removal: .move(edge: .top)))
                 }
             }
-            .frame(width: geometry.size.width * 0.75, height: levelModel.currentStep != nil ? geometry.size.height * 0.2 : 0)
-            .background(.black)
+            .frame(width: geometry.size.width * 0.75)
+            .frame(maxHeight: levelModel.currentStep != nil ? geometry.size.height * 0.15 : 0)
+            .padding()
+            .padding(.top, geometry.safeAreaInsets.top)
+            .padding(.leading, geometry.safeAreaInsets.leading)
         }
     }
+}
+
+#Preview {
+    Group {
+        let isLoadingScene: Binding<Bool> = Binding(get: {
+            return false
+        }, set: { _ in
+            return
+        })
+        BoleroLevelIntroductionView(isLoadingScene: isLoadingScene, finishedIntroduction: isLoadingScene)
+    }
+}
+
+struct BlurView: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        let blurEffect = UIBlurEffect(style: UIBlurEffect.Style.dark)
+        let blurEffectView = UIVisualEffectView(effect: blurEffect)
+        
+        return blurEffectView
+    }
+    
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
 }

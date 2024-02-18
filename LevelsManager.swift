@@ -63,6 +63,7 @@ class LevelsManager: ObservableObject {
     
     func returnToLevelsView(unlockingLevel level: Level?) {
         NotificationCenter.default.post(name: .shouldStopEveryEngineNotification, object: nil)
+        AnswersModel.shared.hideButton()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
             if let level = level {

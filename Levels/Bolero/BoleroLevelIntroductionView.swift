@@ -33,9 +33,80 @@ struct BoleroLevelIntroductionView: View {
             Color.clear.frame(width: 0, height: 0)
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
+                /*
+                 ZStack {
+                 NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM, disabledFeatures: disabledFeatures)
+                 .frame(width: geometry.size.width, height: geometry.size.height)
+                 VStack {
+                 SceneStepsView(levelModel: LevelModel(steps: [
+                 LevelModel.TextStep(text: "Welcome! In this level you will learn about melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be characterized as compositions consisting of these three elements."),
+                 LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
+                 self.disabledFeatures = .changeSpotlightColorFeature
+                 for sound in PM.sounds.values {
+                 sound.unsolo()
+                 sound.unmute()
+                 }
+                 PM.restartAndSynchronizeSounds()
+                 }),
+                 LevelModel.TextStep(text: "The first thing you hear is definitely the lead played by a synthesizers////, it's called the theme or melody of the song. Be aware that it can be played by more than one instrument.", stepAction: {
+                 self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
+                 
+                 // reset states
+                 for (key, sound) in PM.sounds {
+                 if key == Self.melodyPath {
+                 sound.solo()
+                 } else {
+                 sound.unsolo()
+                 }
+                 sound.unmute()
+                 }
+                 PM.restartAndSynchronizeSounds()
+                 }),
+                 LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by two other synthesizers, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
+                 // reset states
+                 for (key, sound) in PM.sounds {
+                 if key == Self.accompaniment1Path || key == Self.accompaniment2Path {
+                 sound.solo()
+                 } else {
+                 sound.unsolo()
+                 }
+                 sound.unmute()
+                 }
+                 PM.restartAndSynchronizeSounds()
+                 }),
+                 LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks. The bassline is very easy to identify as, if there's one, its rythm stays the same troughout the song. It's also more rythmic than the accompaniment that is more harmonic. ////", stepAction: {
+                 SpotlightModel.shared.disactivateAllSpotlights()
+                 self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
+                 // reset states
+                 for (key, sound) in PM.sounds {
+                 if key == Self.basslinePath {
+                 sound.solo()
+                 } else {
+                 sound.unsolo()
+                 }
+                 sound.unmute()
+                 }
+                 PM.restartAndSynchronizeSounds()
+                 }),
+                 LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
+                 self.disabledFeatures = .changeSpotlightColorFeature
+                 SpotlightModel.shared.disactivateAllSpotlights()
+                 SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
+                 }),
+                 LevelModel.TextStep(text: "", stepAction: {
+                 SpotlightModel.shared.disactivateAllSpotlights()
+                 NotificationCenter.default.post(name: .shouldStopEveryEngineNotification, object: nil)
+                 withAnimation {
+                 self.finishedIntroduction = true
+                 }
+                 })
+                 ]), MM: MM, PM: PM)
+                 Spacer()
+                 }
+                 */
                 VStack {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "Welcome! In this level you will learn about themes/melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be characterized as compositions consisting of these three elements."),
+                        LevelModel.TextStep(text: "Welcome! In this level you will learn about melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be characterized as compositions consisting of these three elements."),
                         LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
                             self.disabledFeatures = .changeSpotlightColorFeature
                             for sound in PM.sounds.values {
@@ -46,7 +117,7 @@ struct BoleroLevelIntroductionView: View {
                         }),
                         LevelModel.TextStep(text: "The first thing you hear is definitely the lead played by a synthesizers////, it's called the theme or melody of the song. Be aware that it can be played by more than one instrument.", stepAction: {
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
-
+                            
                             // reset states
                             for (key, sound) in PM.sounds {
                                 if key == Self.melodyPath {
@@ -70,7 +141,7 @@ struct BoleroLevelIntroductionView: View {
                             }
                             PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks.", stepAction: {
+                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks. The bassline is very easy to identify as, if there's one, its rythm stays the same troughout the song. It's also more rythmic than the accompaniment that is more harmonic. ////", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
                             // reset states
@@ -97,6 +168,8 @@ struct BoleroLevelIntroductionView: View {
                             }
                         })
                     ]), MM: MM, PM: PM)
+                    .padding(.top, 40)
+                    .padding(.horizontal)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM, disabledFeatures: disabledFeatures)
                         .frame(height: geometry.size.height * 0.8)
                 }
@@ -127,10 +200,10 @@ struct BoleroLevelIntroductionView: View {
     
     private func setupTutorial(MM: MusiciansManager) async {
         
-        await MM.createMusician(withSongName: Self.accompaniment1Path, index: 0, PM: PM, color: .green)
-        await MM.createMusician(withSongName: Self.basslinePath, index: 1, PM: PM, color: .red)
-        await MM.createMusician(withSongName: Self.melodyPath, index: 2, PM: PM, color: .blue)
-        await MM.createMusician(withSongName: Self.accompaniment2Path, index: 3, PM: PM, color: .green)
+        await MM.createMusician(withSongName: Self.accompaniment1Path, index: 0, PM: PM, color: .green, name: "Synthesizer")
+        await MM.createMusician(withSongName: Self.basslinePath, index: 1, PM: PM, color: .red, name: "Bassline")
+        await MM.createMusician(withSongName: Self.melodyPath, index: 2, PM: PM, color: .blue, name: "Synthesizer")
+        await MM.createMusician(withSongName: Self.accompaniment2Path, index: 3, PM: PM, color: .green, name: "Synthesizer")
         
         MM.recenterCamera()
         

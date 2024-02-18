@@ -87,8 +87,10 @@ struct BoleroLevelTestView: View {
                             TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
                         })
                     ]), MM: MM, PM: PM)
+                    .padding(.top, 40)
+                    .padding(.leading, 40)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
-                        .frame(height: geometry.size.height * 0.8)
+                        .frame(height: geometry.size.height * 0.85)
                 }
                 .overlay(alignment: .topTrailing, content: {
                     TopTrailingActionsView()
@@ -117,11 +119,11 @@ struct BoleroLevelTestView: View {
     }
 
     private func setupTutorial(MM: MusiciansManager) async {
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_clarinet.m4a", index: 0, PM: PM)
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_bassline_snare.m4a", index: 1, PM: PM)
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_flute.m4a", index: 2, PM: PM)
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_oboe.m4a", index: 3, PM: PM)
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_accompaniment_violins2.m4a", index: 4, PM: PM)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_clarinet.m4a", index: 0, PM: PM, name: "Clarinet")
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_bassline_snare.m4a", index: 1, PM: PM, name: "Drum Snare")
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_flute.m4a", index: 2, PM: PM, name: "Flute")
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_oboe.m4a", index: 3, PM: PM, name: "Oboe")
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_accompaniment_violins2.m4a", index: 4, PM: PM, name: "Violins")
         
         MM.recenterCamera()
         
@@ -137,6 +139,7 @@ struct BoleroAnswers: LevelAnswers {
             ForEach(Array(answers.enumerated()), id: \.offset) { offset, color in
                 VStack(alignment: .center) {
                     Text("Musician nº \(offset + 1)")
+                        .foregroundStyle(.white)
                     SingleAnswerView(color: color)
                 }
                     .frame(width: 110)
@@ -152,11 +155,16 @@ struct BoleroAnswers: LevelAnswers {
         var body: some View {
             if showAnswer {
                 VStack {
+                    /*
                     Image(systemName: "figure.wave.circle.fill")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 60, height: 60)
                         .foregroundStyle(color)
+                     */
+                    RoundedRectangle(cornerRadius: 12)
+                        .foregroundStyle(color)
+                        .frame(width: 60, height: 60)
                     
                     var role: String {
                         switch color {
@@ -172,14 +180,17 @@ struct BoleroAnswers: LevelAnswers {
                     }
                     Text(role)
                         .font(.caption)
+                    //Text(color == .blue ? "Theme" : color == .green ? "Accompaniment" : color == .red ? "Bassline" : "")
                 }
             } else {
                 VStack {
                     Image(systemName: "eye.fill")
                         .resizable()
                         .scaledToFit()
+                        .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
                     Text("See answer")
+                        .foregroundStyle(.white)
                 }
                 .onTapGesture {
                     withAnimation {

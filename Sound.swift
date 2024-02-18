@@ -199,11 +199,7 @@ class Sound {
         /// Multiplier that will mulitply itself to the actualSoundDuration to give the soundDuration.
         var durationMultiplier: UInt = 1
         
-        private(set) var isPlaying: Bool = false {
-            didSet {
-                print("newValue: \(isPlaying)")
-            }
-        }
+        private(set) var isPlaying: Bool = false
 
         private var secondsPlayed: Double = 0.0
         

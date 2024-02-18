@@ -11,6 +11,9 @@ class LevelModel: ObservableObject {
     struct TextStep: LevelStep {
         var view: some View {
             Text(text)
+                .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding()
         }
         
         var text: String

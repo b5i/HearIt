@@ -130,10 +130,12 @@ struct NonOptionalSceneView: View {
                         Spacer()
                         ForEach(Array(MM.musicians.values).filter({!$0.musician.status.isHidden}).sorted(by: {$0.index < $1.index}), id: \.index) { (_, musician) in
                             MusicianHeaderView(disabledFeatures: disabledFeatures, musician: musician)
+                                .padding()
+                                .padding()
                             //.spotlight(areaRadius: 100, isEnabled: spotlightIt)
                         }
                         .horizontallyCentered()
-                        .padding(40)
+                        .padding(.top, 40)
                         var soundToUse: Sound? {
                             if let soundToObserveName = soundToObserveName, let sound = PM.sounds.first(where: {$0.value.infos.assetName == soundToObserveName})?.value {
                                 return sound
@@ -383,7 +385,7 @@ extension SCNScene {
         secondRootNote.addChildNode(cameraNode)
         
         // place the camera and observe its position to adapt the listener position in space
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
+        cameraNode.position = SCNVector3(x: 8, y: 2, z: 12)
         
         // create and add an ambient light to the scene
         let ambientLightNode = SCNNode()

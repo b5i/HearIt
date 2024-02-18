@@ -29,12 +29,12 @@ struct TwoThemesIntroductionView: View {
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
                     LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To separate them from each other, compositors usually put a bridge (a moment with no melody, just the accompaniment//// and maybe a bassline) and/or a little pause between them."),
-                    LevelModel.TextStep(text: "You've probably already heard a musician saying that he/she made a \"variation\" on a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it.", stepAction: {
+                    LevelModel.TextStep(text: "You've perhaps already heard a musician saying that he/she made a \"variation\" on a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it.", stepAction: {
                         if !(PM.currentLoop?.isEditable ?? true) { // remove the loop only if it has been set up by the game and not by the player
                             PM.removeLoop()
                         }
                     }),
-                    LevelModel.TextStep(text: "Let me show you an example with the 20th concerto for piano from Mozart. I starts with the introduction, it generally directly precede the Theme A. It can be very short or very long depending on the song.", stepAction: { // TODO: mettre un peu plus de texte la
+                    LevelModel.TextStep(text: "Let me show you an example with the 20th concerto for piano from Mozart. I starts with the introduction, which generally directly precede the Theme A. It can be very short or very long depending on the song.", stepAction: {
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
@@ -44,7 +44,7 @@ struct TwoThemesIntroductionView: View {
                         
                         PM.replaceLoop(by: .init(startTime: introduction.startTime, endTime: themeA.startTime, shouldRestart: true, lockLoopZone: true, isEditable: false))
                     }),
-                    LevelModel.TextStep(text: "Then follows the Theme A, played by the violins. Notice how \"devilish\" this theme is made by the gliding of the accompaniment and the melody that's always out of sync.", stepAction: { // TODO: checker si ca demarre bien avec les violins et viola hellish
+                    LevelModel.TextStep(text: "Then follows the Theme A, played by the violins. Notice how \"devilish\" this theme is made by the gliding of the accompaniment and the melody that's always out of sync.", stepAction: {
                         for sound in PM.sounds.values {
                             sound.unsolo()
                             sound.unmute()
@@ -54,7 +54,7 @@ struct TwoThemesIntroductionView: View {
                         
                         PM.replaceLoop(by: .init(startTime: themeA.startTime, endTime: bridge.startTime, shouldRestart: true, lockLoopZone: true, isEditable: false))
                     }),
-                    LevelModel.TextStep(text: "Then a bridge follows, it is characterized by the tension it brings and by the fact that it prepares, for example by introducing new instruments, to the next theme. In this bridge (all actually) no complex melody is played in and all the instruments act as accompaniment or bassline.", stepAction: {
+                    LevelModel.TextStep(text: "Then a bridge follows, it is characterized by the tension it brings and by the fact that it prepares, for example by introducing new instruments, to the next theme. In bridges (including this one) no complex melody is played in and all the instruments act as accompaniment or bassline.", stepAction: {
                         // reset states
                         for sound in PM.sounds.values {
                             sound.unsolo()
@@ -135,19 +135,19 @@ struct TwoThemesIntroductionView: View {
     
     private func setupTutorial(MM: MusiciansManager) async {
  
-        await MM.createMusician(withSongName: "ThemesSounds/mozart20celloandbass.m4a", index: 0, PM: PM, color: .red, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20celloandbass.m4a", index: 0, PM: PM, color: .red, name: "Cello & Contrabass", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [0.0, 5.5, 37, 43.75, 48, 60.5], colors: [(31.8, .red), (sound.timeObserver.soundDuration, .green)])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart20flutesandoboe.m4a", index: 1, PM: PM, color: .blue, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20flutesandoboe.m4a", index: 1, PM: PM, color: .blue, name: "Flutes & Oboe", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [5.5, 40.2, 60], colors: [(8, .blue), (49.5, .green), (sound.timeObserver.soundDuration, .blue)])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart20piano.m4a", audioLevel: 4, index: 2, PM: PM, color: .blue, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20piano.m4a", audioLevel: 4, index: 2, PM: PM, color: .blue, name: "Piano", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [5.5, 12.9, 44.5, 51.5], colors: [(11.2, .blue), (31.8, .green), (sound.timeObserver.soundDuration, .blue)])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart20viola.m4a", index: 3, PM: PM, color: .green, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20viola.m4a", index: 3, PM: PM, color: .green, name: "Viola", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [37, 43.5, 48, 60.5], colors: [(sound.timeObserver.soundDuration, .green)])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart20violins.m4a", index: 4, PM: PM, color: .blue, handler: { sound in
+        await MM.createMusician(withSongName: "ThemesSounds/mozart20violins.m4a", index: 4, PM: PM, color: .blue, name: "Violins", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [37, 43.5, 48, 51.5], colors: [(31.8, .blue), (43.5, .green), (51.5, .blue), (sound.timeObserver.soundDuration, .green)])
         })
         

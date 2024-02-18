@@ -17,6 +17,9 @@ struct LevelsView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                Rectangle()
+                    .fill(.black)
+                    .ignoresSafeArea()
                 //Rectangle()
                 //    .fill(.ellipticalGradient(colors: [.pink, .gray, .blue]))
                 //    .ignoresSafeArea()
@@ -44,11 +47,13 @@ struct LevelsView: View {
                                     ZStack(alignment: .leading) {
                                         Line()
                                             .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
-                                            .fill(colorScheme.textColor)
+                                            //.fill(colorScheme.textColor)
+                                            .fill(.white)
                                         //.foregroundStyle(colorScheme.textColor)
                                             .frame(width: geometry.size.width * 0.4, height: 1)
                                         RoundedRectangle(cornerRadius: 20)
-                                            .foregroundStyle(colorScheme.textColor)
+                                            //.foregroundStyle(colorScheme.textColor)
+                                            .foregroundStyle(.white)
                                             .frame(width: LM.unlockedLevels[levels[offset]] ?? 0 > 1 ? geometry.size.width * 0.40 : 0, height: 10.5)
                                             .offset(x: 5, y: -1) // fix little visual bug
                                     }
@@ -60,7 +65,8 @@ struct LevelsView: View {
                                 } label: {
                                     Text("Start")
                                     //.scaleEffect(LM.levelStarted ? 10 : 1)
-                                        .foregroundStyle(colorScheme.textColor)
+                                        //.foregroundStyle(colorScheme.textColor)
+                                        .foregroundStyle(.white)
                                 }
                                 .opacity(LM.levelStarted ? 0 : 1)
                                 .frame(width: geometry.size.width * 0.2)
@@ -73,10 +79,12 @@ struct LevelsView: View {
                                     ZStack(alignment: .leading) {
                                         Line()
                                             .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
-                                            .fill(colorScheme.textColor)
+                                            //.fill(colorScheme.textColor)
+                                            .fill(.white)
                                             .frame(width: geometry.size.width * 0.4, height: 1)
                                         RoundedRectangle(cornerRadius: 20)
-                                            .foregroundStyle(colorScheme.textColor)
+                                            //.foregroundStyle(colorScheme.textColor)
+                                            .foregroundStyle(.white)
                                             .frame(width: LM.unlockedLevels[levels[offset + 1]] ?? 0 > 0 ? geometry.size.width * 0.4 : 0, height: 10.5)
                                             .offset(x: -5, y: -1) // fix little visual bug
                                     }
@@ -88,6 +96,7 @@ struct LevelsView: View {
                                 Text(level.rawValue)
                                     .font(.system(size: 80))
                                     .bold()
+                                    .foregroundStyle(.white) // TODO: mettre avec le colorscheme
                                     .opacity(LM.levelStarted ? 0 : 1)
                             })
                         }

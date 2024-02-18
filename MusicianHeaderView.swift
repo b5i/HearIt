@@ -14,7 +14,8 @@ struct MusicianHeaderView: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 15)
-                .stroke(lineWidth: 3)
+                .stroke(.white, lineWidth: 3)
+            /*
             VStack {
                 SpotlightColorButton(isDisabled: disabledFeatures.contains(feature: .changeSpotlightColorFeature), musician: musician)
                     .spotlight(type: .spotlightChange(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 60)
@@ -25,9 +26,28 @@ struct MusicianHeaderView: View {
                         .spotlight(type: .solo(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
                 }
             }
+            .padding()*/
+            VStack {
+                if let musicianName = musician.name {
+                    Text(musicianName)
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+                HStack {
+                    MuteButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
+                        .spotlight(type: .mute(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
+                    SpotlightColorButton(isDisabled: disabledFeatures.contains(feature: .changeSpotlightColorFeature), musician: musician)
+                        .spotlight(type: .spotlightChange(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 60)
+                    SoloButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
+                        .spotlight(type: .solo(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
+                }
+            }
             .padding()
         }
-        .frame(width: 100, height: 140)
+        //.frame(width: 100, height: 140)
+        .frame(width: 100, height: 85)
+        .padding()
     }
     
     struct SpotlightColorButton: View {
@@ -37,9 +57,12 @@ struct MusicianHeaderView: View {
         
         @ObservedObject var musician: Musician
         var body: some View {
+            /*
             Button {
                 if isDisabled {
-                    self.shakeNumber += 2
+             withAnimation {
+                 self.shakeNumber += 2
+             }
                 } else {
                     self.musician.goToNextColor()
                 }
@@ -53,6 +76,22 @@ struct MusicianHeaderView: View {
                     .foregroundStyle(Color(cgColor: self.musician.status.spotlightColor.getCGColor()))
                     .animation(.spring, value: self.musician.status.spotlightColor)
             }
+            .shake(with: shakeNumber)
+             */
+            Button {
+                if isDisabled {
+                    withAnimation {
+                        self.shakeNumber += 2
+                    }
+                } else {
+                    self.musician.goToNextColor()
+                }
+            } label: {
+                RoundedRectangle(cornerRadius: 8)
+                    .foregroundStyle(Color(cgColor: self.musician.status.spotlightColor.getCGColor()))
+                    .frame(width: 35, height: 35)
+            }
+            .frame(width: 35, height: 35)
             .shake(with: shakeNumber)
         }
     }

@@ -109,8 +109,10 @@ struct AnswersOverlayViewModifier: ViewModifier {
                                                 .frame(width: showAnswersSpoilWarning ? 40 : 0)
                                             Text("Answers warning")
                                                 .font(.title)
+                                                .foregroundStyle(.white)
                                         }
                                         Text("Are you sure that you want to see the answers?")
+                                            .foregroundStyle(.white)
                                         HStack {
                                             Button {
                                                 withAnimation {

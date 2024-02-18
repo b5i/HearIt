@@ -17,13 +17,6 @@ struct MyApp: App {
 }
 
 fileprivate extension View {
-    @ViewBuilder func globalSpotlight2(center: CGPoint?, areaRadius: CGFloat?, isEnabled: Bool) -> some View {
-        if #available(iOS 17.0, *), let center = center, let areaRadius = areaRadius {
-            self.colorEffect(Shader(function: ShaderFunction(library: ShaderLibrary.bundle(.main), name: "spotlight"), arguments: [.float2(center.x, center.y), .float(areaRadius)]), isEnabled: isEnabled)
-        } else {
-            self
-        }
-    }
     @ViewBuilder func globalSpotlight() -> some View {
         self.modifier(GlobalSpotlightModifier())
     }

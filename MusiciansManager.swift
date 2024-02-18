@@ -6,6 +6,7 @@
 //
 
 import SceneKit
+import SceneKit.ModelIO
 import AVFoundation
 import PHASE
 
@@ -19,7 +20,7 @@ class MusiciansManager: ObservableObject {
     }
     
     @MainActor
-    func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, PM: PlaybackManager, color: Musician.SpotlightColor = .white, handler: ((Sound) -> ())? = nil) async {
+    func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, PM: PlaybackManager, color: Musician.SpotlightColor = .white, name: String? = nil, handler: ((Sound) -> ())? = nil) async {
         if PM.sounds[songName] == nil {
             let newMusician = self.createMusician(index: index)
             
@@ -40,6 +41,7 @@ class MusiciansManager: ObservableObject {
                 sound.infos.musiciansManager = self
                 sound.infos.playbackManager = PM
                 sound.timeHandler = handler
+                newMusician.name = name
                 newMusician.setSound(sound)
                 newMusician.soundDidChangePlaybackStatus(isPlaying: false)
                 newMusician.changeSpotlightColor(color: color)
@@ -82,8 +84,14 @@ class MusiciansManager: ObservableObject {
     
     private func createUniqueMusician(verifyWithScene scene: SCNScene) -> Musician {
         func makeMusician() -> Musician {
-            let musicianScene = SCNScene(named: "art.scnassets/common_people@idle.scn")!
-            let musicianNode = musicianScene.rootNode.childNode(withName: "Body-Main", recursively: true)!
+            let musicianURL = Bundle.main.url(forResource: "art.scnassets/common_people@idle111", withExtension: "usdz")!
+            let mdlAsset = MDLAsset(url: musicianURL)
+            mdlAsset.loadTextures()
+            let musicianNode = SCNNode(mdlObject: mdlAsset.object(at: 0))
+            musicianNode.rotation.y = 1
+            musicianNode.rotation.w += Float.pi / 2
+            //let musicianScene = SCNScene(named: "art.scnassets/common_people@idle.scn")!
+            //let musicianNode = musicianScene.rootNode.childNode(withName: "Body-Main", recursively: true)!
             musicianNode.removeFromParentNode()
             
             let spotlightScene = SCNScene(named: "art.scnassets/cleanSpotlight.scn")!
@@ -109,7 +117,7 @@ class MusiciansManager: ObservableObject {
             spotlightSupportNode.transform.m42 += 1
             spotlightFlashNode.transform.m42 += 1
             
-            spotlightNode.eulerAngles = SCNVector3(x: .pi * 8/9, y: 0, z: .pi)
+            spotlightNode.eulerAngles = SCNVector3(x: .pi * 8/9, y: .pi/2 /* or 0 if we use the .scn asset*/, z: .pi)
             spotlightNode.pivot = .init(m11: 1, m12: 0, m13: 0, m14: 0, m21: 0, m22: 1, m23: 0, m24: 0, m31: 0, m32: 0, m33: 1, m34: 0, m41: 0  /* side axis */, m42: 0.8 /* z axis */ , m43: 0.9 /* front axis */, m44: 1)
                         
             /*

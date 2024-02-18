@@ -918,7 +918,7 @@ struct KeyboardObserverViewModifier: ViewModifier {
                     return found
                 })
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .opacity(0  )
+                .opacity(0)
                 .allowsHitTesting(false)
             }
     }

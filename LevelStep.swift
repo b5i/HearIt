@@ -12,7 +12,16 @@ protocol LevelStep {
     associatedtype Label: View
     var view: Label { get }
     
+    /// The percentage of the height of the screen that should be used to display the view
+    var heightNeeded: Double { get }
+    
     var passCondition: (MusiciansManager, PlaybackManager) -> Bool { get }
     
     var stepAction: (() -> Void)? { get }
+}
+
+extension LevelStep {
+    var heightNeeded: Double {
+        return 0.2
+    }
 }

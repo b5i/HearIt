@@ -14,13 +14,15 @@ class Musician: ObservableObject {
     let node: SCNNode
     let spotlightNode: SCNNode
     var sound: Sound?
+    var name: String? = nil
     private(set) var status: MusicianStatus = .init()
     
-    init(manager: MusiciansManager, node: SCNNode, spotlightNode: SCNNode, sound: Sound? = nil, status: MusicianStatus = .init()) {
+    init(manager: MusiciansManager, node: SCNNode, spotlightNode: SCNNode, sound: Sound? = nil, name: String? = nil, status: MusicianStatus = .init()) {
         self.manager = manager
         self.node = node
         self.spotlightNode = spotlightNode
         self.sound = sound
+        self.name = name
         self.status = status
     }
     
