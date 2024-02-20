@@ -14,7 +14,7 @@ class Musician: ObservableObject {
     let node: SCNNode
     let spotlightNode: SCNNode
     var sound: Sound?
-    var name: String? = nil
+     var name: String? = nil
     private(set) var status: MusicianStatus = .init()
     
     init(manager: MusiciansManager, node: SCNNode, spotlightNode: SCNNode, sound: Sound? = nil, name: String? = nil, status: MusicianStatus = .init()) {
@@ -216,9 +216,9 @@ class Musician: ObservableObject {
             case .red:
                 return 25000
             case .green:
-                return 10000
+                return 15000
             case .white:
-                return 10000
+                return 15000
             }
         }
         

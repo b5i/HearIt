@@ -109,7 +109,7 @@ struct PlayingBarView: View {
         VStack(spacing: 0) {
             currentTimeLabel
                 .animation(.spring, value: self.playbackManager.currentLoop == nil)
-                .offset(y: self.playbackManager.currentLoop == nil ? 0 : -35)
+                .offset(y: self.playbackManager.currentLoop == nil ? 0 : self.showZoomedInUI ? -15 : -40)
             HStack {
                 playPauseButton
                     .spotlight(type: .playPause, areaRadius: 70)
@@ -128,9 +128,9 @@ struct PlayingBarView: View {
                     //}
                     VStack(spacing: 0) {
                         LoopView(geometry: geometry, soundObserver: soundObserver, playbackManager: playbackManager)
-                            .offset(y: self.showZoomedInUI ? -10 - abs(self.zoomedInHeight - self.zoomedOutHeight) / 2 : -10)
+                            .offset(y: self.showZoomedInUI ? -15 - abs(self.zoomedInHeight - self.zoomedOutHeight) / 2 : -15)
                             .animation(.spring, value: self.playbackManager.currentLoop == nil)
-                            .opacity(self.playbackManager.currentLoop == nil ? 0 : 1)
+                            .opacity(self.playbackManager.currentLoop == nil || self.showZoomedInUI ? 0 : 1)
                         Group {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 10)
@@ -175,6 +175,12 @@ struct PlayingBarView: View {
                                                 .opacity(showZoomedInUI ? 0 : 5)
                                              */
                                         }
+                                        .overlay(alignment: .top, content: {
+                                            SegmentedTextView(stops: textStops)
+                                                .opacity(showZoomedInUI ? 0 : 1)
+                                                .animation(.spring(duration: 0.2), value: showZoomedInUI)
+                                                .offset(y: showZoomedInUI ? -35 : -20)
+                                        })
                                     })
                                     .position(x: geometry.size.width / 2, y: 0)
                                 if #available(iOS 17.0, *) {
@@ -512,6 +518,57 @@ struct PlayingBarView: View {
         }
     }
     
+    struct SegmentedTextView: View {
+        let stops: [(percentage: Double, label: String)]
+        
+        let direction: Direction = .horizontal
+        
+        var body: some View {
+            GeometryReader { geometry in
+                switch direction {
+                case .horizontal:
+                    HStack(spacing: 0) {
+                        ForEach(Array(stops.enumerated()), id: \.offset) { (_, stop) in
+                            ZStack(alignment: .center) {
+                                Rectangle()
+                                    .fill(.clear)
+                                    .frame(width: geometry.size.width * stop.percentage)
+                                if stop.label != "" {
+                                    Text(stop.label)
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                        .fixedSize()
+                                }
+                            }
+                            .clipped()
+                        }
+                    }
+                case .vertical:
+                    VStack(spacing: 0) {
+                        ForEach(Array(stops.enumerated()), id: \.offset) { (_, stop) in
+                            ZStack(alignment: .center) {
+                                Rectangle()
+                                    .fill(.clear)
+                                    .frame(height: geometry.size.height * stop.percentage)
+                                if stop.label != "" {
+                                    Text(stop.label)
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                        .rotationEffect(.degrees(-90))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        enum Direction {
+            case horizontal
+            case vertical
+        }
+    }
+    
     struct LoopView: View {
         let geometry: GeometryProxy
         
@@ -768,6 +825,69 @@ struct PlayingBarView: View {
         
         //return config.isEditing ? handleEditingMode(config: config) : handleNormalMode(config: config)
             return handleEditingMode(config: config)
+    }
+    
+    var textStops: [(Double, String)] {
+        func handleEditingMode(config: PlaybackManager.SongPartsConfiguration) -> [(Double, String)] {
+            var toReturn: [(Double, String)] = []
+            
+            let parts = Array(config.songParts.enumerated())
+            let partsCount = parts.count
+            
+            var distanceCounter: Double = 0
+            
+            for (offset, part) in parts {
+                let time = part.startTime
+                if time == -1 {
+                    let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
+                    
+                    toReturn.append((distanceOfNextFromCapsule, part.label))
+                    break
+                } else {
+                    // normal handling
+                    if offset != partsCount - 1 {
+                        if parts[offset + 1].element.startTime == -1 {
+                            let distanceFromNext = max((self.sliderValue * self.soundObserver.soundDuration - time) / self.soundObserver.soundDuration, 0)
+                            /*
+                            let distanceFromNext: Double
+                            if self.sliderValue * self.soundObserver.soundDuration >= time {
+                                distanceFromNext = (self.sliderValue * self.soundObserver.soundDuration - time) / self.soundObserver.soundDuration
+                            } else {
+                                distanceFromNext = (self.soundObserver.soundDuration - time) / self.soundObserver.soundDuration
+                            } */ // TODO: Decide if we use that implementation instead
+                            
+                            toReturn.append((distanceFromNext, part.label))
+                            
+                            distanceCounter += distanceFromNext
+                            
+                            toReturn.append((1 - distanceCounter, ""))
+                            break
+                        }
+                        if parts[offset + 1].element.startTime > self.soundObserver.soundDuration {
+                            toReturn.append((1 - distanceCounter, part.label))
+                            break
+                        } else {
+                            let distanceFromNext = (parts[offset + 1].element.startTime - time) / self.soundObserver.soundDuration
+                            
+                            toReturn.append((distanceFromNext, part.label))
+                            
+                            distanceCounter += distanceFromNext
+                        }
+                    } else {
+                        let distanceOfNextFromCapsule = max(1 - distanceCounter, 0)
+                        
+                        toReturn.append((distanceOfNextFromCapsule, part.label))
+                    }
+                }
+            }
+            
+            return toReturn
+        }
+        
+        guard let config = self.playbackManager.currentSongPartsConfiguration else { return [
+            (1, "")] }
+                
+        return handleEditingMode(config: config)
     }
     
     

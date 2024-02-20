@@ -38,7 +38,7 @@ struct MusicianHeaderView: View {
                     MuteButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
                         .spotlight(type: .mute(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
                     SpotlightColorButton(isDisabled: disabledFeatures.contains(feature: .changeSpotlightColorFeature), musician: musician)
-                        .spotlight(type: .spotlightChange(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 60)
+                        .spotlight(type: .spotlightChange(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 50)
                     SoloButton(isDisabled: disabledFeatures.contains(feature: .soloFeature), musician: musician)
                         .spotlight(type: .solo(assetName: self.musician.sound?.infos.assetName ?? ""), areaRadius: 40)
                 }

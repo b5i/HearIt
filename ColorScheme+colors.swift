@@ -10,7 +10,7 @@ extension ColorScheme {
     /// The color that must be used depending on the color style of the device.
     ///
     ///
-    /// When you implement a `Text`, you must be sure that is will stay visible whether choice your user do.
+    /// When you implement a `Text`, you must be sure that is will stay visible whatever choice your user do.
     /// The `textColor` attribute provides the right color your `Text` has to be.
     /// ```swift
     /// struct MyView: View {
@@ -28,7 +28,7 @@ extension ColorScheme {
     /// The color that must be used depending on the color style of the device.
     ///
     ///
-    /// When you implement a `View`, you must be sure that its background will stay in the background whether choice your user do.
+    /// When you implement a `View`, you must be sure that its background will stay in the background whatever choice your user do.
     /// The `backgroundColor` attribute provides the right color your `View` has to be.
     /// ```swift
     /// struct MyView: View {

@@ -34,6 +34,7 @@ struct BoleroLevelTestView: View {
                         LevelModel.ViewStep(view: {
                             VStack {
                                 Text("Your objective is to identify which musician is performing each element. Multiple musicians can play the same element simultaneously. To submit your choice, adjust the color of the musician corresponding to what you believe they are playing, as explained in the tutorial. Once you've completed your selections, click the right arrow to confirm your results. Best of luck!")
+                                    .foregroundStyle(.white)
                                 HStack {
                                     Spacer()
                                     ZStack {
@@ -62,6 +63,7 @@ struct BoleroLevelTestView: View {
                                     Spacer()
                                 }
                             }
+                            .fixedSize(horizontal: false, vertical: true)
                         }, passCondition: { mm,_ in
                             for musician in mm.musicians.values.map({$0.musician}) {
                                 if musician.sound?.infos.assetName.hasPrefix("bolero_theme") == true && musician.status.spotlightColor != .blue {
@@ -87,10 +89,8 @@ struct BoleroLevelTestView: View {
                             TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
                         })
                     ]), MM: MM, PM: PM)
-                    .padding(.top, 40)
-                    .padding(.leading, 40)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
-                        .frame(height: geometry.size.height * 0.85)
+                        .frame(height: geometry.size.height * 0.8)
                 }
                 .overlay(alignment: .topTrailing, content: {
                     TopTrailingActionsView()

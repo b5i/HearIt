@@ -78,9 +78,9 @@ struct AnswersOverlayViewModifier: ViewModifier {
                                         AM.showSheet = false
                                     }
                                 }
-                            RoundedRectangle(cornerRadius: 50)
+                            RoundedRectangle(cornerRadius: 30)
                                 .strokeBorder(.white, lineWidth: 3)
-                                .background(RoundedRectangle(cornerRadius: 50).fill(.black.opacity(0.5)))
+                                .background(RoundedRectangle(cornerRadius: 30).fill(.black.opacity(0.5)))
                                 .frame(width: geometry.size.width * 0.75, height: geometry.size.width * 0.2)
                             
                                 .overlay(alignment: .topTrailing, content: {

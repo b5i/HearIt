@@ -104,6 +104,7 @@ struct LevelsView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
+                /*
                 .overlay(alignment: .bottom, content: {
                     HStack {
                         Button("Home") {
@@ -120,7 +121,7 @@ struct LevelsView: View {
                         }
                     }
                     .opacity(LM.levelStarted ? 0 : 1)
-                })/*
+                })*//*
                 .castedOnChange(of: LM.levelSelection, perform: {
                     withAnimation {
                         self.selection = LM.levelSelection

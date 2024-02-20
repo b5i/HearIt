@@ -74,6 +74,7 @@ struct HomeScreenView: View {
                 }
                 .padding()
                 .frame(width: 200, height: 100)
+                .padding(.bottom)
             }
         }
     }

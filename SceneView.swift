@@ -106,6 +106,7 @@ struct NonOptionalSceneView: View {
             .overlay(alignment: .bottom) {
                 VStack {
                     Spacer()
+                    /*
                     HStack {
                         Button("front") {
                             scene.rootNode.getFirstCamera()?.transform.m43 -= 1
@@ -126,6 +127,7 @@ struct NonOptionalSceneView: View {
                             scene.rootNode.getFirstCamera()?.transform.m41 += 1
                         }
                     }
+                     */
                     VStack {
                         Spacer()
                         ForEach(Array(MM.musicians.values).filter({!$0.musician.status.isHidden}).sorted(by: {$0.index < $1.index}), id: \.index) { (_, musician) in
@@ -375,7 +377,7 @@ extension SCNScene {
         let scene = SCNScene(named: "art.scnassets/musicScene.scn")!
         
         let secondRootNote = SCNNode()
-        
+                
         scene.rootNode.addChildNode(secondRootNote)
         
         // create and add a camera to the scene
@@ -390,17 +392,20 @@ extension SCNScene {
         // create and add an ambient light to the scene
         let ambientLightNode = SCNNode()
         ambientLightNode.light = SCNLight()
-        ambientLightNode.light!.type = .ambient
-        ambientLightNode.light!.color = UIColor.darkGray
+        ambientLightNode.light?.type = .ambient
+        ambientLightNode.light?.color = UIColor.darkGray
+        ambientLightNode.light?.intensity = 1500
         secondRootNote.addChildNode(ambientLightNode)
         
+        /*
         // create and add a light to the scene
         let lightNode = SCNNode()
         lightNode.light = SCNLight()
-        lightNode.light!.type = .omni
+        lightNode.light?.type = .omni
         lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
         lightNode.light?.intensity = 100
         secondRootNote.addChildNode(lightNode)
+         */
         
         return scene
     }

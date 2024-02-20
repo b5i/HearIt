@@ -76,6 +76,7 @@ struct TopTrailingActionsView: View {
                 .spotlight(type: .lightBulb, areaRadius: 50)
                 .padding()
             Button {
+                SpotlightModel.shared.clearCache()
                 LevelsManager.shared.returnToLevelsView(unlockingLevel: Model.shared.unlockedLevel) // TODO: add a confirmation dialog
             } label: {
                 Image(systemName: "door.left.hand.open")

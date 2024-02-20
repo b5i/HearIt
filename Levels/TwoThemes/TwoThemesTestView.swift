@@ -38,12 +38,17 @@ struct TwoThemesTestView: View {
                         LevelModel.ViewStep(view: {
                             VStack {
                                 Text("You have control over two buttons. When you discern a change in the song's section (e.g. Theme A, the bridge or Theme B started), press the checkmark button. If you wish to undo your previous selection, simply click the clockwise arrow. Your selections will be visually represented by the colored playing bar. Finally, click the standard arrow to confirm your choice.") // TODO: add the possiblity to manually change the selection
+                                    .foregroundStyle(.white)
                                 HStack {
                                     Button {
                                         var newConfig = PM.currentSongPartsConfiguration
                                         
                                         if let newStartTime = PM.sounds.values.first?.timeObserver.currentTime, let minusIndex = newConfig?.songParts.firstIndex(where: {$0.startTime == -1}) {
-                                            newConfig?.songParts[minusIndex].startTime = newStartTime
+                                            if let partThatBeginsAfterCurrentTime /* lol */ = newConfig?.songParts.last(where: {$0.startTime > newStartTime})?.startTime { // prevent the user to have a part that begins before another if it's not intended
+                                                newConfig?.songParts[minusIndex].startTime = min(partThatBeginsAfterCurrentTime + 1, PM.sounds.values.first?.timeObserver.soundDuration ?? partThatBeginsAfterCurrentTime + 1)
+                                            } else {
+                                                newConfig?.songParts[minusIndex].startTime = newStartTime
+                                            }
                                         }
                                         
                                         PM.changeConfiguration(for: newConfig)
@@ -53,6 +58,7 @@ struct TwoThemesTestView: View {
                                             .scaledToFit()
                                     }
                                     .frame(width: 40, height: 40)
+                                    .padding(.horizontal)
                                     .spotlight(type: .addPart, areaRadius: 40)
                                     //.disabled(PM.currentSongPartsConfiguration?.songParts.contains(where: {$0.startTime == -1}) == false)
                                     //.id(PM.currentSongPartsConfiguration?.uuid)
@@ -71,12 +77,14 @@ struct TwoThemesTestView: View {
                                             .scaledToFit()
                                     }
                                     .frame(width: 40, height: 40)
+                                    .padding(.horizontal)
                                     .spotlight(type: .removeLastPart, areaRadius: 40)
                                     //.disabled(PM.currentSongPartsConfiguration?.songParts.contains(where: {$0.startTime != -1 && $0.startTime != 0 /* the first one is always 0*/ }) == false)
                                     //.id(PM.currentSongPartsConfiguration?.uuid)
 
                                 }
                             }
+                            .fixedSize(horizontal: false, vertical: true)
                             .onAppear {
                                 SpotlightModel.shared.disactivateAllSpotlights()
                                 SpotlightModel.shared.setSpotlightActiveStatus(ofType: .addPart, to: true)
@@ -160,25 +168,20 @@ struct TwoThemesTestView: View {
     }
     
     private func setupTutorial(MM: MusiciansManager) async {
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, PM: PM, color: .green, name: "Cello & Contrabass", handler: { sound in
-            guard self.isLevelFinished else { return }
-            Musician.handleTime(sound: sound, powerOnOff: [] /* always playing */, colors: [(25.4, .green), (44.4, .red), (52.9, .blue), (70.5, .red), (sound.timeObserver.soundDuration, .blue)]) // raph
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, PM: PM, name: "Cello & Contrabass", handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [] /* always playing */, colors: self.isLevelFinished ? [(25.4, .green), (44.4, .red), (52.9, .blue), (70.5, .red), (sound.timeObserver.soundDuration, .blue)] : []) // raph
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, PM: PM, color: .green, name: "French Horns", handler: { sound in
-            guard self.isLevelFinished else { return }
-            Musician.handleTime(sound: sound, powerOnOff: [0.0, 6.3], colors: [(55.7, .green), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)])
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, PM: PM, name: "French Horns", handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [0.0, 6.3], colors: self.isLevelFinished ? [(55.7, .green), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)] : [])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, PM: PM, color: .green, name: "Oboe", handler: { sound in
-            guard self.isLevelFinished else { return }
-            Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .green), (18.7, .blue), (70.5, .green) ,(sound.timeObserver.soundDuration, .blue)])
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, PM: PM, name: "Oboe", handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .green), (18.7, .blue), (70.5, .green) ,(sound.timeObserver.soundDuration, .blue)] : [])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, PM: PM, color: .red, name: "Violas", handler: { sound in
-            guard self.isLevelFinished else { return }
-            Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .red), (18.7, .blue), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)])
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, PM: PM, name: "Violas", handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .red), (18.7, .blue), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)] : [])
         })
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, PM: PM, color: .red, name: "Violins", handler: { sound in
-            guard self.isLevelFinished else { return }
-            Musician.handleTime(sound: sound, powerOnOff: [], colors: [(7, .red), (18.7, .blue), (24.7, .red), (41.6, .green), (sound.timeObserver.soundDuration, .blue)])
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, PM: PM, name: "Violins", handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .red), (18.7, .blue), (24.7, .red), (41.6, .green), (sound.timeObserver.soundDuration, .blue)] : [])
         })
         PM.changeConfiguration(for: .init(songParts: [
             .init(startTime: 0.0, type: .introduction, label: "Introduction"),

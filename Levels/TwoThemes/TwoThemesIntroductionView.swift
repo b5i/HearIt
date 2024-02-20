@@ -28,7 +28,7 @@ struct TwoThemesIntroductionView: View {
             GeometryReader { geometry in
             VStack {
                 SceneStepsView(levelModel: LevelModel(steps: [
-                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To separate them from each other, compositors usually put a bridge (a moment with no melody, just the accompaniment//// and maybe a bassline) and/or a little pause between them."),
+                    LevelModel.TextStep(text: "Welcome! In this level you will learn about themes in music. A theme is, as you've seen in level \"\(LevelsManager.Level.boleroTheme.rawValue)\" the main melody in a song. It can be played by multiple intruments, together or in solo. A lot of music doesn't contain only one theme but several. They are usually called Theme A and Theme B and so on. To separate them from each other, compositors usually put a bridge (a moment with no melody, just the accompaniment and maybe a bassline) and/or a little pause between them."),
                     LevelModel.TextStep(text: "You've perhaps already heard a musician saying that he/she made a \"variation\" on a theme. What he/she actually means is that they created a song using some elements of the theme or even all of it, and then created a new accompaniment and bassline for it.", stepAction: {
                         if !(PM.currentLoop?.isEditable ?? true) { // remove the loop only if it has been set up by the game and not by the player
                             PM.removeLoop()
@@ -100,6 +100,7 @@ struct TwoThemesIntroductionView: View {
                     LevelModel.TextStep(text: "", stepAction: {
                         SpotlightModel.shared.disactivateAllSpotlights()
                         NotificationCenter.default.post(name: .shouldStopEveryEngineNotification, object: nil)
+                        SpotlightModel.shared.clearCache()
                         withAnimation {
                             self.finishedIntroduction = true
                         }

@@ -115,7 +115,7 @@ struct BoleroLevelIntroductionView: View {
                             }
                             PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "The first thing you hear is definitely the lead played by a synthesizers////, it's called the theme or melody of the song. Be aware that it can be played by more than one instrument.", stepAction: {
+                        LevelModel.TextStep(text: "The first thing you hear is definitely the lead played by a synthesizers, it's called the theme or melody of the song. Be aware that it can be played by more than one instrument.", stepAction: {
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
                             
                             // reset states
@@ -141,7 +141,7 @@ struct BoleroLevelIntroductionView: View {
                             }
                             PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks. The bassline is very easy to identify as, if there's one, its rythm stays the same troughout the song. It's also more rythmic than the accompaniment that is more harmonic. ////", stepAction: {
+                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks. The bassline is very easy to identify as, if there's one, its rythm stays the same troughout the song. It's also more rythmic than the accompaniment that is more harmonic.", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
                             // reset states
@@ -161,15 +161,13 @@ struct BoleroLevelIntroductionView: View {
                             SpotlightModel.shared.setSpotlightActiveStatus(ofType: .goForwardArrow, to: true)
                         }),
                         LevelModel.TextStep(text: "", stepAction: {
-                            SpotlightModel.shared.disactivateAllSpotlights()
+                            SpotlightModel.shared.clearCache()
                             NotificationCenter.default.post(name: .shouldStopEveryEngineNotification, object: nil)
                             withAnimation {
                                 self.finishedIntroduction = true
                             }
                         })
                     ]), MM: MM, PM: PM)
-                    .padding(.top, 40)
-                    .padding(.horizontal)
                     NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM, disabledFeatures: disabledFeatures)
                         .frame(height: geometry.size.height * 0.8)
                 }

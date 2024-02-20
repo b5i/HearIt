@@ -15,7 +15,7 @@ struct SceneStepsView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .center) {
+            VStack {
                 if let currentStep = levelModel.currentStep {
                     ZStack {
                         //BlurView()
@@ -23,9 +23,13 @@ struct SceneStepsView: View {
                         RoundedRectangle(cornerRadius: 25)
                             .strokeBorder(.white, lineWidth: 3)
                             .background(RoundedRectangle(cornerRadius: 25).fill(.black.opacity(1)))
-                        VStack(alignment: .leading) {
-                            AnyView(currentStep.view)
-                                .padding()
+                        HStack {
+                            VStack(alignment: .leading) {
+                                AnyView(currentStep.view)
+                                    .padding()
+                                    .padding(.bottom) // right and left arrows
+                                Spacer()
+                            }
                             Spacer()
                         }
                         VStack {
@@ -55,25 +59,23 @@ struct SceneStepsView: View {
                     .transition(.asymmetric(insertion: .push(from: .top), removal: .move(edge: .top)))
                 }
             }
-            .frame(width: geometry.size.width * 0.75)
-            .frame(maxHeight: levelModel.currentStep != nil ? geometry.size.height * 0.15 : 0)
+            .frame(minWidth:  geometry.size.width * 0.4, maxWidth:  geometry.size.width * 0.75, maxHeight: levelModel.currentStep != nil ? geometry.size.height : 0)
             .padding()
-            .padding(.top, geometry.safeAreaInsets.top)
-            .padding(.leading, geometry.safeAreaInsets.leading)
+        }
+        .padding(.top, 20)
+        .padding(.bottom)
+    }
+}
+    #Preview {
+        Group {
+            let isLoadingScene: Binding<Bool> = Binding(get: {
+                return false
+            }, set: { _ in
+                return
+            })
+            BoleroLevelIntroductionView(isLoadingScene: isLoadingScene, finishedIntroduction: isLoadingScene)
         }
     }
-}
-
-#Preview {
-    Group {
-        let isLoadingScene: Binding<Bool> = Binding(get: {
-            return false
-        }, set: { _ in
-            return
-        })
-        BoleroLevelIntroductionView(isLoadingScene: isLoadingScene, finishedIntroduction: isLoadingScene)
-    }
-}
 
 struct BlurView: UIViewRepresentable {
     func makeUIView(context: Context) -> UIVisualEffectView {

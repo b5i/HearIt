@@ -58,7 +58,7 @@ class MusiciansManager: ObservableObject {
         musician.node.name = name
         musicians.updateValue((index, musician), forKey: name)
         musician.setMuteStatus(isMuted: musician.status.isMuted)
-        
+                
         scene.rootNode.childNodes.first?.addChildNode(musician.node)
         
         return musician
@@ -163,6 +163,12 @@ class MusiciansManager: ObservableObject {
             spotlightLight.type = .area
             spotlightLight.color = Musician.SpotlightColor.white.getCGColor()
             spotlightLight.intensity = 0
+            spotlightLight.categoryBitMask = 0x1 << self.musicians.count
+            
+            // prevent the light from other musicians to reflect on this musician
+            musicianNode.categoryBitMask = 0x1 << self.musicians.count
+            spotlightLight.categoryBitMask = 0x1 << self.musicians.count
+            musicianNode.getAllChidren().forEach({$0.categoryBitMask = 0x1 << self.musicians.count})
             
             //spotlightLight.spotInnerAngle = 180
             
@@ -309,6 +315,15 @@ extension SCNNode {
                 nodeList.append(child)
             }
             nodeList.append(contentsOf: child.getAllMusicianChildren())
+        }
+        return nodeList
+    }
+    
+    func getAllChidren() -> [SCNNode] {
+        var nodeList: [SCNNode] = []
+        for child in self.childNodes {
+            nodeList.append(child)
+            nodeList.append(contentsOf: child.getAllChidren())
         }
         return nodeList
     }
