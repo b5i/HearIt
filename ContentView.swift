@@ -5,15 +5,20 @@ struct ContentView: View {
     @ObservedObject private var NM = NavigationModel.shared
     @ObservedObject private var LM = LevelsManager.shared
     
+    @Namespace private var animation
+    
     @State private var isLoadingAScene: Bool = false
     var body: some View {
         switch NM.currentStep {
         case .homeScreen:
-            HomeScreenView()
+            //GeometryReader { geometry in
+                HomeScreenView(homeScreenAnimation: animation)
+                .transition(.asymmetric(insertion: .identity, removal: .move(edge: .top)))
+            //}
+
             //.animation(.bouncy, value: NM.currentStep == .homeScreen)
-                .transition(.move(edge: .top))
         case .levelsView:
-            LevelsView(shouldGradientGoToMiddle: LM.levelStarted || isLoadingAScene)
+            LevelsView(homeScreenAnimation: animation, shouldGradientGoToMiddle: LM.levelStarted || isLoadingAScene)
         case .levelView(let level):
             ZStack {
                 Rectangle()
@@ -36,9 +41,4 @@ struct ContentView: View {
          }*/
         //.globalSpotlight(center: spotlightModel.spotlight?.position, areaRadius: spotlightModel.spotlight?.areaRadius, isEnabled: spotlightModel.isEnabled)
     }
-}
-extension Notification.Name {
-    static let shouldStopEveryEngineNotification: Notification.Name = .init("ShouldStopEveryEngineNotification")
-    
-    static let shouldStopAREngine: Notification.Name = .init("ShouldStopAREngine")
 }

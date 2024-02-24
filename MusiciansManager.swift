@@ -20,7 +20,7 @@ class MusiciansManager: ObservableObject {
     }
     
     @MainActor
-    func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, PM: PlaybackManager, color: Musician.SpotlightColor = .white, name: String? = nil, handler: ((Sound) -> ())? = nil) async {
+    func createMusician(withSongName songName: String, audioLevel: Double = 0, index: Int, PM: PlaybackManager, color: Musician.SpotlightColor = .white, name: String? = nil, handler: ((Sound) -> ())? = nil, instrument: Musician.InstrumentType? = nil) async {
         if PM.sounds[songName] == nil {
             let newMusician = self.createMusician(index: index)
             
@@ -45,6 +45,9 @@ class MusiciansManager: ObservableObject {
                 newMusician.setSound(sound)
                 newMusician.soundDidChangePlaybackStatus(isPlaying: false)
                 newMusician.changeSpotlightColor(color: color)
+                if let instrument = instrument {
+                    newMusician.setIntrumentTextureTo(instrument)
+                }
                 sound.delegate = newMusician
             case .failure(let error):
                 print("Error: \(error)")
@@ -78,6 +81,10 @@ class MusiciansManager: ObservableObject {
         }
     }
     
+    func placeCameraToDefaultPosition() {
+        self.scene.rootNode.getFirstCamera()?.position = SCNVector3(x: 0, y: 2, z: 12)
+    }
+    
     func recenterCamera() {
         self.scene.rootNode.getFirstCamera()?.position.x = Float((self.musicians.count - 1) * 2)
     }
@@ -93,7 +100,7 @@ class MusiciansManager: ObservableObject {
             //let musicianScene = SCNScene(named: "art.scnassets/common_people@idle.scn")!
             //let musicianNode = musicianScene.rootNode.childNode(withName: "Body-Main", recursively: true)!
             musicianNode.removeFromParentNode()
-            
+                        
             let spotlightScene = SCNScene(named: "art.scnassets/cleanSpotlight.scn")!
             let spotlightNode = SCNNode()
             spotlightNode.name = "Spotlight-RootNode"
@@ -150,16 +157,10 @@ class MusiciansManager: ObservableObject {
             musicianNode.addAudioPlayer(player)
             */
             
-            
-            let spotlightFlashGeometry = SCNPlane(width: 0.15, height: 0.15)
-            spotlightFlashGeometry.cornerRadius = 0.5
-            
             let spotlightLightNode = SCNNode()
-            //spotlightLightNode.geometry = spotlightFlashGeometry
             let spotlightLight = SCNLight()
             spotlightLightNode.eulerAngles = SCNVector3(x: .pi, y: 0, z: 0)
             spotlightLightNode.light = spotlightLight
-            //spotlightLightNode.scale = SCNVector3(x: 10, y: 10, z: 10)
             spotlightLight.type = .area
             spotlightLight.color = Musician.SpotlightColor.white.getCGColor()
             spotlightLight.intensity = 0
@@ -169,42 +170,9 @@ class MusiciansManager: ObservableObject {
             musicianNode.categoryBitMask = 0x1 << self.musicians.count
             spotlightLight.categoryBitMask = 0x1 << self.musicians.count
             musicianNode.getAllChidren().forEach({$0.categoryBitMask = 0x1 << self.musicians.count})
-            
-            //spotlightLight.spotInnerAngle = 180
-            
+                        
             spotlightFlashNode.addChildNode(spotlightLightNode)
-            
-            /* can't be added at the moment as there is a limit of 8 lights
-            let spotlightLightNode2 = SCNNode()
-            spotlightLightNode2.transform.m43 += 0.7 // make the light reflect on the blindfolds of the spotlight
-            let spotlightLight2 = SCNLight()
-            spotlightLightNode2.eulerAngles = SCNVector3(x: 0, y: 0, z: 0)
-            spotlightLightNode2.light = spotlightLight2
-            //spotlightLightNode.scale = SCNVector3(x: 10, y: 10, z: 10)
-            spotlightLight2.type = .spot
-            spotlightLight2.color = CGColor(red: 0, green: 0, blue: 1, alpha: 1)
-            spotlightLight2.intensity = 100
-            spotlightFlashNode.addChildNode(spotlightLightNode2)
-            
-            let spotlightLightNode3 = SCNNode()
-            spotlightLightNode3.transform.m43 += 0.3 // make the illusion that the light is coming from the yellow part of the spotlight
-            let spotlightLight3 = SCNLight()
-            spotlightLightNode3.eulerAngles = SCNVector3(x: 0, y: 0, z: 0)
-            spotlightLightNode3.light = spotlightLight2
-            spotlightLight3.type = .spot
-            spotlightLight3.color = CGColor(red: 0, green: 0, blue: 1, alpha: 1)
-            spotlightLight3.intensity = 100
-            spotlightFlashNode.addChildNode(spotlightLightNode3)
-             */
 
-            
-            /*
-            spotlightLight.shadowColor = CGColor(red: 1, green: 0, blue: 0, alpha: 1)
-            spotlightLight.shadowRadius = 10
-            spotlightLight.castsShadow = true
-            spotlightLight.shadowMode = .deferred
-             */
-            
             return Musician(manager: self, node: musicianNode, spotlightNode: spotlightLightNode)
         }
         while true {
@@ -231,113 +199,5 @@ class MusiciansManager: ObservableObject {
     
     func update() {
         self.objectWillChange.send()
-    }
-}
-
-extension simd_float3 {
-    func getSceneVector() -> SCNVector3 {
-        return SCNVector3(x: self.x, y: self.y, z: self.z)
-    }
-}
-
-extension SCNVector3 {
-    func getBaseVector() -> simd_float3 {
-        return simd_float3(x: self.x, y: self.y, z: self.z)
-    }
-}
-
-extension SCNScene {
-    func getMusician(withName name: String) -> SCNNode? {
-        return self.rootNode.getMusicianChild(withName: name)
-    }
-}
-
-extension SCNNode {
-    func getFirstCamera() -> SCNNode? {
-        var node: SCNNode? = nil
-        for child in self.childNodes {
-            if child.name?.hasPrefix("WWDC24-Camera") == true {
-                node = child
-                break
-            } else {
-                node = child.getFirstCamera()
-            }
-        }
-        return node
-    }
-    
-    var isSpotlightPart: Bool {
-        var result: Bool = false
-        
-        if self.name?.hasPrefix("Spotlight") == true { return true }
-        else if let parent = self.parent {
-            if parent.name?.hasPrefix("Spotlight") == true {
-                result = true
-            } else {
-                result = parent.isSpotlightPart
-            }
-        }
-         
-        return result
-    }
-    
-    var isMusicianBodyPart: Bool {
-        var result: Bool = false
-        
-        if self.name?.hasPrefix("Body") == true { return true }
-        else if let parent = self.parent {
-            if parent.name?.hasPrefix("Body") == true {
-                result = true
-            } else {
-                result = parent.isSpotlightPart
-            }
-        }
-         
-        return result
-    }
-    
-    func getMusicianParent() -> SCNNode? {
-        var node: SCNNode? = nil
-        if let parent = self.parent, let parentName = parent.name {
-            if parentName.hasPrefix("WWDC24-Musician-") {
-                node = parent
-            } else {
-                node = parent.getMusicianParent()
-            }
-        }
-        return node
-    }
-    
-    func getAllMusicianChildren() -> [SCNNode] {
-        var nodeList: [SCNNode] = []
-        for child in self.childNodes {
-            if child.name?.hasPrefix("WWDC24-Musician-") == true {
-                nodeList.append(child)
-            }
-            nodeList.append(contentsOf: child.getAllMusicianChildren())
-        }
-        return nodeList
-    }
-    
-    func getAllChidren() -> [SCNNode] {
-        var nodeList: [SCNNode] = []
-        for child in self.childNodes {
-            nodeList.append(child)
-            nodeList.append(contentsOf: child.getAllChidren())
-        }
-        return nodeList
-    }
-    
-    func getMusicianChild(withName name: String) -> SCNNode? {
-        var node: SCNNode? = nil
-        for child in self.childNodes {
-            if child.name?.hasPrefix("WWDC24-Musician-\(name)") == true {
-                node = child
-                break
-            } else {
-                node = child.getMusicianChild(withName: name)
-            }
-        }
-        return node
     }
 }

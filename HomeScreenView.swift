@@ -10,12 +10,16 @@ import AVKit
 
 struct HomeScreenView: View {    
     @Environment(\.colorScheme) private var colorScheme
+    
+    let homeScreenAnimation: Namespace.ID
     var body: some View {
         ZStack {
             Rectangle()
                 .fill(colorScheme.backgroundColor)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
+                //.matchedGeometryEffect(id: "HomeScreen", in: homeScreenAnimation, isSource: false)
+
             VStack {
                 Text(appName)
                     .foregroundStyle(colorScheme.textColor)

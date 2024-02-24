@@ -11,7 +11,7 @@ import SceneKit
 
 struct BoleroLevelIntroductionView: View {
     static private var basslinePath = "BoleroSounds/tutorial_bassline.m4a"
-    static private var melodyPath = "BoleroSounds/tutorial_melody2.m4a"
+    static private var melodyPath = "BoleroSounds/tutorial_melody.m4a"
     static private var accompaniment1Path = "BoleroSounds/tutorial_accompaniment1.m4a"
     static private var accompaniment2Path = "BoleroSounds/tutorial_accompaniment2.m4a"
     
@@ -198,10 +198,10 @@ struct BoleroLevelIntroductionView: View {
     
     private func setupTutorial(MM: MusiciansManager) async {
         
-        await MM.createMusician(withSongName: Self.accompaniment1Path, index: 0, PM: PM, color: .green, name: "Synthesizer")
-        await MM.createMusician(withSongName: Self.basslinePath, index: 1, PM: PM, color: .red, name: "Bassline")
-        await MM.createMusician(withSongName: Self.melodyPath, index: 2, PM: PM, color: .blue, name: "Synthesizer")
-        await MM.createMusician(withSongName: Self.accompaniment2Path, index: 3, PM: PM, color: .green, name: "Synthesizer")
+        await MM.createMusician(withSongName: Self.accompaniment1Path, index: 0, PM: PM, color: .green, name: "Synthesizer", instrument: .piano)
+        await MM.createMusician(withSongName: Self.basslinePath, index: 1, PM: PM, color: .red, name: "Bassline", instrument: .drums)
+        await MM.createMusician(withSongName: Self.melodyPath, index: 2, PM: PM, color: .blue, name: "Synthesizer", instrument: .piano)
+        await MM.createMusician(withSongName: Self.accompaniment2Path, index: 3, PM: PM, color: .green, name: "Synthesizer", instrument: .piano)
         
         MM.recenterCamera()
         

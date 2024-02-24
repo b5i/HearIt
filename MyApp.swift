@@ -1,6 +1,6 @@
 import SwiftUI
 
-let appName: String = "[name of the app]"
+let appName: String = "Hear it!" /* "[name of the app]" */
 
 @main
 struct MyApp: App {

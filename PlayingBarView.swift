@@ -109,11 +109,12 @@ struct PlayingBarView: View {
         VStack(spacing: 0) {
             currentTimeLabel
                 .animation(.spring, value: self.playbackManager.currentLoop == nil)
-                .offset(y: self.playbackManager.currentLoop == nil ? 0 : self.showZoomedInUI ? -15 : -40)
+                .offset(y: self.playbackManager.currentLoop == nil ? 0 : self.showZoomedInUI ? -20 : -40)
             HStack {
                 playPauseButton
                     .spotlight(type: .playPause, areaRadius: 70)
                 GeometryReader { geometry in
+                    
                     let UNUSED_SPACE: Double = Double(geometry.size.width - 2*sidePadding).truncatingRemainder(dividingBy: barSpacing) / 2
                     let bars: [Double] = (0...Int((geometry.size.width - 2*sidePadding) / barSpacing)).map({Double($0) * barSpacing + sidePadding + abs(sidePadding - UNUSED_SPACE) })
                     //if bars.count + 2 > Int(soundObserver.soundDuration.rounded(.down)) { // as 1 bar = 1 second, we need to set the generation rules manually and ignore the barSpacing

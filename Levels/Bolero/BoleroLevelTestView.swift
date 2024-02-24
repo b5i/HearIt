@@ -119,11 +119,11 @@ struct BoleroLevelTestView: View {
     }
 
     private func setupTutorial(MM: MusiciansManager) async {
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_clarinet.m4a", index: 0, PM: PM, name: "Clarinet")
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_bassline_snare.m4a", index: 1, PM: PM, name: "Drum Snare")
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_flute.m4a", index: 2, PM: PM, name: "Flute")
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_oboe.m4a", index: 3, PM: PM, name: "Oboe")
-        await MM.createMusician(withSongName: "BoleroSounds/bolero_accompaniment_violins2.m4a", index: 4, PM: PM, name: "Violins")
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_clarinet.m4a", index: 0, PM: PM, name: "Clarinet", instrument: .flute)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_bassline_snare.m4a", index: 1, PM: PM, name: "Drum Snare", instrument: .drums)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_flute.m4a", index: 2, PM: PM, name: "Flute", instrument: .flute)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_theme_oboe.m4a", index: 3, PM: PM, name: "Oboe", instrument: .flute)
+        await MM.createMusician(withSongName: "BoleroSounds/bolero_accompaniment_violins2.m4a", index: 4, PM: PM, name: "Violins", instrument: .chords)
         
         MM.recenterCamera()
         

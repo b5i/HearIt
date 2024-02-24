@@ -170,19 +170,19 @@ struct TwoThemesTestView: View {
     private func setupTutorial(MM: MusiciansManager) async {
         await MM.createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, PM: PM, name: "Cello & Contrabass", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [] /* always playing */, colors: self.isLevelFinished ? [(25.4, .green), (44.4, .red), (52.9, .blue), (70.5, .red), (sound.timeObserver.soundDuration, .blue)] : []) // raph
-        })
+        }, instrument: .chords)
         await MM.createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, PM: PM, name: "French Horns", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [0.0, 6.3], colors: self.isLevelFinished ? [(55.7, .green), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)] : [])
-        })
+        }, instrument: .trumpet)
         await MM.createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, PM: PM, name: "Oboe", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .green), (18.7, .blue), (70.5, .green) ,(sound.timeObserver.soundDuration, .blue)] : [])
-        })
+        }, instrument: .flute)
         await MM.createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, PM: PM, name: "Violas", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .red), (18.7, .blue), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)] : [])
-        })
+        }, instrument: .chords)
         await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, PM: PM, name: "Violins", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .red), (18.7, .blue), (24.7, .red), (41.6, .green), (sound.timeObserver.soundDuration, .blue)] : [])
-        })
+        }, instrument: .chords)
         PM.changeConfiguration(for: .init(songParts: [
             .init(startTime: 0.0, type: .introduction, label: "Introduction"),
             .init(startTime: -1, type: .themeA, label: "Theme A"),

@@ -106,7 +106,7 @@ struct NonOptionalSceneView: View {
             .overlay(alignment: .bottom) {
                 VStack {
                     Spacer()
-                    /*
+                    
                     HStack {
                         Button("front") {
                             scene.rootNode.getFirstCamera()?.transform.m43 -= 1
@@ -127,7 +127,7 @@ struct NonOptionalSceneView: View {
                             scene.rootNode.getFirstCamera()?.transform.m41 += 1
                         }
                     }
-                     */
+                     
                     VStack {
                         Spacer()
                         ForEach(Array(MM.musicians.values).filter({!$0.musician.status.isHidden}).sorted(by: {$0.index < $1.index}), id: \.index) { (_, musician) in
@@ -305,7 +305,7 @@ class SceneViewController: UIViewController, SCNSceneRendererDelegate {
         view.scene = self.scene
         view.delegate = self
         view.showsStatistics = self.showStatistics
-        //view.allowsCameraControl = true
+        view.allowsCameraControl = true
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         view.addGestureRecognizer(tapGesture)
@@ -349,24 +349,6 @@ class SceneViewController: UIViewController, SCNSceneRendererDelegate {
             }
         } else {
             self.playbackManager.listener.worldTransform = matrix_identity_float4x4
-        }
-    }
-}
-
-extension View {
-    /// apply the content transition only if the device is iOS 17.0 or later
-    func sfReplaceEffect() -> some View {
-        if #available(iOS 17.0, *) {
-            return self.contentTransition(.symbolEffect(.replace))
-        } else {
-            return self
-        }
-    }
-    
-    func takeFullSpace() -> some View {
-        GeometryReader { geometry in
-            self
-                .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
 }

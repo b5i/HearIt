@@ -59,22 +59,24 @@ struct TopTrailingActionsView: View {
                 }
                 .padding()
             }
-            Image(systemName: SM.isOn ? "lightbulb.max.fill" : "lightbulb")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 30, height: 30)
-                .foregroundStyle(.yellow)
-                .gesture(
-                    DragGesture(minimumDistance: 0.0) // infinite time longpressgesture
-                        .onChanged({ currentValue in
-                            SM.turnOnSpotlight()
-                        })
-                        .onEnded({ _ in
-                            SM.turnOffSpotlight()
-                        })
-                )
-                .spotlight(type: .lightBulb, areaRadius: 50)
-                .padding()
+            let shouldShowLightBulb = SM.spotlights.contains(where: {$0.value.isEnabled})
+                    Image(systemName: SM.isOn ? "lightbulb.max.fill" : "lightbulb")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .foregroundStyle(.yellow.opacity(shouldShowLightBulb ? 1 : 0.5))
+                        .gesture(
+                            DragGesture(minimumDistance: 0.0) // infinite time longpressgesture
+                                .onChanged({ currentValue in
+                                    SM.turnOnSpotlight()
+                                })
+                                .onEnded({ _ in
+                                    SM.turnOffSpotlight()
+                                })
+                        )
+                        .spotlight(type: .lightBulb, areaRadius: 50)
+                        .padding()
+                        .disabled(!shouldShowLightBulb)
             Button {
                 SpotlightModel.shared.clearCache()
                 LevelsManager.shared.returnToLevelsView(unlockingLevel: Model.shared.unlockedLevel) // TODO: add a confirmation dialog

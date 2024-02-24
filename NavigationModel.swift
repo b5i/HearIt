@@ -18,7 +18,27 @@ class NavigationModel: ObservableObject {
         case levelView(level: Level)
     }
     
-    enum Level: String, CaseIterable {        
+    enum LevelsViewCategories: String, CaseIterable {
+        case homeScreen
+        case tutorial
+        case boleroTheme
+        case twoThemes
+        
+        func getLevel() -> Level? {
+            switch self {
+            case .homeScreen:
+                return nil
+            case .tutorial:
+                return .tutorial
+            case .boleroTheme:
+                return .boleroTheme
+            case .twoThemes:
+                return .twoThemes
+            }
+        }
+    }
+    
+    enum Level: String, CaseIterable {   
         case tutorial = "Tutorial"
         case boleroTheme = "3 Elements"
         case twoThemes = "2 Themes"

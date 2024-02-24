@@ -13,6 +13,7 @@ struct SceneStepsView: View {
     @ObservedObject var MM: MusiciansManager
     @ObservedObject var PM: PlaybackManager
     
+    @State private var forwardArrowShakes: CGFloat = 0
     var body: some View {
         GeometryReader { geometry in
             VStack {
@@ -47,11 +48,16 @@ struct SceneStepsView: View {
                                 Image(systemName: "arrow.forward.circle.fill")
                                     .foregroundStyle(.white)
                                     .onTapGesture {
-                                        levelModel.goToNextStep(musicianManager: MM, playbackManager: PM)
+                                        if !levelModel.goToNextStep(musicianManager: MM, playbackManager: PM) {
+                                            withAnimation {
+                                                self.forwardArrowShakes += 2
+                                            }
+                                        }
                                     }
                                     .disabled(!levelModel.nextStepExists)
                                     .opacity(levelModel.nextStepExists ? 1 : 0)
                                     .spotlight(type: .goForwardArrow, areaRadius: 30)
+                                    .shake(with: forwardArrowShakes)
                             }
                             .padding()
                         }
@@ -66,24 +72,13 @@ struct SceneStepsView: View {
         .padding(.bottom)
     }
 }
-    #Preview {
-        Group {
-            let isLoadingScene: Binding<Bool> = Binding(get: {
-                return false
-            }, set: { _ in
-                return
-            })
-            BoleroLevelIntroductionView(isLoadingScene: isLoadingScene, finishedIntroduction: isLoadingScene)
-        }
+#Preview {
+    Group {
+        let isLoadingScene: Binding<Bool> = Binding(get: {
+            return false
+        }, set: { _ in
+            return
+        })
+        BoleroLevelIntroductionView(isLoadingScene: isLoadingScene, finishedIntroduction: isLoadingScene)
     }
-
-struct BlurView: UIViewRepresentable {
-    func makeUIView(context: Context) -> UIVisualEffectView {
-        let blurEffect = UIBlurEffect(style: UIBlurEffect.Style.dark)
-        let blurEffectView = UIVisualEffectView(effect: blurEffect)
-        
-        return blurEffectView
-    }
-    
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
 }

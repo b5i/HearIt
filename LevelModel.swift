@@ -80,7 +80,7 @@ class LevelModel: ObservableObject {
         }
     }
     
-    func goToNextStep(musicianManager: MusiciansManager, playbackManager: PlaybackManager) {
+    func goToNextStep(musicianManager: MusiciansManager, playbackManager: PlaybackManager) -> Bool {
         if self.steps[self.currentStepIndex].passCondition(musicianManager, playbackManager) {
             if self.steps.count > self.currentStepIndex + 1 {
                 withAnimation {
@@ -92,6 +92,9 @@ class LevelModel: ObservableObject {
                     self.currentStepIndex = -1
                 }
             }
+            return true
+        } else {
+            return false
         }
     }
 }

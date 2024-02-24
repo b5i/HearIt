@@ -10,6 +10,14 @@ import SceneKit
 
 
 class Musician: ObservableObject {
+    static var defaultMusicianTexture: CGImage {
+        let musicianURL = Bundle.main.url(forResource: "art.scnassets/common_people@idle111", withExtension: "usdz")!
+        let mdlAsset = MDLAsset(url: musicianURL)
+        mdlAsset.loadTextures()
+        let musicianNode = SCNNode(mdlObject: mdlAsset.object(at: 0))
+        return (musicianNode.childNodes[1].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].geometry?.materials[0].diffuse.contents as! MDLTexture).imageFromTexture()!.takeUnretainedValue() // TODO: remove those !
+    }
+    
     let manager: MusiciansManager
     let node: SCNNode
     let spotlightNode: SCNNode
@@ -149,6 +157,59 @@ class Musician: ObservableObject {
         self.spotlightNode.light?.color = color.getCGColor()
         self.spotlightNode.light?.intensity = self.status.isSpotlightOn ? color.getPreferredIntensity() : 0
         SCNTransaction.commit()
+    }
+        
+    func setIntrumentTextureTo(_ instrumentType: InstrumentType) {
+        let uiTexture = UIImage(cgImage: Self.defaultMusicianTexture).withRenderingMode(.alwaysOriginal)
+        
+        let text = instrumentType.rawValue
+        let textColor = UIColor.orange
+        let textFont = UIFont.systemFont(ofSize: 250)
+                
+        let format = UIGraphicsImageRendererFormat.default()
+        let renderer = UIGraphicsImageRenderer(size: uiTexture.size, format: format)
+                
+        do {
+            try renderer.runDrawingActions({ context in
+                uiTexture.draw(in: .init(origin: .zero, size: uiTexture.size)) // fill the canvas with the base texture
+                
+                let textFontAttributes: [NSAttributedString.Key : Any] = [
+                    NSAttributedString.Key.font: textFont,
+                    NSAttributedString.Key.foregroundColor: textColor,
+                ]
+                
+                let rect = CGRect(origin: .init(x: 690, y: 330), size: uiTexture.size)
+                let attrString = NSAttributedString(string: text, attributes: textFontAttributes)
+                
+                context.cgContext.translateBy(x: rect.minX + attrString.size().width / 2, y: rect.minY + attrString.size().height / 2) // translate to the center of the rotation
+                context.cgContext.rotate(by: instrumentType.getIntrumentAngle())
+                context.cgContext.translateBy(x: -rect.minX - attrString.size().width / 2, y: -rect.minY - attrString.size().height / 2)
+                attrString.draw(in: rect)
+            }, completionActions: { context in
+                guard let newImage = context.cgContext.makeImage() else { print("Could not create image"); return }
+                self.node.childNodes[1].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[0].geometry?.materials[0].diffuse.contents = newImage
+            })
+        } catch {
+            print("Could not generate new texture: \(error.localizedDescription)")
+        }
+    }
+    
+    enum InstrumentType: String {
+        case chords = "🎻"
+        case flute = "🪈"
+        case drums = "🥁"
+        case maracas = "🪇"
+        case piano = "🎹"
+        case trumpet = "🎺"
+        
+        func getIntrumentAngle() -> CGFloat {
+            switch self {
+            case .chords, .flute, .trumpet:
+                return 3 * .pi / 2
+            case .drums, .piano, .maracas:
+                return 3.2 * .pi / 2
+            }
+        }
     }
     
     /// powerOnOff: values that have a pair index means spotlight on, start the array by 0.0 if the player start with the spotlight off

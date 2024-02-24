@@ -138,19 +138,19 @@ struct TwoThemesIntroductionView: View {
  
         await MM.createMusician(withSongName: "ThemesSounds/mozart20celloandbass.m4a", index: 0, PM: PM, color: .red, name: "Cello & Contrabass", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [0.0, 5.5, 37, 43.75, 48, 60.5], colors: [(31.8, .red), (sound.timeObserver.soundDuration, .green)])
-        })
+        }, instrument: .chords)
         await MM.createMusician(withSongName: "ThemesSounds/mozart20flutesandoboe.m4a", index: 1, PM: PM, color: .blue, name: "Flutes & Oboe", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [5.5, 40.2, 60], colors: [(8, .blue), (49.5, .green), (sound.timeObserver.soundDuration, .blue)])
-        })
+        }, instrument: .flute)
         await MM.createMusician(withSongName: "ThemesSounds/mozart20piano.m4a", audioLevel: 4, index: 2, PM: PM, color: .blue, name: "Piano", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [5.5, 12.9, 44.5, 51.5], colors: [(11.2, .blue), (31.8, .green), (sound.timeObserver.soundDuration, .blue)])
-        })
+        }, instrument: .piano)
         await MM.createMusician(withSongName: "ThemesSounds/mozart20viola.m4a", index: 3, PM: PM, color: .green, name: "Viola", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [37, 43.5, 48, 60.5], colors: [(sound.timeObserver.soundDuration, .green)])
-        })
+        }, instrument: .chords)
         await MM.createMusician(withSongName: "ThemesSounds/mozart20violins.m4a", index: 4, PM: PM, color: .blue, name: "Violins", handler: { sound in
             Musician.handleTime(sound: sound, powerOnOff: [37, 43.5, 48, 51.5], colors: [(31.8, .blue), (43.5, .green), (51.5, .blue), (sound.timeObserver.soundDuration, .green)])
-        })
+        }, instrument: .chords)
         
         MM.recenterCamera()
         
