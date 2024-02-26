@@ -1,6 +1,6 @@
 //
 //  PlaybackManager.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 10.01.2024.
 //

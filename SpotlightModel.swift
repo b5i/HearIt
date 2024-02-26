@@ -1,6 +1,6 @@
 //
 //  SpotlightModel.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 10.02.2024.
 //
@@ -15,13 +15,22 @@ class SpotlightModel: ObservableObject {
     
     private(set) var isOn: Bool = false
     
+    /// A list that contains the spotlights that should be activated as soon as they are registered with ``setSpotlight(withType:to:)``.
+    private var automaticActivationList: [SpotlightType] = []
+    
     // Don't forget to add all the all-xxx main spotlight controllers to the init so they can be activated later on
     init() {
         self.spotlights = [.allMutes: (.init(position: .zero, areaRadius: .zero), false), .allSolos: (.init(position: .zero, areaRadius: .zero), false), .allSpotlightChanges: (.init(position: .zero, areaRadius: .zero), false)]
     }
         
+    /// Register a spotlight with its position.
     func setSpotlight(withType type: SpotlightType, to spotlight: Spotlight) {
-        self.spotlights.updateValue((spotlight, self.spotlights[type]?.isEnabled ?? false), forKey: type)
+        if self.spotlights[type] == nil {
+            self.spotlights.updateValue((spotlight, self.automaticActivationList.contains(type)), forKey: type)
+            self.automaticActivationList.removeAll(where: {$0 == type})
+        } else {
+            self.spotlights.updateValue((spotlight, self.spotlights[type]?.isEnabled ?? false), forKey: type)
+        }
                 
         self.update()
     }
@@ -32,8 +41,13 @@ class SpotlightModel: ObservableObject {
         }
     }
     
-    func setSpotlightActiveStatus(ofType type: SpotlightType, to status: Bool) {
-        self.spotlights[type]?.isEnabled = status
+    /// Activate/Disactivate a spotlight, setting placeInQueue will activate the spotlight if it's registered and if it's not it will activate it as soon as the spotlight is registered. Make sure it'll be otherwise you could face some undefined behaviors.
+    func setSpotlightActiveStatus(ofType type: SpotlightType, to status: Bool, placeInQueue: Bool = false) {
+        if placeInQueue, self.spotlights[type] == nil {
+            self.automaticActivationList.append(type)
+        } else {
+            self.spotlights[type]?.isEnabled = status
+        }
         
         self.update()
     }

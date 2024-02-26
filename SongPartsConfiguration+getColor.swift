@@ -1,6 +1,6 @@
 //
 //  SongPartsConfiguration+getColor.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 13.02.2024.
 //

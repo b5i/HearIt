@@ -1,13 +1,13 @@
 //
 //  Musician.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 03.02.2024.
 //
 
 import Foundation
 import SceneKit
-
+import SceneKit.ModelIO
 
 class Musician: ObservableObject {
     static var defaultMusicianTexture: CGImage {
@@ -136,11 +136,11 @@ class Musician: ObservableObject {
     func goToNextColor() {
         switch self.status.spotlightColor {
         case .blue:
-            changeSpotlightColor(color: .red)
-        case .red:
             changeSpotlightColor(color: .green)
-        case .green:
+        case .red:
             changeSpotlightColor(color: .blue)
+        case .green:
+            changeSpotlightColor(color: .red)
         case .white:
             changeSpotlightColor(color: .blue)
         }
@@ -232,6 +232,7 @@ class Musician: ObservableObject {
                 }
             } else {
                 musician.powerOffSpotlight()
+                musician.changeSpotlightColor(color: .white)
             }
         } else {
             if powerOnOff.count % 2 == 0 {
@@ -244,6 +245,7 @@ class Musician: ObservableObject {
                 }
             } else {
                 musician.powerOffSpotlight()
+                musician.changeSpotlightColor(color: .white)
             }
         }
     }

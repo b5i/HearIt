@@ -105,8 +105,13 @@ struct BoleroLevelIntroductionView: View {
                  }
                  */
                 VStack {
+                    Spacer()
+                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM, disabledFeatures: disabledFeatures | .changeSpotlightColorFeature)
+                        .frame(height: geometry.size.height * 0.8)
+                }
+                .overlay(alignment: .topLeading, content: {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "Welcome! In this level you will learn about melodies, accompaniment and continuous bassline. Almost every music, from pop to classical, can be characterized as compositions consisting of these three elements."),
+                        LevelModel.TextStep(text: "Welcome! In this level you will learn about melodies, accompaniment and bassline. Almost every music, from pop to classical, can be characterized as a composition consisting of these three elements."),
                         LevelModel.TextStep(text: "Let me show you an example with this simple music that 4 musicians are playing.", stepAction: {
                             self.disabledFeatures = .changeSpotlightColorFeature
                             for sound in PM.sounds.values {
@@ -115,7 +120,7 @@ struct BoleroLevelIntroductionView: View {
                             }
                             PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "The first thing you hear is definitely the lead played by a synthesizers, it's called the theme or melody of the song. Be aware that it can be played by more than one instrument.", stepAction: {
+                        LevelModel.TextStep(text: "The first thing you hear is definitely the lead played by a synthesizer, it's called the theme or melody of the song. Be aware that it can be played by more than one instrument.", stepAction: {
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
                             
                             // reset states
@@ -127,9 +132,9 @@ struct BoleroLevelIntroductionView: View {
                                 }
                                 sound.unmute()
                             }
-                            PM.restartAndSynchronizeSounds()
+                            //PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by two other synthesizers, it is here to provide a harmonic to the melody so it doesn't feel empty.", stepAction: {
+                        LevelModel.TextStep(text: "The second element is the accompaniment, here it is composed by two other synthesizers, it is here to provide a harmony to the melody so it doesn't feel empty.", stepAction: {
                             // reset states
                             for (key, sound) in PM.sounds {
                                 if key == Self.accompaniment1Path || key == Self.accompaniment2Path {
@@ -139,9 +144,9 @@ struct BoleroLevelIntroductionView: View {
                                 }
                                 sound.unmute()
                             }
-                            PM.restartAndSynchronizeSounds()
+                            //PM.restartAndSynchronizeSounds()
                         }),
-                        LevelModel.TextStep(text: "And the final element is of course the continuous bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks. The bassline is very easy to identify as, if there's one, its rythm stays the same troughout the song. It's also more rythmic than the accompaniment that is more harmonic.", stepAction: {
+                        LevelModel.TextStep(text: "And the final element is, of course, the bassline, here it is represented by the little kick. The bassline gives the rythm to the music and support the theme. Note that the bassline can also be played by other instruments than drums/kicks. The bassline is very easy to identify as, if there's one, its rythm stays the same troughout the song. It's also more rythmic than the accompaniment that is more harmonic.", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
                             self.disabledFeatures = .muteFeature | .soloFeature | .changeSpotlightColorFeature
                             // reset states
@@ -153,7 +158,7 @@ struct BoleroLevelIntroductionView: View {
                                 }
                                 sound.unmute()
                             }
-                            PM.restartAndSynchronizeSounds()
+                            //PM.restartAndSynchronizeSounds()
                         }),
                         LevelModel.TextStep(text: "Click on the right arrow when you're ready to take the test.", stepAction: {
                             self.disabledFeatures = .changeSpotlightColorFeature
@@ -168,9 +173,7 @@ struct BoleroLevelIntroductionView: View {
                             }
                         })
                     ]), MM: MM, PM: PM)
-                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM, disabledFeatures: disabledFeatures)
-                        .frame(height: geometry.size.height * 0.8)
-                }
+                })
                 .overlay(alignment: .topTrailing, content: {
                     TopTrailingActionsView()
                 })

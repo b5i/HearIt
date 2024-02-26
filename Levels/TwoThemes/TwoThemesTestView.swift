@@ -29,15 +29,20 @@ struct TwoThemesTestView: View {
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
                 VStack {
+                    Spacer()
+                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM, disabledFeatures: isLevelFinished ? .changeSpotlightColorFeature : 0)
+                        .frame(height: geometry.size.height * 0.78) // TODO: precise here which soundObserver to use
+                }
+                .overlay(alignment: .topLeading, content: {
                     SceneStepsView(levelModel: LevelModel(steps: [
                         LevelModel.TextStep(text: "Here is the 25th symphony from Mozart, it's a bit easier than the 20th concerto that you've heard before. Let's see if you understood the theory correctly."),
-                        LevelModel.TextStep(text: "Your goal is to locate more or less precisely (I'll be indulgent) where Theme A start, where it ends and so where the bridge starts in addition to the beginning of the Theme B that is also the end of the bridge and the beginning of the CODA (conclusion).", stepAction: {
+                        LevelModel.TextStep(text: "Your task is to locate more or less precisely (I'll be indulgent) where Theme A, the bridge, Theme B and the CODA (conclusion) start.", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
                             AnswersModel.shared.hideButton()
                         }),
                         LevelModel.ViewStep(view: {
                             VStack {
-                                Text("You have control over two buttons. When you discern a change in the song's section (e.g. Theme A, the bridge or Theme B started), press the checkmark button. If you wish to undo your previous selection, simply click the clockwise arrow. Your selections will be visually represented by the colored playing bar. Finally, click the standard arrow to confirm your choice.") // TODO: add the possiblity to manually change the selection
+                                Text("You now have control over two new buttons. When you discern a change in the song's section (i.e. Theme A, the bridge, Theme B or the CODA started), press the checkmark button. If you wish to undo your previous selection, simply click the clockwise arrow. Your selections will be visually represented by the colored playing bar. Finally, click the standard right arrow to confirm your choice.")
                                     .foregroundStyle(.white)
                                 HStack {
                                     Button {
@@ -87,8 +92,8 @@ struct TwoThemesTestView: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .onAppear {
                                 SpotlightModel.shared.disactivateAllSpotlights()
-                                SpotlightModel.shared.setSpotlightActiveStatus(ofType: .addPart, to: true)
-                                SpotlightModel.shared.setSpotlightActiveStatus(ofType: .removeLastPart, to: true)
+                                SpotlightModel.shared.setSpotlightActiveStatus(ofType: .addPart, to: true, placeInQueue: true)
+                                SpotlightModel.shared.setSpotlightActiveStatus(ofType: .removeLastPart, to: true, placeInQueue: true)
                             }
                         }, passCondition: { _, pm in
                             if let config = pm.currentSongPartsConfiguration {
@@ -128,7 +133,7 @@ struct TwoThemesTestView: View {
                                 .init(startTime: 0.0, type: .introduction, label: "Introduction"),
                                 .init(startTime: 5.6, type: .themeA, label: "Theme A"),
                                 .init(startTime: 17, type: .bridge, label: "Bridge"),
-                                .init(startTime: 39.52, type: .themeB, label: "Theme B"),
+                                .init(startTime: 39, type: .themeB, label: "Theme B"),
                                 .init(startTime: 68.5, type: .ending, label: "CODA")
                             ]), totalDuration: PM.sounds.first?.value.timeObserver.soundDuration ?? 100)) // TODO: remove that 100 ting
                         }), // TODO: disable the continue button if there still -1 parts
@@ -136,11 +141,17 @@ struct TwoThemesTestView: View {
                             AnswersModel.shared.hideButton()
                             self.isLevelFinished = true
                             SpotlightModel.shared.disactivateAllSpotlights()
+                            PM.changeConfiguration(for: .init(songParts: [
+                                .init(startTime: 0.0, type: .introduction, label: "Introduction"),
+                                .init(startTime: 5.6, type: .themeA, label: "Theme A"),
+                                .init(startTime: 17, type: .bridge, label: "Bridge"),
+                                .init(startTime: 39, type: .themeB, label: "Theme B"),
+                                .init(startTime: 68, type: .ending, label: "CODA")
+                            ]))
                         })
                     ]), MM: MM, PM: PM)
-                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
-                        .frame(height: geometry.size.height * 0.8) // TODO: precise here which soundObserver to use
-                }
+                    .frame(alignment: .top)
+                })
             .overlay(alignment: .topTrailing, content: {
                 TopTrailingActionsView()
             })
@@ -169,19 +180,19 @@ struct TwoThemesTestView: View {
     
     private func setupTutorial(MM: MusiciansManager) async {
         await MM.createMusician(withSongName: "ThemesSounds/mozart25celloandbass.m4a", index: 0, PM: PM, name: "Cello & Contrabass", handler: { sound in
-            Musician.handleTime(sound: sound, powerOnOff: [] /* always playing */, colors: self.isLevelFinished ? [(25.4, .green), (44.4, .red), (52.9, .blue), (70.5, .red), (sound.timeObserver.soundDuration, .blue)] : []) // raph
+            Musician.handleTime(sound: sound, powerOnOff: [] /* always playing */, colors: self.isLevelFinished ? [(25.4, .green), (44.4, .red), (52.9, .blue), (68, .red), (sound.timeObserver.soundDuration, .green)] : []) // raph
         }, instrument: .chords)
         await MM.createMusician(withSongName: "ThemesSounds/mozart25horns.m4a", index: 1, PM: PM, name: "French Horns", handler: { sound in
-            Musician.handleTime(sound: sound, powerOnOff: [0.0, 6.3], colors: self.isLevelFinished ? [(55.7, .green), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)] : [])
+            Musician.handleTime(sound: sound, powerOnOff: [0.0, 6.3], colors: self.isLevelFinished ? [(55.7, .green), (68, .red) ,(sound.timeObserver.soundDuration, .green)] : [])
         }, instrument: .trumpet)
         await MM.createMusician(withSongName: "ThemesSounds/mozart25oboe.m4a", index: 2, PM: PM, name: "Oboe", handler: { sound in
-            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .green), (18.7, .blue), (70.5, .green) ,(sound.timeObserver.soundDuration, .blue)] : [])
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(6, .green), (17, .blue), (68, .green) ,(sound.timeObserver.soundDuration, .green)] : [])
         }, instrument: .flute)
         await MM.createMusician(withSongName: "ThemesSounds/mozart25violas.m4a", index: 3, PM: PM, name: "Violas", handler: { sound in
-            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .red), (18.7, .blue), (70.5, .red) ,(sound.timeObserver.soundDuration, .blue)] : [])
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(6, .red), (17, .blue), (68, .red) ,(sound.timeObserver.soundDuration, .green)] : [])
         }, instrument: .chords)
-        await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", index: 4, PM: PM, name: "Violins", handler: { sound in
-            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(7, .red), (18.7, .blue), (24.7, .red), (41.6, .green), (sound.timeObserver.soundDuration, .blue)] : [])
+        await MM.createMusician(withSongName: "ThemesSounds/mozart25violins.m4a", audioLevel: 5, index: 4, PM: PM, name: "Violins", handler: { sound in
+            Musician.handleTime(sound: sound, powerOnOff: [], colors: self.isLevelFinished ? [(6, .red), (17, .blue), (24.7, .red), (39, .green), (68, .blue), (sound.timeObserver.soundDuration, .green)] : [])
         }, instrument: .chords)
         PM.changeConfiguration(for: .init(songParts: [
             .init(startTime: 0.0, type: .introduction, label: "Introduction"),

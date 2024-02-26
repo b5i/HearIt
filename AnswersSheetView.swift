@@ -1,6 +1,6 @@
 //
 //  AnswersSheetView.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 17.02.2024.
 //

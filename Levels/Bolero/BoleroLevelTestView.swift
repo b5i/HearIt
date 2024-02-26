@@ -26,14 +26,19 @@ struct BoleroLevelTestView: View {
         } else if let scene = scene, let MM = MM {
             GeometryReader { geometry in
                 VStack {
+                    Spacer()
+                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
+                        .frame(height: geometry.size.height * 0.8)
+                }
+                .overlay(alignment: .topLeading, content: {
                     SceneStepsView(levelModel: LevelModel(steps: [
-                        LevelModel.TextStep(text: "I just added a few musicians to complicate a bit the thing. Let's see if you understood the theory correctly.", stepAction: {
+                        LevelModel.TextStep(text: "I just added a musician and a new song to complicate a bit the thing. Let's see if you understood the theory correctly.", stepAction: {
                             SpotlightModel.shared.disactivateAllSpotlights()
                             AM.hideButton()
                         }),
                         LevelModel.ViewStep(view: {
                             VStack {
-                                Text("Your objective is to identify which musician is performing each element. Multiple musicians can play the same element simultaneously. To submit your choice, adjust the color of the musician corresponding to what you believe they are playing, as explained in the tutorial. Once you've completed your selections, click the right arrow to confirm your results. Best of luck!")
+                                Text("Your objective is to identify which musician is performing each element. Multiple musicians can play the same element simultaneously. To submit your choice, adjust the color of the musician corresponding to what you believe they are playing, as explained in the tutorial. Once you've completed your selections, click the right arrow to verify your results. Good luck!")
                                     .foregroundStyle(.white)
                                 HStack {
                                     Spacer()
@@ -62,6 +67,7 @@ struct BoleroLevelTestView: View {
                                     }
                                     Spacer()
                                 }
+                                .padding(.bottom, -10)
                             }
                             .fixedSize(horizontal: false, vertical: true)
                         }, passCondition: { mm,_ in
@@ -89,9 +95,7 @@ struct BoleroLevelTestView: View {
                             TopTrailingActionsView.Model.shared.unlockedLevel = .twoThemes
                         })
                     ]), MM: MM, PM: PM)
-                    NonOptionalSceneView(scene: scene, musicianManager: MM, playbackManager: PM)
-                        .frame(height: geometry.size.height * 0.8)
-                }
+                })
                 .overlay(alignment: .topTrailing, content: {
                     TopTrailingActionsView()
                 })

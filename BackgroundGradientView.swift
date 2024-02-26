@@ -1,6 +1,6 @@
 //
 //  BackgroundGradientView.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 16.02.2024.
 //
@@ -12,7 +12,7 @@ struct BackgroundGradientView: View {
     static let middleAnimationDuration: Double = 0.7
     
     @Environment(\.colorScheme) private var colorScheme
-
+    
     let level: LevelsManager.Level
     let shouldGoToMiddle: Bool
     var body: some View {
@@ -37,10 +37,10 @@ struct BackgroundGradientView: View {
                     
                     var colors: [Color] {
                         /*
-                        let redCombination: [Color] = [.red, .orange, shouldGoToMiddle ? colorScheme.backgroundColor : .yellow]
-                        let yellowCombination: [Color] = [.yellow, .green, shouldGoToMiddle ? colorScheme.backgroundColor : .cyan]
-                        let cyanCombination: [Color] = [.cyan, .blue, shouldGoToMiddle ? colorScheme.backgroundColor : .purple]
-                        let purpleCombination: [Color] = [.purple, .pink, shouldGoToMiddle ? colorScheme.backgroundColor : .red]
+                         let redCombination: [Color] = [.red, .orange, shouldGoToMiddle ? colorScheme.backgroundColor : .yellow]
+                         let yellowCombination: [Color] = [.yellow, .green, shouldGoToMiddle ? colorScheme.backgroundColor : .cyan]
+                         let cyanCombination: [Color] = [.cyan, .blue, shouldGoToMiddle ? colorScheme.backgroundColor : .purple]
+                         let purpleCombination: [Color] = [.purple, .pink, shouldGoToMiddle ? colorScheme.backgroundColor : .red]
                          */
                         let redCombination: [Color] = [.red, .orange, shouldGoToMiddle ? .black : .yellow]
                         let yellowCombination: [Color] = [.yellow, .green, shouldGoToMiddle ? .black : .cyan]
@@ -87,7 +87,7 @@ struct BackgroundGradientView: View {
                             return redCombination
                         }
                     }
-                    Point(geometry: geometry, shouldStayInRect: .init(x: topLeadingPoint.x, y: topLeadingPoint.y, width: geometry.size.width / 2, height: geometry.size.height / 2), colors: colors, shouldGoToMiddle: shouldGoToMiddle)
+                    Point(geometry: geometry, shouldStayInRect: .init(x: topLeadingPoint.x, y: topLeadingPoint.y, width: geometry.size.width / 2, height: geometry.size.height / 2), gradientColors: colors, shouldGoToMiddle: shouldGoToMiddle)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .id(geometry.size)
                 }
@@ -97,6 +97,7 @@ struct BackgroundGradientView: View {
         .overlay(alignment: .center, content: {
             if shouldGoToMiddle {
                 ProgressView()
+                    .tint(.white)
                     .transition(.scale.combined(with: .opacity))
                     .animation(.smooth(duration: Self.middleAnimationDuration - 0.5).delay(0.5), value: shouldGoToMiddle)
             }
@@ -108,34 +109,33 @@ struct BackgroundGradientView: View {
         let destinationDistance: Double = 70
         let rectArea: CGRect
         let colors: [Color]
-        var timeTillRefresh: Double = 5
-        @State private var position: CGPoint = .zero
+        let refreshTime: Double
+        @State private var position: CGPoint
         let timer: Publishers.Autoconnect<Timer.TimerPublisher>
         
-        let elipseSize = CGSize(width: 200, height: 200)
-        @State private var currentElipseSize: CGSize
+        let defaultEclipseSize = CGSize(width: 200, height: 200)
+        @State private var currentElipseSize: CGSize = CGSize(width: 200, height: 200)
         let elipseVariation: Double = 50
         let elipseBlur: Double = 35
-        let shouldGoToMiddle: Bool
+        let isMiddleCentered: Bool
         
         
-        init(geometry: GeometryProxy, shouldStayInRect: CGRect, timeTillRefresh: Double = 5, colors: [Color], shouldGoToMiddle: Bool) {
+        init(geometry: GeometryProxy, shouldStayInRect: CGRect, timeTillRefresh: Double = 5, gradientColors: [Color], shouldGoToMiddle: Bool) {
             self.geometry = geometry
-            //self.position = .init(x: Double.random(in: shouldStayInRect.minX...shouldStayInRect.maxX), y: Double.random(in: shouldStayInRect.minY...shouldStayInRect.maxY))
-            self.position = .init(x: shouldStayInRect.midX * Double.random(in: 0.7...1.3), y: shouldStayInRect.midY * Double.random(in: 0.7...1.3))
             self.rectArea = shouldStayInRect
-            self.colors = colors
-            self.timeTillRefresh = timeTillRefresh
+            self.colors = gradientColors
+            self.refreshTime = timeTillRefresh
             self.timer = Timer.publish(every: timeTillRefresh, on: .main, in: .common).autoconnect()
-            self.shouldGoToMiddle = shouldGoToMiddle
-            self.currentElipseSize = self.elipseSize
+            self.isMiddleCentered = shouldGoToMiddle
+            self._currentElipseSize = State(wrappedValue: self.defaultEclipseSize)
+            self._position = State(wrappedValue: CGPoint(x: shouldStayInRect.midX * Double.random(in: 0.7...1.3), y: shouldStayInRect.midY * Double.random(in: 0.7...1.3)))
         }
         var body: some View {
             Ellipse()
-                .fill(EllipticalGradient(gradient: Gradient(colors: colors), center: .center, startRadiusFraction: 0.5, endRadiusFraction: shouldGoToMiddle ? 0.25 : 0.1))
-                .frame(width: shouldGoToMiddle ? elipseSize.width : currentElipseSize.width, height: shouldGoToMiddle ? elipseSize.height : currentElipseSize.height)
+                .fill(EllipticalGradient(gradient: Gradient(colors: colors), center: .center, startRadiusFraction: 0.5, endRadiusFraction: isMiddleCentered ? 0.25 : 0.1))
+                .frame(width: isMiddleCentered ? defaultEclipseSize.width : currentElipseSize.width, height: isMiddleCentered ? defaultEclipseSize.height : currentElipseSize.height)
                 .blur(radius: elipseBlur)
-                .position(shouldGoToMiddle ? .init(x: geometry.size.width / 2, y: geometry.size.height / 2) : position)
+                .position(isMiddleCentered ? .init(x: geometry.size.width / 2, y: geometry.size.height / 2) : position)
                 .onReceive(timer, perform: { _ in
                     goToNewPoint()
                 })
@@ -146,33 +146,42 @@ struct BackgroundGradientView: View {
         
         private func goToNewPoint() {
             Task { // avoid blocking the thread if it can't find the next destination
+                var foundSolution: Bool = false
+                
                 var newDirection = Double.random(in: 0...2*Double.pi)
-                var destination = CGPoint(x: self.position.x + destinationDistance * cos(newDirection), y: self.position.y + destinationDistance * sin(newDirection))
+                var newDestination = CGPoint(x: self.position.x + destinationDistance * cos(newDirection), y: self.position.y + destinationDistance * sin(newDirection))
                 var newWidth = currentElipseSize.width + Double.random(in: -elipseVariation...elipseVariation)
                 var newHeight = currentElipseSize.height + Double.random(in: -elipseVariation...elipseVariation)
-                while
-                    destination.x - newWidth / 2 < rectArea.minX ||
-                        destination.y - newHeight / 2 < rectArea.minY ||
-                        destination.x + newWidth / 2 > rectArea.maxX ||
-                        destination.y + newHeight / 2 > rectArea.maxY ||
-                        abs(newHeight - elipseSize.height) > elipseVariation ||
-                        abs(newWidth - elipseSize.width) > elipseVariation { // check if the bubbles stay in their attributed rectangle, otherwise regenerate the values
-                    newDirection = Double.random(in: 0...2*Double.pi)
-                    destination = CGPoint(x: self.position.x + destinationDistance * cos(newDirection), y: self.position.y + destinationDistance * sin(newDirection))
-                    newHeight = currentElipseSize.height + Double.random(in: -elipseVariation...elipseVariation)
-                    newWidth = currentElipseSize.width + Double.random(in: -elipseVariation...elipseVariation)
+                for _ in 0..<100 { // try only a hundred times to avoid using all the ressources
+                    if
+                        newDestination.x - newWidth / 2 < rectArea.minX ||
+                            newDestination.y - newHeight / 2 < rectArea.minY ||
+                            newDestination.x + newWidth / 2 > rectArea.maxX ||
+                            newDestination.y + newHeight / 2 > rectArea.maxY ||
+                            abs(newHeight - defaultEclipseSize.height) > elipseVariation ||
+                            abs(newWidth - defaultEclipseSize.width) > elipseVariation { // check if the bubbles stay in their attributed rectangle, otherwise regenerate the values
+                        newDirection = Double.random(in: 0...2*Double.pi)
+                        newDestination = CGPoint(x: self.position.x + destinationDistance * cos(newDirection), y: self.position.y + destinationDistance * sin(newDirection))
+                        newHeight = currentElipseSize.height + Double.random(in: -elipseVariation...elipseVariation)
+                        newWidth = currentElipseSize.width + Double.random(in: -elipseVariation...elipseVariation)                        
+                    } else {
+                        foundSolution = true
+                        break
+                    }
                 }
                 
-                // avoid being annoyed with the concurrent code warning
-                let finalNewDirection = newDirection
-                let finalNewWidth = newWidth
-                let finalNewHeight = newHeight
-                
-                DispatchQueue.main.async {
-                    withAnimation(.linear(duration: timeTillRefresh)) {
-                        self.position.x += destinationDistance * cos(finalNewDirection)
-                        self.position.y += destinationDistance * sin(finalNewDirection)
-                        self.currentElipseSize = CGSize(width: finalNewWidth, height: finalNewHeight)
+                if foundSolution {
+                    // avoid being annoyed with the concurrent code warning
+                    let finalDestination = newDestination
+                    let finalNewWidth = newWidth
+                    let finalNewHeight = newHeight
+                    
+                    DispatchQueue.main.async {
+                        withAnimation(.linear(duration: refreshTime)) {
+                            self.position.x = finalDestination.x
+                            self.position.y = finalDestination.y
+                            self.currentElipseSize = CGSize(width: finalNewWidth, height: finalNewHeight)
+                        }
                     }
                 }
             }

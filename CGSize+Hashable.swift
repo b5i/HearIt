@@ -1,6 +1,6 @@
 //
 //  CGSize+Hashable.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 24.02.2024.
 //

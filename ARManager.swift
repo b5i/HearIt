@@ -1,6 +1,6 @@
 //
 //  ARManager.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 14.02.2024.
 //
@@ -51,6 +51,7 @@ class ARManager: ObservableObject {
                 $0.position.x *= Self.ARScale
                 $0.position.y *= Self.ARScale
                 $0.position.z *= Self.ARScale
+                
             }) // TODO: Check if there's a method to reduce the FOV of the camera to avoid dealing with that kind of thing
             PM?.sounds.values.forEach({$0.position *= Self.ARScale})
         } else {
@@ -67,6 +68,7 @@ class ARManager: ObservableObject {
             })
             PM?.sounds.values.forEach({$0.position /= Self.ARScale})
             MM?.scene.rootNode.childNodes.first?.position = .init(0, 0, 0)
+            //MM?.updateMusiciansSoundPosition()
         }
         
         MM?.updateMusicianParticles(isAROn: newStatus)

@@ -1,6 +1,6 @@
 //
 //  Line.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 09.02.2024.
 //

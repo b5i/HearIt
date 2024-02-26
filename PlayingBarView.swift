@@ -98,6 +98,8 @@ struct PlayingBarView: View {
     @State private var zoomedInSliderValue: Double = 0.5 // middle of the screen
     @State private var startedWithZoomedInSliderValue: Double = 0.5
         
+    @State private var playPauseButtonRotation: Double = 0
+    
     @Namespace private var animation
     
     @State private var bars: [Double] = []
@@ -135,7 +137,7 @@ struct PlayingBarView: View {
                         Group {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(showZoomedInUI ? Color(uiColor: .darkGray) : .gray)
+                                    .fill(showZoomedInUI ? Color(uiColor: .darkGray) : Color(uiColor: .darkGray) /* maybe we keep just .gray */)
                                     .frame(height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
                                     .overlay(alignment: .center, content: {
                                         ZStack {
@@ -162,19 +164,6 @@ struct PlayingBarView: View {
                                                 .frame(width: showZoomedInUI ? 0 : max(size.width - sliderValue * size.width + capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
                                                 .position(x: showZoomedInUI ? size.width : (sliderValue * size.width + size.width) / 2, y: showZoomedInUI ? 25 : 10)
                                                 .opacity(showZoomedInUI ? 0 : 5)
-                                            
-                                            /*RoundedRectangle(cornerRadius: 10)
-                                                .fill(showZoomedInUI ? Color(uiColor: .darkGray) : .gray)
-                                                //.fill(showZoomedInUI ? grayGradient : gradient)
-                                                .frame(width: showZoomedInUI ? 0 : sliderValue * self.size.width, height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
-                                                .position(x: showZoomedInUI ? 0 : sliderValue * self.size.width / 2, y: showZoomedInUI ? 25 : 10)
-                                                .opacity(showZoomedInUI ? 0 : 5)
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(showZoomedInUI ? Color(uiColor: .darkGray) : .gray)
-                                                .frame(width: showZoomedInUI ? 0 : max(geometry.size.width - sliderValue * geometry.size.width - capsuleSize.width, 0), height: showZoomedInUI ? zoomedInHeight : zoomedOutHeight)
-                                                .position(x: showZoomedInUI ? geometry.size.width : (sliderValue * geometry.size.width + capsuleSize.width + geometry.size.width) / 2, y: showZoomedInUI ? 25 : 10)
-                                                .opacity(showZoomedInUI ? 0 : 5)
-                                             */
                                         }
                                         .overlay(alignment: .top, content: {
                                             SegmentedTextView(stops: textStops)
@@ -291,13 +280,35 @@ struct PlayingBarView: View {
                     .foregroundStyle(.white)
                     .opacity(0.3)
                     .frame(width: 55, height: zoomedInHeight)
-                Image(systemName: self.soundObserver.isPlaying ? "pause.fill" : "play.fill")
+                Image(systemName: "play.fill")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 30)
+                    .frame(width: 100)
                     .foregroundStyle(.white)
                     .padding(10)
+                    .rotation3DEffect(
+                        .degrees(playPauseButtonRotation),
+                        axis: (0.0, 1.0, 0.0)
+                    )
+                    .opacity(playPauseButtonRotation.truncatingRemainder(dividingBy: 360) == 180 ? -1 : 1)
+                Image(systemName: "pause.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 100)
+                    .foregroundStyle(.white)
+                    .padding(10)
+                    .rotation3DEffect(
+                        .degrees(playPauseButtonRotation - 180),
+                        axis: (0.0, 1.0, 0.0)
+                    )
+                    .opacity(playPauseButtonRotation.truncatingRemainder(dividingBy: 360) == 180 ? 1 : -1)
+                    .castedOnChange(of: self.soundObserver.isPlaying, perform: {
+                        withAnimation(.spring) {
+                            self.playPauseButtonRotation += 180
+                        }
+                    })
             }
+            .clipped()
         }
         .frame(width: 55, height: zoomedInHeight)
         .padding(.horizontal)
@@ -353,6 +364,7 @@ struct PlayingBarView: View {
                     .sfReplaceEffect()
                     .foregroundStyle(.white)
                     .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
                     .onTapGesture {
                         if let currentLoop = playbackManager.currentLoop, currentLoop.isEditable {
                             let newLoop = PlaybackManager.LoopEvent.init(startTime: currentLoop.startTime, endTime: currentLoop.endTime, shouldRestart: false, lockLoopZone: !currentLoop.lockLoopZone, isEditable: true)
@@ -1092,4 +1104,62 @@ class KeyboardObserverView: UIView {
             super.pressesBegan(presses, with: event)
         }
     }
+}
+
+struct Rotation3DViewModifier: ViewModifier {
+    let angle: Angle
+    
+    func body(content: Content) -> some View {
+        content.rotation3DEffect(angle, axis: (0.0, 1.0, 0.0))
+    }
+}
+
+struct TestView: View {
+    @State private var rotate: Bool = false
+    @State private var rotationAngle: Double = 0
+    var body: some View {
+        ZStack {
+            /*
+            Image(systemName: rotate ? "play.fill" : "pause.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 100)
+                .rotation3DEffect(
+                    .degrees(rotate ? 360 : 0),
+                    axis: (0.0, 1.0, 0.0)
+                )
+             */
+            Image(systemName: "play.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 100)
+                .rotation3DEffect(
+                    .degrees(rotationAngle),
+                    axis: (0.0, 1.0, 0.0)
+                )
+                .opacity(rotationAngle.truncatingRemainder(dividingBy: 360) == 180 ? -1 : 1)
+            
+            Image(systemName: "pause.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 100)
+                .rotation3DEffect(
+                    .degrees(rotationAngle - 180),
+                    axis: (0.0, 1.0, 0.0)
+                )
+                .opacity(rotationAngle.truncatingRemainder(dividingBy: 360) == 180 ? 1 : -1)
+             
+             
+        }
+        Button("Rotate") {
+            withAnimation(.spring) {
+                self.rotate.toggle()
+                self.rotationAngle += 180
+            }
+        }
+    }
+}
+
+#Preview {
+    TestView()
 }

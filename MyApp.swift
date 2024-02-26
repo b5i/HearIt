@@ -3,14 +3,11 @@ import SwiftUI
 let appName: String = "Hear it!" /* "[name of the app]" */
 
 @main
-struct MyApp: App {
+struct HearIt: App {
     @ObservedObject private var spotlightModel = SpotlightModel.shared
     var body: some Scene {
         WindowGroup {
-            //TwoThemesTestView()
-            //ActualSceneView()
             ContentView()
-            //ARTestView2()
                 .globalSpotlight()
         }
     }

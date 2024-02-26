@@ -13,7 +13,7 @@ struct ContentView: View {
         case .homeScreen:
             //GeometryReader { geometry in
                 HomeScreenView(homeScreenAnimation: animation)
-                .transition(.asymmetric(insertion: .identity, removal: .move(edge: .top)))
+                    .transition(.asymmetric(insertion: .identity, removal: .move(edge: .top)))
             //}
 
             //.animation(.bouncy, value: NM.currentStep == .homeScreen)

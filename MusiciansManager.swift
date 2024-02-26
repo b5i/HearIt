@@ -1,6 +1,6 @@
 //
 //  MusicianManager.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 10.01.2024.
 //
@@ -71,6 +71,12 @@ class MusiciansManager: ObservableObject {
         return musicians.first(where: {$0.value.musician.node == node})?.value.musician
     }
     
+    func updateMusiciansSoundPosition() {
+        self.musicians.forEach({
+            $0.value.musician.sound?.position = $0.value.musician.node.simdWorldPosition
+        })
+    }
+    
     func updateMusicianParticles(isAROn: Bool? = nil) {
         for musician in self.musicians.values.map({$0.musician}) {
             if musician.status.isStopped {
@@ -97,8 +103,6 @@ class MusiciansManager: ObservableObject {
             let musicianNode = SCNNode(mdlObject: mdlAsset.object(at: 0))
             musicianNode.rotation.y = 1
             musicianNode.rotation.w += Float.pi / 2
-            //let musicianScene = SCNScene(named: "art.scnassets/common_people@idle.scn")!
-            //let musicianNode = musicianScene.rootNode.childNode(withName: "Body-Main", recursively: true)!
             musicianNode.removeFromParentNode()
                         
             let spotlightScene = SCNScene(named: "art.scnassets/cleanSpotlight.scn")!
@@ -118,8 +122,6 @@ class MusiciansManager: ObservableObject {
             
              
             spotlightNode.scale = SCNVector3(x: 60, y: 60, z: 60)
-            //spotlightNode.eulerAngles = SCNVector3(x: .pi / 2, y: 0, z: 0)
-            //spotlightNode.pivot = .init(m11: 1, m12: 0, m13: 0, m14: 0, m21: 0, m22: 1, m23: 0, m24: 0, m31: 0, m32: 0, m33: 1, m34: 0, m41: 0, m42: 1.3, m43: 1.4, m44: 1) // top of the musician position
             
             spotlightSupportNode.transform.m42 += 1
             spotlightFlashNode.transform.m42 += 1

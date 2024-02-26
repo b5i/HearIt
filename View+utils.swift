@@ -1,6 +1,6 @@
 //
 //  View+castedOnChange.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 24.02.2024.
 //
@@ -11,12 +11,10 @@ import SwiftUI
 extension View {
     func castedOnChange<V>(of value: V, perform action: @escaping () -> Void) -> some View where V: Equatable {
         if #available(iOS 17.0, *) {
-            print(value)
             return self.onChange(of: value, {
                 action()
             })
         } else {
-            print(value)
             return self.onChange(of: value, perform: {_ in
                 action()
             })

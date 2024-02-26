@@ -1,6 +1,6 @@
 //
 //  LevelsManager.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 10.02.2024.
 //
@@ -16,7 +16,7 @@ class LevelsManager: ObservableObject {
     
     @Published private(set) var levelStarted: Bool = false
     
-    @Published private(set) var unlockedLevels: [NavigationModel.Level: Int] = [:]
+    @Published private(set) var unlockedLevels: [NavigationModel.Level: Int] = [:] 
     
     @Published private(set) var isDoingTransition: Bool = false
     

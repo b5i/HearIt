@@ -1,6 +1,6 @@
 //
 //  LevelsView.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 09.02.2024.
 //
@@ -19,6 +19,7 @@ struct LevelsView: View {
     
     @State private var showCredits: Bool = false
     @ObservedObject private var LM = LevelsManager.shared
+    @ObservedObject private var NM = NavigationModel.shared
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -89,29 +90,42 @@ struct LevelsView: View {
                                         Line()
                                             .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
                                             //.fill(colorScheme.textColor)
-                                            .fill(.white)
+                                            .fill(.white.opacity(LM.levelStarted ? 0 : 1))
                                         //.foregroundStyle(colorScheme.textColor)
                                             .frame(width: geometry.size.width * 0.4, height: 1)
-                                        RoundedRectangle(cornerRadius: 20)
-                                            //.foregroundStyle(colorScheme.textColor)
-                                            .foregroundStyle(.white)
-                                            .frame(width: LM.unlockedLevels[levels[offset]] ?? 0 > 1 ? geometry.size.width * 0.40 : 0, height: 10.5)
-                                            .offset(x: 5, y: -1) // fix little visual bug
+                                            .animation(.smooth(duration: 0.2), value: LM.levelStarted)
+                                            .overlay(alignment: .leading, content: {
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    //.foregroundStyle(colorScheme.textColor)
+                                                    .foregroundStyle(.white)
+                                                    .frame(width: LM.unlockedLevels[levels[offset]] ?? 0 > 1 ? geometry.size.width * 0.4 + 20 : 0, height: 10.5)
+                                                    .offset(x: -5 - 10, y: -1) // fix little visual bug
+                                                    .opacity(LM.levelStarted ? 0 : 1)
+                                                    .animation(.smooth(duration: 0.2), value: LM.levelStarted)
+                                            })
                                     }
                                     .verticallyCentered()
                                     .opacity(LM.levelStarted ? 0 : 1)
+                                    .animation(.smooth(duration: 0.2), value: LM.levelStarted)
                                 }
+                                StartButton(mode: .black) {
+                                    LevelsManager.shared.startLevel(level)
+                                }
+                                .padding()
+                                .opacity(LM.levelStarted ? 0 : 1)
+                                .animation(.smooth(duration: 0.2), value: LM.levelStarted)
+                                
+                                /*
                                 Button {
                                     LevelsManager.shared.startLevel(level)
                                 } label: {
                                     Text("Start")
-                                    //.scaleEffect(LM.levelStarted ? 10 : 1)
                                         //.foregroundStyle(colorScheme.textColor)
                                         .foregroundStyle(.white)
                                 }
                                 .opacity(LM.levelStarted ? 0 : 1)
                                 .frame(width: geometry.size.width * 0.2)
-                                
+                                */
                                 if offset == lastLevelIndex {
                                     Spacer()
                                         .frame(width: geometry.size.width * 0.4)
@@ -121,23 +135,29 @@ struct LevelsView: View {
                                         Line()
                                             .stroke(style: .init(lineWidth: 10, lineCap: .round, dash: [30], dashPhase: 200))
                                             //.fill(colorScheme.textColor)
-                                            .fill(.white)
+                                            .fill(.white.opacity(LM.levelStarted ? 0 : 1))
                                             .frame(width: geometry.size.width * 0.4, height: 1)
-                                        RoundedRectangle(cornerRadius: 20)
-                                            //.foregroundStyle(colorScheme.textColor)
-                                            .foregroundStyle(.white)
-                                            .frame(width: LM.unlockedLevels[levels[offset + 1]] ?? 0 > 0 ? geometry.size.width * 0.4 : 0, height: 10.5)
-                                            .offset(x: -5, y: -1) // fix little visual bug
+                                            .animation(.smooth(duration: 0.2), value: LM.levelStarted)
+                                            .overlay(alignment: .leading, content: {
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    //.foregroundStyle(colorScheme.textColor)
+                                                    .foregroundStyle(.white)
+                                                    .frame(width: LM.unlockedLevels[levels[offset + 1]] ?? 0 > 0 ? geometry.size.width * 0.4 + 20 : 0, height: 10.5)
+                                                    .offset(x: 5 - 10, y: -1) // fix little visual bug
+                                                    .opacity(LM.levelStarted ? 0 : 1)
+                                                    .animation(.smooth(duration: 0.2), value: LM.levelStarted)
+                                            })
                                     }
                                     .verticallyCentered()
                                     .opacity(LM.levelStarted ? 0 : 1)
+                                    .animation(.smooth(duration: 0.2), value: LM.levelStarted)
                                 }
                             }
                             .overlay(alignment: .top, content: {
                                 Text(level.rawValue)
                                     .font(.system(size: 80))
                                     .bold()
-                                    .foregroundStyle(.white) // TODO: mettre avec le colorscheme
+                                    .foregroundStyle(.white)
                                     .opacity(LM.levelStarted ? 0 : 1)
                             })
                         }
@@ -145,6 +165,24 @@ struct LevelsView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
+                .overlay(alignment: .bottomTrailing, content: {
+                    Image(systemName: "book")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .foregroundStyle(.yellow)
+                        .padding()
+                        .padding()
+                        .offset(x: LM.levelStarted ? 100 : 0)
+                        .opacity(LM.levelStarted ? 0 : 1)
+                        .animation(.spring(duration: 0.5), value: LM.levelStarted)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation {
+                                self.showCredits = true
+                            }
+                        }
+                })
                 /*
                 .overlay(alignment: .bottom, content: {
                     HStack {
@@ -169,25 +207,18 @@ struct LevelsView: View {
                     }
                 })*/
             }
-            .overlay(alignment: .bottomTrailing, content: {
-                Image(systemName: "book")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 30, height: 30)
-                    .foregroundStyle(.yellow)
-                    .padding()
-                    .padding()
-                    .offset(x: LM.levelStarted ? 100 : 0)
-                    .opacity(LM.levelStarted ? 0 : 1)
-                    .animation(.spring(duration: 0.5), value: LM.levelStarted)
-                    .onTapGesture {
-                        withAnimation {
-                            self.showCredits = true
-                        }
-                    }
-            })
             .creditsOverlay(isActive: $showCredits)
         }
+        .ignoresSafeArea()
     }
 }
 
+fileprivate extension View {
+    func homeScreenButtonAnimation(isActive: Bool, namespace: Namespace.ID) -> some View {
+        if isActive {
+            return AnyView(self.matchedGeometryEffect(id: "StartButton", in: namespace))
+        } else {
+            return AnyView(self)
+        }
+    }
+}

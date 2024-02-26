@@ -1,6 +1,6 @@
 //
 //  ARSceneView.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 14.02.2024.
 //
@@ -24,6 +24,8 @@ struct ARSceneView: UIViewRepresentable {
         static let shared = SessionDelegate()
         
         var PM: PlaybackManager? = nil
+        
+        var MM: MusiciansManager? = nil
         
         var arView: ARSCNView? = nil {
             didSet {
@@ -100,6 +102,33 @@ struct ARSceneView: UIViewRepresentable {
                 masterNode.scale = .init(currentScale, currentScale, currentScale)
             }
         }
+        
+        @objc func handleTap(_ gestureRecognize: UIGestureRecognizer) {
+            guard let scnView = self.arView, let musicianManager = self.MM else { return }
+                    
+            // check what nodes are tapped
+            let p = gestureRecognize.location(in: scnView)
+            let hitResults = scnView.hitTest(p, options: [:])
+            // check that we clicked on at least one object
+            
+            var didToggleSpotlight: Bool = false // avoid having two hit results on the same part that will let the spotlight's power status unchanged
+            var didTogglePlayback: Bool = false
+            
+            for result in hitResults {
+                guard let musician = result.node.getMusicianParent(), let musicianName = musician.name else { continue }
+                if result.node.isSpotlightPart {
+                    if !didToggleSpotlight {
+                        musicianManager.musicians[musicianName]?.musician.goToNextColor()
+                        didToggleSpotlight = true
+                    }
+                } else if result.node.isMusicianBodyPart {
+                    if !didTogglePlayback {
+                        musicianManager.musicians[musicianName]?.musician.sound?.isMuted.toggle() // won't do anything if the result is not a musician
+                        didTogglePlayback = true
+                    }
+                }
+            }
+        }
                 
         enum HasAnchorStatus {
             case anchorFound
@@ -117,6 +146,7 @@ struct ARSceneView: UIViewRepresentable {
         sceneView.session.delegate = SessionDelegate.shared
         sceneView.delegate = SessionDelegate.shared
         SessionDelegate.shared.PM = self.playbackManager
+        SessionDelegate.shared.MM = self.musicianManager
         SessionDelegate.shared.arView = sceneView
         sceneView.scene = self.scene
         
@@ -161,6 +191,9 @@ struct ARSceneView: UIViewRepresentable {
         }
         
         sceneView.session.run(configuration)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(SessionDelegate.shared.handleTap(_:)))
+        sceneView.addGestureRecognizer(tapGesture)
         
         return sceneView
     }

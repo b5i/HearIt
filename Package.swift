@@ -8,15 +8,15 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "WWDC24",
+    name: "Hear it!",
     platforms: [
         .iOS("16.0")
     ],
     products: [
         .iOSApplication(
-            name: "WWDC24",
+            name: "Hear it!",
             targets: ["AppModule"],
-            bundleIdentifier: "Antoine-Bollengier.WWDC24",
+            bundleIdentifier: "Antoine-Bollengier.HearIt",
             teamIdentifier: "QDH78FDX85",
             displayVersion: "1.0",
             bundleVersion: "1",
@@ -43,9 +43,6 @@ let package = Package(
             name: "AppModule",
             path: ".",
             resources: [
-                .copy("Resources/getPath"),
-                .copy("Resources/kick.m4a"),
-                .copy("Resources/kick2.m4a"),
                 .copy("Resources/TutorialSounds"),
                 .copy("Resources/ThemesSounds"),
                 .copy("Resources/BoleroSounds"),

@@ -1,6 +1,6 @@
 //
 //  MusicianHeaderView.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 12.02.2024.
 //
@@ -87,8 +87,20 @@ struct MusicianHeaderView: View {
                     self.musician.goToNextColor()
                 }
             } label: {
+                let swiftColor: Color = {
+                    switch self.musician.status.spotlightColor {
+                    case .white:
+                        return .white
+                    case .blue:
+                        return .blue
+                    case .red:
+                        return .red
+                    case .green:
+                        return .green
+                    }
+                }()
                 RoundedRectangle(cornerRadius: 8)
-                    .foregroundStyle(Color(cgColor: self.musician.status.spotlightColor.getCGColor()))
+                    .foregroundStyle(swiftColor)
                     .frame(width: 35, height: 35)
             }
             .frame(width: 35, height: 35)

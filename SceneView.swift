@@ -1,6 +1,6 @@
 //
 //  SceneView.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 07.01.2024.
 //
@@ -106,7 +106,7 @@ struct NonOptionalSceneView: View {
             .overlay(alignment: .bottom) {
                 VStack {
                     Spacer()
-                    
+                    /*
                     HStack {
                         Button("front") {
                             scene.rootNode.getFirstCamera()?.transform.m43 -= 1
@@ -127,6 +127,7 @@ struct NonOptionalSceneView: View {
                             scene.rootNode.getFirstCamera()?.transform.m41 += 1
                         }
                     }
+                     */
                      
                     VStack {
                         Spacer()
@@ -305,7 +306,7 @@ class SceneViewController: UIViewController, SCNSceneRendererDelegate {
         view.scene = self.scene
         view.delegate = self
         view.showsStatistics = self.showStatistics
-        view.allowsCameraControl = true
+        //view.allowsCameraControl = true
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         view.addGestureRecognizer(tapGesture)
@@ -362,33 +363,30 @@ extension SCNScene {
                 
         scene.rootNode.addChildNode(secondRootNote)
         
-        // create and add a camera to the scene
-        let cameraNode = SCNNode()
-        cameraNode.name = "WWDC24-Camera"
-        cameraNode.camera = SCNCamera()
-        secondRootNote.addChildNode(cameraNode)
-        
-        // place the camera and observe its position to adapt the listener position in space
-        cameraNode.position = SCNVector3(x: 8, y: 2, z: 12)
+        scene.addCamera()
         
         // create and add an ambient light to the scene
         let ambientLightNode = SCNNode()
+        ambientLightNode.name = "WWDC24-AmbientLight"
         ambientLightNode.light = SCNLight()
         ambientLightNode.light?.type = .ambient
         ambientLightNode.light?.color = UIColor.darkGray
         ambientLightNode.light?.intensity = 1500
+        
         secondRootNote.addChildNode(ambientLightNode)
-        
-        /*
-        // create and add a light to the scene
-        let lightNode = SCNNode()
-        lightNode.light = SCNLight()
-        lightNode.light?.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
-        lightNode.light?.intensity = 100
-        secondRootNote.addChildNode(lightNode)
-         */
-        
+                
         return scene
+    }
+    
+    func addCamera() {
+        // create and add a camera to the scene
+        let cameraNode = SCNNode()
+        cameraNode.name = "WWDC24-Camera"
+        cameraNode.camera = SCNCamera()
+        
+        // place the camera and observe its position to adapt the listener position in space
+        cameraNode.position = SCNVector3(x: 8, y: 2, z: 12)
+        
+        self.rootNode.childNodes.first?.addChildNode(cameraNode)
     }
 }

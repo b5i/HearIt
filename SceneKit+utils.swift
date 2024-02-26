@@ -1,6 +1,6 @@
 //
 //  SceneKit+utils.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 24.02.2024.
 //
@@ -25,7 +25,7 @@ extension SCNScene {
         return self.rootNode.getMusicianChild(withName: name)
     }
 }
-
+  
 extension SCNNode {
     func getFirstCamera() -> SCNNode? {
         var node: SCNNode? = nil
@@ -34,12 +34,29 @@ extension SCNNode {
                 node = child
                 break
             } else {
-                node = child.getFirstCamera()
+                if let potentialNode = child.getFirstCamera() {
+                    node = potentialNode
+                }
             }
         }
         return node
     }
     
+    func getFirstAmbientLight() -> SCNNode? {
+        var node: SCNNode? = nil
+        for child in self.childNodes {
+            if child.name?.hasPrefix("WWDC24-AmbientLight") == true {
+                node = child
+                break
+            } else {
+                if let potentialNode = child.getFirstAmbientLight() {
+                    node = potentialNode
+                }
+            }
+        }
+        return node
+    }
+        
     var isSpotlightPart: Bool {
         var result: Bool = false
         
@@ -76,7 +93,9 @@ extension SCNNode {
             if parentName.hasPrefix("WWDC24-Musician-") {
                 node = parent
             } else {
-                node = parent.getMusicianParent()
+                if let potentialNode = parent.getMusicianParent() {
+                    node = potentialNode
+                }
             }
         }
         return node
@@ -109,7 +128,9 @@ extension SCNNode {
                 node = child
                 break
             } else {
-                node = child.getMusicianChild(withName: name)
+                if let potentialNode = child.getMusicianChild(withName: name) {
+                    node = potentialNode
+                }
             }
         }
         return node

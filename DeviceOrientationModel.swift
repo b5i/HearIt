@@ -1,6 +1,6 @@
 //
 //  DeviceOrientationModel.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 14.02.2024.
 //

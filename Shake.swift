@@ -1,6 +1,6 @@
 //
 //  Shake.swift
-//  WWDC24
+//  Hear it!
 //
 //  Created by Antoine Bollengier on 12.02.2024.
 //
