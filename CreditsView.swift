@@ -21,7 +21,7 @@ struct CreditsViewModifier: ViewModifier {
                                                      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                                                      """
                       ),
-        CreditContents(url: URL(string: "https://en.wikipedia.org/wiki/Public_domain_music")!, object: "Bolero and Mozart arrangements: Rapahël Bollengier", author: "Raphaël Bollengier", license: """
+        CreditContents(url: URL(string: "https://en.wikipedia.org/wiki/Public_domain_music")!, object: "Bolero and Mozart arrangements: Raphaël Bollengier", author: "Raphaël Bollengier", license: """
                                                      Raphaël created the arrangements from public domain music only, he granted the permission to \(appName) to use them. The sounds from the app have been created with Logic Pro X by myself from those arrangements.
                                                      """
                       ),
